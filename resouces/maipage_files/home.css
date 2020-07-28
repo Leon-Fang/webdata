@@ -1,0 +1,376 @@
+html,body,p,form,ul,hr,h1,h2,h3,h4,h5,h6{margin:0;padding:0}
+body,a,li,input,button,textarea{font-family:"microsoft yahei" !important}
+a{text-decoration:none}
+li{list-style:none}
+img{border:0 none}
+textarea{line-height:20px}
+input,button,textarea{font-size:14px;outline:0 none;margin:0;padding:0}
+input::-ms-clear{display:none}
+body{line-height:20px;font-size:14px;background-color:#f5f5f5}
+.footer{background-color:#fff}
+
+.e_icon{background:url(//img01.51jobcdn.com/im/2016/home/imgs.png?20171025) no-repeat}
+.dicon{background:url(//img01.51jobcdn.com/im/jobs/list_icon_dw.png) no-repeat}
+
+.content{position:relative;max-width:1920px;min-width:1002px;height:305px;margin:-56px auto 10px}
+.content .in{position:absolute;width:1002px;margin:0 auto;bottom:0;left:50%;margin-left:-501px;z-index:2}
+.content .fltr{float:left;width:744px;height:128px;padding:20px 20px 0 20px;background:url(//img01.51jobcdn.com/im/2016/home/bg_flter3.png) repeat;border-radius:2px}
+.content .ush{position:relative;height:40px;margin-bottom:8px;z-index:2}
+.content .ush button{width:120px;height:40px;font-size:18px;color:#fff;cursor:pointer;background-color:#ff6000;border:0 none;
+	-webkit-border-radius:0 3px 3px 0;-moz-border-radius:0 3px 3px 0;-ms-border-radius:0 3px 3px 0;border-radius:0 3px 3px 0}
+.content .ush button:hover{background-color:#ea5800}
+.content .ush .more{position:absolute;line-height:14px;font-size:12px;color:#fff;top:6px;right:0px}
+.content .ht a,.content .lks a{color:#fff}
+.content .ht a:hover,.content .lks a:hover,.content .ush .more:hover{color:#ff6000}
+.content .ht{height:20px;color:#f1f1f1;overflow:hidden}
+.content .ht a{display:inline-block;white-space:nowrap;margin-left:15px}
+.content .lks{*width:738px;margin-top:15px;padding-top:15px;border-top:1px solid #fff}
+.content .lks span{float:left;height:14px;line-height:14px;padding:0 8px}
+.content .lks span:first-child{padding-left:0;border-left:0 none}
+.content .lks a{position:relative;height:20px;line-height:20px;top:-3px;padding-left:20px}
+.content .lks .e_mb{background-position:-150px 3px}
+.content .lks .e_qzx{background-position:-150px -17px}
+.content .lks .e_qzgl{background-position:-150px -37px}
+.content .lks .e_bbs{background-position:-150px -57px}
+.content .lks .e_px{background-position:-150px -77px}
+.content .lks .e_wft{background-position:-150px -97px}
+.content .lks .e_gz{background:url(//img01.51jobcdn.com/im/2016/home/icon_medal.png) left center no-repeat}
+.content .lks .e_jlyh{color: #ffff8d;background:url(//img01.51jobcdn.com/im/2017/ucompany/icon_game5.png) left center no-repeat}
+.content .lks .e_dj{color:#f1f1f1;background:url(//img01.51jobcdn.com/im/2016/icon/icon_game.png) left center no-repeat}
+.content .lks .e_dj2,.content .lks .e_mqzp{background:url(//img01.51jobcdn.com/im/2017/ucompany/icon_game4.png) no-repeat}
+.content .lks .e_mqzp{background-position:0 2px}
+.content .lks .e_ml{background-position:-52px -361px}
+.content .el{position:relative;float:left;height:40px;line-height:40px}
+.content .el.on .ul{width:auto;top:39px;right:0;left:0}
+.content .el ul{position:absolute;width:74px;height:38px;line-height:38px;color:#333;overflow:hidden;cursor:pointer;top:0;left:0;border:1px solid transparent;border-radius:2px;z-index:1}
+.content .el ul em{position:absolute;width:10px;height:6px;top:17px;right:8px;background-position:-170px -60px !important}
+.content .el ul.on{height:80px;background-color:#fff;border-color:#eee;z-index:5}
+.content .el ul.on li{height:40px}
+.content .el ul.on em{top:16px;background-position:-150px -60px !important}
+.content .el li{font-size:14px;text-indent:16px}
+.content .el li a{display:block;height:33px;color:#333}
+.content .el li:hover{background-color:#eee}
+.content .el .ipt{position:relative;float:left;width:387px;height:24px;padding:8px 0 8px 75px;background-color:#fff;border-right:1px solid #fff;border-radius:2px 0 0 2px}
+.content .el .mytxt{float:left;width:385px;height:24px;line-height:24px;font:14px/24px "Microsoft YaHei";color:#333;text-align:left;text-indent:12px;padding:0;border:0 none;border-left:1px solid #ddd;border-right:1px solid #ddd}
+.content .el .addbut{float:left;width:109px;height:40px;font-size:14px;font-family:"Microsoft YaHei";color:#333;cursor:pointer;background-color:#fff}
+.content .el .addbut input{float:left;width:77px;height:40px;line-height:40px;color:#333;cursor:pointer;margin-left:5px;background-color:#fff;border:0 none}
+.content .el .addbut:hover,.content .el .addbut:hover input{background-color:#eee}
+.content .el .addbut em{float:right;width:10px;height:10px;margin:14px 13px 0 0;background-position:-75px -85px}
+.content .ubox{position:absolute;width:240px;height:248px;overflow:hidden;bottom:0;right:-22px}
+.content .sml{position:absolute;width:218px;height:136px;bottom:0;left:0;padding-top:12px;background-color:#fff;background-position:131px 49px;border-radius:2px;z-index:1}
+.content .sml .img{position:relative;width:48px;height:48px;margin:0 auto;overflow:hidden}
+.content .sml .img img{position:absolute;top:0;left:0}
+.content .sml .img em{position:absolute;width:48px;height:48px;top:0;left:0;background-position:0 -120px}
+.content .sml .msg{line-height:16px;text-align:center;padding:12px 0}
+.content .sml .inter{position:absolute;width:36px;height:36px;cursor:pointer;top:0;right:0;background:url(//img01.51jobcdn.com/im/2017/phone/home/icon_inter.png) no-repeat}
+.content .sml .inter:hover{background-image:url(//img01.51jobcdn.com/im/2017/phone/home/icon_inter_hover.png)}
+.content .sml .inter.iphone:hover a{display:block}
+.content .sml .inter.iphone a{position:absolute;display:none;width:12px;line-height:14px;font-size:12px;color:#999;top:0;right:-22px;padding:30px 4px 5px;background:url(//img01.51jobcdn.com/im/2017/phone/home/icon_iphone.png) center 10px #f7f7f7 no-repeat;border:1px solid #ddd}
+.content .sml .inter.iphone a:hover{color:#ff6000;background-image:url(//img01.51jobcdn.com/im/2017/phone/home/icon_iphone-hover.png);background-color:#fff2e3;border-color:#ff9f20}
+.content .uinfo{position:absolute;width:178px;height:134px;bottom:0;padding:14px 20px 0;background-color:#fff}
+.content .uinfo .user{height:40px;color:#666}
+.content .uinfo .user .name{float:left;height:20px;line-height:20px;max-width:64px;color:#666}
+.content .uinfo .user .name:hover{color:#ff6000}
+.content .uinfo .user .img{position:relative;float:left;width:35px;height:35px;cursor:pointer;overflow:hidden;margin:2px 6px 0 0}
+.content .uinfo .user .img img{position:absolute;top:0;left:0}
+.content .uinfo .user .img em{position:absolute;width:30px;height:30px;top:0;left:0;background-position:-60px -120px;zoom:1.17}
+.content .uinfo .user .a2{display:block;height:20px;line-height:17px;font-size:12px;color:#FF6000;text-align:right;text-decoration:underline}
+.content .uinfo .user .a2:hover{color:#ea5800}
+.content .uinfo .status{height:20px;line-height:20px;padding:8px 0;border-bottom:1px solid #f7f7f7}
+.content .uinfo .status label{float:left;width:56px}
+.content .uinfo .status p,.content .uinfo .status p span{float:left;width:68px;height:20px;margin:0 10px;background-position:0 -186px}
+.content .uinfo .status p span{width:0;margin:0;background-position:0 -206px}
+.content .uinfo .status p .s0_5{width:6px}
+.content .uinfo .status p .s1_0{width:12px}
+.content .uinfo .status p .s1_5{width:20px}
+.content .uinfo .status p .s2_0{width:26px}
+.content .uinfo .status p .s2_5{width:34px}
+.content .uinfo .status p .s3_0{width:40px}
+.content .uinfo .status p .s3_5{width:48px}
+.content .uinfo .status p .s4_0{width:54px}
+.content .uinfo .status p .s4_5{width:62px}
+.content .uinfo .status p .s5_0{width:68px}
+.content .uinfo .status .edit,.content .uinfo .status .refresh{float:left;width:12px;height:12px;margin-top:4px;background-position:0 -240px}
+.content .uinfo .status .edit:hover{background-position:0 -260px}
+.content .uinfo .status .refresh{position:relative}
+.content .uinfo .status .refresh .re_pop{display:block;height:12px;background-position:-25px -240px}
+.content .uinfo .status .refresh:hover .re_pop{background-position:-25px -260px}
+.content .uinfo .status .refresh span{position:absolute;display:none;font-size:12px;color:#fff;white-space:nowrap;top:-32px;right:-18px;padding:3px 8px;background:url(//img01.51jobcdn.com/im/2016/home/bg_flter.png) repeat;border-radius:2px}
+.content .uinfo .status .refresh .angle{position:absolute;width:8px;height:4px;right:20px;bottom:-4px;background:url(//img01.51jobcdn.com/im/2016/home/angle.png) center no-repeat}
+.content .uinfo .status .l{float:left;width:1px;height:12px;font-size:0;margin:4px 4px 0;background-color:#eee}
+.content .uinfo .count p{float:left;width:50%;text-align:center}
+.content .uinfo .count strong{display:block;font-weight:normal;font-size:24px;padding:9px 0 3px}
+.content .uinfo .count a{font-size:13px;color:#666}
+.content .uinfo .count a:hover{color:#ff6000}
+.content .uinfo .nstar,.content .uinfo .star{background:url(//img01.51jobcdn.com/im/2016/home/star.png) -6px -7px no-repeat}
+.content .uinfo .nstar{float:left;width:78px;height:20px;cursor:pointer;margin-left:-4px}
+.content .uinfo .star{display:inline-block;height:20px;background-position:-6px -27px}
+.content .uinfo .star.s0_5{width:11px}
+.content .uinfo .star.s1{width:18px}
+.content .uinfo .star.s1_5{width:26px}
+.content .uinfo .star.s2{width:33px}
+.content .uinfo .star.s2_5{width:41px}
+.content .uinfo .star.s3{width:48px}
+.content .uinfo .star.s3_5{width:56px}
+.content .uinfo .star.s4{width:63px}
+.content .uinfo .star.s4_5{width:71px}
+.content .uinfo .star.s5{width:78px}
+.content .uinfo .btnbox{text-align:center;padding-top:7px}
+.content .uinfo .btnbox .p_but{min-width:78px;height:26px;line-height:26px;font-size:12px;margin:0 4px 0 0}
+.content .uinfo .btnbox .p_but.flesh{margin:0 0 0 5px}
+.content .uinfo .fresh{position:relative;display:inline-block;#display:inline;#zoom:1}
+.content .uinfo .fresh .pro{position:absolute;display:none;font-size:12px;color:#fff;white-space:nowrap;top:-32px;left:0;padding:3px 8px;background:url(//img01.51jobcdn.com/im/2016/home/bg_flter.png) repeat;border-radius:2px}
+.content .uinfo .fresh .angle{position:absolute;width:8px;height:4px;left:38px;bottom:-4px;background:url(//img01.51jobcdn.com/im/2016/home/angle.png) center no-repeat}
+.content .c_entry{position:absolute;width:100%;height:249px;left:0;bottom:0;z-index:1}
+
+.content .ufm{position:absolute;width:178px;bottom:-248px;left:0;padding:14px 20px;background-color:#fff;z-index:2}
+.content .ufm .error{position:absolute;width:178px;height:22px;line-height:22px;font-size:12px;text-indent:10px;top:14px;left:20px;color:#ff6000;background-color:#fff2e3}
+.content .ufm .error a{color:#ff6000;text-decoration:underline}
+.content .ufm .e{padding-top:5px}
+.content .ufm .op{height:35px;line-height:35px;font-size:12px}
+.content .ufm .op input{position:relative;top:2px;*top:0;margin-right:5px}
+.content .ufm .op a{float:right;color:#00457d}
+.content .ufm .op a:hover{color:#ff6000}
+.content .ufm .op label{cursor:pointer}
+.content .ufm .abut{width:176px !important;margin:0 !important}
+.content .tle{height:22px;text-align:center}
+.content .tle span{display:inline-block;width:50px;font-weight:bold;text-align:left;cursor:pointer;background-position:40px -330px}
+.content .uipt{position:relative;height:30px;overflow:hidden;border-bottom:1px solid #ddd}
+.content .uipt input{float:left;width:100%;height:30px;line-height:30px;border:0 none}
+.content .uipt .e_eye{position:absolute;width:16px;height:10px;font-size:0;cursor:pointer;top:10px;right:0;background-position:-50px -240px}
+.content .uipt .e_eye.on{background-position:-50px -260px}
+.content .uipt .icon_ok{position:absolute;width:30px;height:30px;text-align:center;top:0;left:84px;background:url(//img01.51jobcdn.com/im/2016/temp/icon_ok.png) center no-repeat}
+.content .uipt.u2{padding-right:20px}
+.content .uipt.u3{padding-right:94px}
+.content .uipt.u3 img{position:absolute;cursor:pointer;top:2px;right:0}
+.content .abut_box{text-align:center}
+.content .abut_box .abut{display:inline-block;width:68px;height:30px;line-height:30px;color:#fff;text-align:center;cursor:pointer;margin:0 8px;background-color:#ff6000;border:1px solid #ff6000;
+	-webkit-border-radius:2px;-moz-border-radius:2px;-ms-border-radius:2px;border-radius:2px}
+.content .abut_box .abut:hover{background-color:#ea5800;border-color:#ea5800}
+.content .abut_box .abut.flesh{color:#ff6000;background-color:#fff}
+.content .abut_box .abut.flesh:hover{background-color:#fff0e7}
+.content .abut_box .abut.big{width:138px}
+.content .focus{border-bottom:1px solid #ff9f20}
+.en .content .fltr{width:694px;padding-right:70px}
+.en .content .ush .more{text-align:center;right:-58px}
+.en .content .ush button{width:110px}
+.en .content .lks{margin-right:-50px}
+.en .content .lks span{padding:0 11px}
+.en .content .lks span:first-child{padding-left:0}
+.en .content .el ul{width:98px}
+.en .content .el .ipt{width:356px;padding-left:98px}
+.en .content .el .mytxt{width:354px}
+.en .content .tle span{width:65px;background-position:54px -330px}
+.en .content .sml .inter{background-image:url(//img01.51jobcdn.com/im/2017/phone/home/icon_inter_en.png)}
+.en .content .sml .inter:hover{background-image:url(//img01.51jobcdn.com/im/2017/phone/home/icon_inter_enhover.png)}
+.en .content .sml .inter.iphone span{display:block;height:64px;margin-left:-1px;background:url(//img01.51jobcdn.com/im/2017/phone/home/icon_hphone_bg.png) no-repeat}
+.en .content .sml .inter.iphone a:hover span{background-image:url(//img01.51jobcdn.com/im/2017/phone/home/icon_hphone_hover_bg.png)}
+
+.cresume{min-width:1002px;max-width:1920px;height:42px;line-height:42px;font-weight:bold;text-align:center;margin:-10px auto 0;background-color:#fff2e3}
+.cresume:hover{background-color:#ffe8cd}
+.cresume a{font-size:16px;color:#ff6000}
+.cresume em{position:relative;display:inline-block;width:20px;height:20px;top:4px;*top:0;margin-left:8px;background-position:0 -290px}
+
+.hm{margin-bottom:15px}
+.hm .cn{margin-bottom:10px;background-color:#fff}
+.hm .cn .tle{display:block;height:35px;line-height:40px;font-size:16px;text-indent:20px}
+.hm .type1,.hm .type2,.hm .type3,.hm .type4{padding-bottom:10px}
+.hm .type1,.hm .type4{padding-top:10px}
+.hm .type2 table{width:962px;margin:0 auto -7px}
+.hm .module{border:0 none}
+
+.hlist{float:left;width:772px;height:158px;margin-right:10px;padding:30px 0 20px}
+.hlist .e{float:left;width:174px;height:158px;font-size:14px;padding:0 9px;border-left:1px solid #ddd}
+.hlist .e:first-child{border-left:0 none}
+.hlist .tie{height:35px;font-size:16px;color:#333;text-align:center;margin-bottom:22px}
+.hlist .tie span{display:inline-block;height:35px;line-height:35px;padding-left:30px}
+.hlist .tie a{max-width:120px}
+.hlist .tie .h1{background-position:-150px -140px}
+.hlist .tie .h2{background-position:-150px -175px}
+.hlist .tie .h3{background-position:-150px -210px}
+.hlist .tie .h4{background-position:-150px -245px}
+.hlist .tie a{color:#333;margin-bottom:0;padding-left:0}
+.hlist .tie a:hover{color:#ff6000}
+.hlist a{display:inline-block;color:#666;margin-bottom:16px;padding-left:23px}
+.hlist a span{float:left;max-width:83px;cursor:pointer}
+.hlist a em{font-style:normal;color:#999}
+.hlist a:hover span{color:#ff6000}
+.en .hlist a{padding-left:10px}
+.en .hlist a span{max-width:100px}
+.en .hlist .tie a{padding-left:0}
+
+.hist{height:46px;overflow:hidden;margin-bottom:10px}
+.hist .h{position:relative;float:left;width:243px;height:44px;line-height:44px;font-size:16px;color:#333;text-align:center;margin-right:10px;background-color:#fff}
+.hist .h:hover{color:#ff6000;background-color:#fbfbfb}
+.hist .h .ic{position:absolute;width:20px;height:20px;top:12px;right:10px;background:url(//img01.51jobcdn.com/im/2016/home/hist_arr.png) no-repeat}
+.hist .h span{position:relative;padding-left:30px;display:inline-block;max-width:80%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hist .e_icon{position:absolute;width:30px;height:30px;top:9px;left:0px}
+.hist .h_l{width:218px;margin-right:0}
+.hist .h_l{font-size:16px;font-weight:bold;color:#427fed}
+.hist .h_l .h_len{font-size:12px;font-weight:bold;color:#427fed}
+.hist .h_l:hover{color:#427fed}
+.hist .h4{margin-right:0}
+.hist .h1 em{background-position:-150px -144px}
+.hist .h2 em{background-position:-150px -177px}
+.hist .h3 em{background-position:-150px -213px}
+.hist .h4 em{background-position:-150px -250px}
+.hist .h5 em{background-position:-150px -285px}
+.hist .h5 em.e2{cursor:pointer;background-position:2px -355px}
+
+.hserver{float:right;width:184px;height:208px;padding:0 18px}
+.hserver .tie{display:block;line-height:45px;font-size:16px;font-weight:bold;color:#427fed;margin-bottom:9px;border-bottom:1px solid #ddd}
+.hserver .tie:hover{color:#ff6000}
+.hserver .hlst{height:110px}
+.hserver .hlst span{float:left;width:50%;line-height:33px;text-align:center}
+.hserver .hlst span.rt{float:right}
+.hserver .hlst a{font-size:14px;color:#666}
+.hserver .hlst a:hover{color:#ff6000}
+.hserver .cln{display:block;width:140px;height:32px;line-height:32px;font-size:14px;color:#fff;text-align:center;margin:0 auto;background-color:#427fed;border-radius:2px}
+.hserver .cln:hover{color:#fff;background-color:#266be7}
+.en .hserver .hlst span{width:auto}
+
+
+.entry{height:70px;clear:both;margin-bottom:10px;padding:10px 18px;background-color:#fff}
+.entry a{float:left;margin-left:10px}
+.entry a:first-child{margin-left:0}
+
+.dcon li,.dcon a,
+	.bcon li,.bcon a,
+	.content .uinfo .status label,
+	.en .hlist .tie a,.hist .h font{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dcon{line-height:23px;overflow:hidden}
+.dcon.l2 li{width:50%}
+.dcon.l3 li{width:33.3%}
+.dcon.l3 li.d_sch,.dcon.l3 li.d_rum,.dcon.l3 li.d_rad{background-image:none}
+.dcon li{float:left;width:97%;height:24px;line-height:24px;margin-left:10px}
+.dcon li em{float:left;margin-right:5px}
+.dcon li a{float:left;max-width:200px;font-size:12px;color:#666}
+.dcon li a:hover, .a_box .kw a:hover{color:#ff6000}
+.dcon li a.c_orange{margin-left:10px}
+.dcon li a.c_orange:hover{text-decoration:underline}
+.dcon .more a{float:right;max-width:none;color:#00457d}
+.dcon .more a:hover{color:#ff6000}
+
+.bcon{overflow:hidden}
+.bcon li{float:left;width:100%;height:34px;line-height:34px}
+.bcon li a{float:left;width:168px;font-size:14px;color:#333;margin-left:20px}
+.bcon li a:hover{color:#ff6000!important}
+.bcon li span{float:left;width:104px;font-size:14px;color:#ff6000;text-align:right}
+
+.blck .tle,
+	.zlck .tle,.wk .tle{height:45px !important;line-height:45px !important;text-indent:0 !important;margin:0 20px;border-bottom:1px solid #ddd}
+.blck .tle a{float:right;font-size:14px;font-weight:normal}
+.blck .e{float:left;width:318px;margin:10px 0;border-left:1px solid #ddd}
+.blck .e.e2{width:500px}
+.blck .lx .e:first-child{margin-left:10px;border-left:0 none}
+.blck .lx .e2:first-child{margin-left:0}
+
+
+.zlck{float:left;width:496px;height:216px;font-size:12px;color:#666}
+.zlck .msg{height:70px;margin:10px 20px 0;padding-left:70px;background:url(//img01.51jobcdn.com/im/2016/home/cuad.png) no-repeat}
+.zlck .tname{float:left;max-width:100%;font-weight:bold;color:#666}
+.zlck .tname:hover{color:#ff6000}
+.zlck .p{text-indent:2em;clear:both;padding-top:5px}
+.zlck .p a{color:#ff6000}
+.zlck .p a:hover{text-decoration:underline}
+.zlck .dcon{margin-top:10px}
+.zlck .dcon li{width:218px;margin-left:20px}
+.zlck .dcon li a,
+	.mlck .dcon li a{max-width:170px}
+
+.mlck{float:right;width:496px;height:216px;font-size:12px;color:#666}
+.mlck .flashid{text-align:center;height:95px;margin:0 20px;padding-top:30px;border-bottom:1px solid #ddd}
+.mlck .dcon{float:left;width:218px;margin-top:10px;padding-bottom:0}
+.mlck .dcon li{margin-left:20px}
+.mlck .lks{position:relative;line-height:24px;margin:0 20px;padding-left:5em}
+.mlck .lks label{position:absolute;top:0;left:0}
+.mlck .lks a{float:left;color:#ff6000;margin-right:5px}
+.mlck .lks a:hover{text-decoration:underline}
+.mlck .scrollin{position:relative;height:24px;overflow:hidden}
+.mlck .scrollin div{position:absolute;width:1000%;top:0;left:0}
+.mlck .scrollin p{float:left}
+
+#goTop{position:fixed;display:none;width:48px;height:40px;line-height:16px;color:#FFF;font-size:0;text-align:center;bottom:68px;margin-left:1042px;padding-top:8px;background:url(//img01.51jobcdn.com/im/jobs/img_top.png) center center #C1C1C1 no-repeat}
+#goTop:hover{font-size:12px;background:#FF6000}
+.dw_fb{position:fixed;width:48px;height:48px;overflow:hidden;text-indent:-200px;text-decoration:none !important;bottom:10px;margin-left:1042px;background:url(//img01.51jobcdn.com/im/jobs/fb_img.png) 0 -48px no-repeat}
+.dw_fb:hover{background-position:0 0}
+.en #goTop{line-height:40px}
+.en #goTop:hover{font-size:14px}
+.en .dw_fb{background-image:url(//img01.51jobcdn.com/im/2016/temp/fb_img_en.png)}
+
+#famous li,#famous a{font-family: "ËÎÌו" !important}
+
+.favor{width:972px;margin-bottom:10px;padding:0px 20px 10px 10px;background-color:#fff}
+.favor .fav{height:42px}
+.favor .fav_title{float:left;line-height:42px;font-size:16px;font-weight:bold;color:#ff6000;margin-left:10px}
+.favor .fav_a{float:right;line-height:42px;font-size:14px}
+.favor .fav_a a{color:#00457D}
+.favor .fav_a a:hover{color:#ff6000}
+.favor .list{overflow:hidden}
+.favor .e{float:left;width:292px;height:68px;margin:0 0 10px 10px;padding:10px;border:1px solid #E8E8E8}
+.favor .e a{float:left;width:182px;height:34px;line-height:34px;font-size:14px;color:#333;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.favor .e a:hover{color:#ff6000}
+.favor .e .po_name{color:#333}
+.favor .e .co_name{color:#666}
+.favor .e strong{float:right;width:90px;height:34px;line-height:34px;font-size:14px;font-weight:400;color:#ff6000;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.favor .e span{float:right;width:92px;height:34px;line-height:34px;font-size:14px;color:#999;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.favor .data{height:32px;text-align:center}
+.favor .data span{font-size:12px;color:#999}
+.favor.f1 .e{float:left;width:282px;height:102px;margin:0 0 10px 10px;padding:10px 15px;border:1px solid #E8E8E8}
+.favor.f1 .e:hover{box-shadow:0 4px 8px rgba(0, 0, 0, .08)}
+.favor.f1 .e .t_area{display:block;height:68px;width:282px;line-height:34px;margin-bottom:5px;border-bottom:1px dashed #eee}
+.favor.f1 .e p{float:left;width:100%;height:34px;line-height:34px;font-size:12px;color:#999;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.favor.f1 .e .po_name{width:182px;font-size:14px;color:#333}
+.favor.f1 .e .co_name{float:left;width:182px;height:34px;line-height:34px;font-size:14px;color:#333;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.favor.f1 .e .co_name:hover{color:#ff6000}
+.favor.f1 .e a:hover .po_name{color:#ff6000}
+.favor.f2 .e{position:relative}
+.favor.f2 .e a{width:196px}
+.favor.f2 .lg{position:absolute;width:88px;height:88px;top:0;right:0;}
+.favor.f2 .lg a{display:table-cell;float:none;width:88px;height:88px;line-height:inherit;font-size:62px;text-align:center;vertical-align:middle}
+.favor.f2 .lg img{max-width:88px;max-height:88px;vertical-align:middle}
+ 
+.hcity{position:relative;height:30px;line-height:30px;padding:8px 75px 8px 108px;background-color:#fff}
+.hcity .tit{position:absolute;font-size:16px;font-weight:bold;color:#ff6000;top:8px;left:20px}
+.hcity .a{position:absolute;font-size:14px;top:8px;right:20px;padding-right:15px;background:url(//img01.51jobcdn.com/im/2016/home/icon_arr.png) right -60px no-repeat}
+.hcity .a:hover{background-position:right -90px}
+.hcity .a.on{background-position:right 0}
+.hcity .a.on:hover{background-position:right -30px}
+.hcity .li{height:30px;overflow:hidden}
+.hcity .li a,.hcbox .clst span{float:left;font-size:14px;color:#333;margin-right:10px}
+.hcity .li a:hover,.hcbox .clst a:hover{color:#ff6000}
+.hcbox{padding-bottom:10px;background-color:#fff}
+.hcbox .harea{line-height:26px;padding:3px 0 11px;overflow:hidden}
+.hcbox .harea span{float:left;font-size:14px;color:#ff6000;margin:0 20px}
+.hcbox .harea ul{float:left;overflow:hidden}
+.hcbox .harea li{float:left;width:70px;height:24px;line-height:24px;font-size:14px;color:#999;text-align:center;cursor:pointer;margin-right:16px;border:1px solid #ddd;border-radius:2px}
+.hcbox .harea li:hover,.hcbox .harea li.on{color:#ff6000;background-color:#fff2e3;border-color:#ff6000}
+.hcbox .clst .e{display:none;line-height:30px;overflow:hidden;padding:0 20px}
+.hcbox .clst a{color:#666}
+
+.j_entry{position:relative;height:60px;text-align:center;margin-bottom:10px;background-color:#fff}
+.j_entry img{margin-top:5px}
+.j_entry a{position:absolute;width:140px;height:34px;line-height:34px;font-size:14px;color:#ff6000;text-align:center;top:13px;right:38px;border:1px solid #ff6000;
+-webkit-border-radius:2px;-moz-border-radius:2px;-ms-border-radius:2px;-o-border-radius:2px;border-radius:2px}
+.j_entry a:hover{color:#fff;background-color:#ff6000}
+.j_entry a em{display:inline-block;width:20px;height:20px;vertical-align:sub;*vertical-align:top;cursor:pointer;margin-left:8px;background:url(//img01.51jobcdn.com/im/2016/temp/icon_go.png) center no-repeat}
+
+.header .nag{border-bottom:0 none;background:url(//img01.51jobcdn.com/im/2016/home/bg_top.png) repeat-x}
+.header .nag .nlink a{color:#fff}
+.header .nag .nlink .on{color:#fff;border-bottom-color:#fff}
+.header .nag:hover{background:#fff}
+.header .nag:hover .nlink a{color:#333}
+.header .nag:hover .nlink .on{color:#ff6000;border-bottom-color:#ff6000}
+
+/* wenku */
+.wk{height:306px}
+.wk .b{position:relative;float:left;width:88px;height:73px;overflow:hidden;padding:16px 16px 0 144px}
+.wk .b .img{position:absolute;width:115px;height:73px;overflow:hidden;left:20px;top:16px}
+.wk .wimg{width:100%;vertical-align:top}
+.wk .b .dec{font-size:14px;color:#333}
+.wk .b:hover .dec{color:#ff6000}
+.wk .links a{float:left;width:104px;font-size:14px;color:#333;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:14px;padding-left:20px}
+.wk .links a:hover{color:#ff6000}
+.wk .msg{position:relative;height:73px;margin-top:16px;padding-left:129px;background:none}
+.wk .msg .img{position:absolute;width:115px;height:73px;overflow:hidden;left:0;top:0}
+.wk .tname,.zlck .tname{font-size:14px}

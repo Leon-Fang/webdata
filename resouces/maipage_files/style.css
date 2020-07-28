@@ -1,0 +1,223 @@
+/* CSS Document */
+.cn{font-size:12px}
+.cn ul{margin:0px;padding:0px;list-style-type:none}
+
+.cn a{color:#666666;text-decoration:none}
+.cn a:hover{text-decoration:none;color:#ea5e01}
+.cn a img{border:none;border-top-width:0px}
+.links a {color: #666666;text-decoration: none}
+/*top start*/
+#index_top{width:1002px;margin:0 auto;font-size:12px}
+#index_top .top{height:65px;background:url(//img01.51jobcdn.com/im/2012/index/top_bg.gif) repeat-x;border-bottom:1px #f3f3f3 solid}
+#index_top .top .logo{float:left}
+#index_top .top .language{float:left;margin-left:15px;width:46px;height:53px;padding-top:12px;line-height:22px;background:url(//img01.51jobcdn.com/im/2012/index/top_language_ge.gif) left 33px repeat-x;font-family:Arial}
+#index_top .top .language a{color:#fd7400;text-decoration:none;font-family:Arial}
+#index_top .top .language a:hover{text-decoration:underline;font-family:Arial}
+#index_top .top .arc{float:left;width:24px;height:65px;background:url(//img01.51jobcdn.com/im/2012/index/top_logo_arc.gif) no-repeat}
+
+#ad_top{margin-right:12px}
+#ad_top li{float:right;padding:5px 7px 0 0}
+#ad_top li a{color:#ff6501;text-decoration:underline}
+#ad_top .mobile{padding:45px 10px 0 0}
+/*top end*/
+
+#index_content{width:1002px;margin:1px auto 0 auto;padding:14px 0;background:url(//img01.51jobcdn.com/im/2012/index/bg.gif)}
+#index_content .firstscreen{width:966px;margin:0 auto}
+#index_content .lastscreen{width:966px;margin:8px auto 0 auto}
+
+/*main start*/
+#main{float:left;width:406px;height:429px;margin:0 2px 0 8px;background:url(//img01.51jobcdn.com/im/2012/index/main_bg.gif) no-repeat}
+#main .login{float:left;width:218px;height:100px;margin:38px 0 0 12px;_margin:38px 0 0 6px}
+#main .login .username, #main .login .password{font-size:14px;color:#898989;height:33px;width:150px}
+#main .login .textboxs{float:left;background:url(//img01.51jobcdn.com/im/2012/index/main_login_input_bg.gif) center right no-repeat scroll transparent;border:none;width:88px;height:31px;line-height:31px;padding:0 5px}
+#main .login .textbox{margin-top: 3px;margin-top:5px \9;*margin-top:6px;width: 96px;width:88px \9;margin-left: -4px;height: 23px;height:18px \9;border:0px}
+#main .login .login_input{vertical-align:middle;width:88px;height:15px;border:0 none;margin-left:6px;padding:6px 5px;background:url(//img01.51jobcdn.com/im/2012/index/main_login_input_bg.gif) no-repeat}
+#main .login .btn{float:right;margin-top:-1px}
+
+#main .login .operate{vertical-align: text-bottom;color:#666666;height:18px;padding-top:0px;margin:6px 0 0 -4px;background:url(//img01.51jobcdn.com/im/2012/index/main_login_operate_bg.gif) 76px 1px no-repeat;*background:url(//img01.51jobcdn.com/im/2012/index/main_login_operate_bg.gif) 76px 0 no-repeat}
+#main .login .login_check{height:13px;margin-bottom:0px;*margin-bottom:-2px;vertical-align:text-bottom \0;margin-top:0}
+#main .login .operate a{color:#ea5e01}
+#main .login .operate .autologinsp{*margin-top:3px;margin-left:20px;margin-top:3px\9;position:absolute}
+#main .login .operate .autologinsp1{position:absolute}
+#main .login .operate a:hover{text-decoration:underline}
+
+#main .ehire{float:right;width:142px;margin:38px 9px 0 0;_margin:38px 5px 0 0}
+#main .ehire .btn{margin-top:-1px}
+#main .ehire .links{padding:4px 5px;line-height:16px}
+
+#main .search_20121126 {margin-top:8px;height:70px;padding:0 12px}
+#main .search_20121126 ul{margin:0;padding:0;height:32px}
+#main .search_20121126 ul li{ color: #7796D5;float:left;cursor: pointer;background:url(//img01.51jobcdn.com/im/2012/index/search_tab.gif) no-repeat;width:64px;height:19px;margin-right:3px;text-align:center;padding-top:5px}
+#main .search_20121126 .notsel{float:left;background:url(//img01.51jobcdn.com/im/2012/index/search_tab.gif) no-repeat;width:64px;height:19px;margin-right:3px;text-align:center;padding-top:5px}
+#main .search_20121126 .sel{background:url(//img01.51jobcdn.com/im/2012/index/search_tab_sel.gif) no-repeat;height:27px;*height:29px;_height:27px;color:#FFFFFF}
+
+#main .search_20121126 .spsearch{float:right;color:#CCCCCC;width:140px;height:24px;line-height:24px;text-align:right}
+#main .search_20121126 .area{float:left;margin-top:-5px;width:95px}
+#main .search_20121126 .area input{width:95px;height:31px;background:url(//img01.51jobcdn.com/im/2012/index/search_list.gif) no-repeat;cursor:point;border:none;text-align:center;padding-right:27px}
+#main .search_20121126 .textboxs{float:left;background:url(//img01.51jobcdn.com/im/2012/index/search_input.gif) center right no-repeat scroll transparent;border:none;width:188px;height:31px;line-height:31px;padding:0 5px;margin-right:7px;padding-top:5px \0;_padding-top:7px;_margin-top:-4px}
+#main .search_20121126 .textbox{margin-top:1px;margin-top:5px \0;*margin-top:3px;width:193px;width:190px \9;_width:178px;height:27px;_height:18px;  height:18px \9;border:0px;margin-left: -4px; padding-left: 3px}
+
+
+#main .search_20121126 .btn{float:left;width:69px;padding-left:7px}
+#main .search_20121126 a{color:#0099ff;font-weight:normal}
+#main .search_20121126 a:hover{text-decoration:underline}
+.position{color:#ea5e01}
+#main .city{height:140px;margin-top:8px;padding:0px 0px 0px 12px;color:#666666;line-height:19px;position:relative}
+#main .city a{color:#666666}
+#main .city a:hover{color:#ea5e01}
+#main .city .newcity{color:#0075e8}
+#main .city .newcity2{color:#003399}
+#main .city .more{color:#ea5e01}
+#main .city .mycity{color:#ea5e01;font-size:14px}
+#main .city .key{width:294px;height:50px;position:absolute;left:83px;top:78px}
+
+#main .other{margin-top:6px;padding:0 9px;line-height:29px;color:#666666}
+#flashbanner{_margin-top:4px}
+.flashbanner {margin:5px auto 0px auto;width:966px}
+#ad_left{margin-bottom:-4px; float:left;width:263px}
+#ad_left li{margin:0 0 4px 0;*margin-bottom:0px;_margin:0 0 0 0;margin:0 1 0 0\9}
+
+#ad_right li{float:left;margin-right:0px;height:80px;margin:0 0 7px 6px;_margin:0 0 7px 4px}
+
+#ad_right .info{width:278px;height:78px;_width:256px;_height:40px}
+#ad_right .info .title{width:254px}
+#ad_right .info .content{padding:4px 10px;color:#666666;overflow:hidden;}
+#ad_right .info .content li  {overflow:hidden;_height:33px;}
+#ad_right .info .content li div {float:none;width:248px;height:21px;margin:0;text-align:left}
+#ad_right .info .content li div a{color:#666666;text-decoration:none}
+#ad_right .info .content li div a:hover{text-decoration:none;color:#ea5e01}
+/*main end  *height:14px;*/
+
+/*ad_abc start*/
+#ad_a, #ad_b, #ad_c{margin-top:6px}
+#ad_c a{color:#ff6000;line-height:22px}
+#ad_b .famous{width:963px;margin:0 auto}
+#ad_c .hot{width:963px;margin:0 auto}
+/*ad_abc end*/
+
+/* ad_d */
+#ad_d{width:966px;margin-left:12px;text-align:center}
+#ad_d .index_D_table{width:966px;padding-top:7px;table-layout:fixed;border:none}
+#ad_d .index_D_table tr td {border:none;text-align:center;border-right-style:none;border-collapse: separate;word-wrap:break-word}
+/*famouse start*/
+#famous{width:964px;margin:0 auto;margin-top:0px}
+#famous .list_left,#famous .list_center,#famous .list_right{float:left;width:310px;color:#666666;margin:10px 0 10px 10px;_margin:10px 0 10px 5px}
+#famous ul li{height:24px;line-height:24px}
+#famous table {margin-top:10px;margin-bottom:10px}
+.famousinnerstyle{border-right:1px dotted #bababa;padding-right:10px}
+#famous table tr td{color:#666666}
+#famous  a{color:#666666; font-size:12px}
+#famous  a:hover{color:#ff6000}
+#famous a.blues{color:#ea5d01}
+#famous  a.blues:hover{text-decoration:underline}
+#famous ul li a.position {color: #EA5D01}
+#famous ul li a.position:hover{text-decoration:underline}
+/*famouse end*/
+.list_left li, .list_center li , .list_right li{margin-left:-3px}
+/*info start*/
+#info{float:left;width:477px;height:190px}
+#info .head{float:left;height:70px;margin:10px 10px 0 10px}
+#info .content{float:left;width:370px;margin-top:10px;color:#666666;line-height:22px}
+#info .content .ttl{font-weight:bold;color:#666666}
+#info .content a{color:#666666}
+#info ul{margin:10px 0 0 10px}
+#info ul li{float:left;color:#666666;width:230px;line-height:20px}
+
+/*info end*  .info ul li a{color:#666666}/
+
+/*info start*/
+#other{width:477px;float:right;height:190px;margin-left:5px;margin-right:1px}
+#other .ad{width:477px;height:89px;text-align:center;}
+#other ul{margin:10px 0 0 10px}
+#other ul li{float:left;color:#666666;width:230px;text-align:left;line-height:20px}
+#other .partner{margin:6px 0 0 12px;color:#666666}
+#other .partner a{color:#ea5d01}
+#other .font_show{color: #ea5d01;}
+#other div{color: #666666;}
+#other ul li a{color:#666666}
+#other ul li a:hover{color:#ea5d01}
+.other a{color: #666666}
+.other .other_1l a {margin-right:4px}
+.other .other_2l a {margin-right:13px}
+/*info end*/
+.anbg{font-size:13px}
+/*module_grey start*/
+.module{border-left:1px solid #d2d3d4;border-right:1px solid #d2d3d4;border-bottom:1px solid #969798;border-top:1px solid #d2d3d4;background-color:#FFFFFF}
+.module .title{height:31px;line-height:31px;border:2px solid #FFFFFF;font-size:14px;padding:0 10px;color:#FFFFFF;background:url(//img01.51jobcdn.com/im/2012/index/module_title_grey.gif) repeat-x}
+.module .title2{background:url(//img01.51jobcdn.com/im/2012/index/module_title_grey2.gif) repeat-x}
+.module .title3{background:url(//img01.51jobcdn.com/im/2012/index/module_title_blue.gif) repeat-x}
+.module .title_right{float:right}
+.module .title_right a{color:#666666}
+
+.module ul li a {color:#666666}
+.module ul li a:hover {color:#EA5D01}
+
+.lastscreen .module .ad ul li a {color:#666666}
+.lastscreen .module .ad ul li a:hover {color:#EA5D01}
+/*拼音索引*/
+.popup_box{float:left;padding-left:0px}
+.popup{font-size:12px;display:none;position:absolute;width:400px}
+.popup span{display:inline}
+.popup .letter{font-family:Arial, Helvetica, sans-serif;font-weight:bold;color:#FF6600}
+.popup a.a_city{font-family:"宋体";color:#333333;text-decoration:none}
+.popup a.a_newcity{font-family:"宋体";color:#0075e8;text-decoration:none}
+.popup a.a_city:hover{font-family:"宋体";color:#F60}
+.popup .popup_left{float:left;width:4px;height:24px;background:url(//img01.51jobcdn.com/im/2012/index/popup_bg_left.gif) no-repeat}
+.popup .popup_center{float:left;height:31px;background:url(//img01.51jobcdn.com/im/2012/index/popup_bg.gif) top center repeat-x;padding:3px 4px}
+.popup .popup_center_H{float:left;height:31px;background:url(//img01.51jobcdn.com/im/2012/index/popup_bg.gif) 103px 0 repeat-x;padding:3px 4px}
+.popup .popup_center_Y{float:left;height:31px;background:url(//img01.51jobcdn.com/im/2012/index/popup_bg.gif) 4px 0 repeat-x;padding:3px 4px}
+.popup .popup_center_J{float:left;height:31px;background:url(//img01.51jobcdn.com/im/2012/index/popup_bg.gif) 65px 0 repeat-x;padding:3px 4px}
+.popup .popup_center_L{float:left;height:31px;background:url(//img01.51jobcdn.com/im/2012/index/popup_bg.gif) -62px 0 repeat-x;padding:3px 4px}
+.popup .popup_center_Z{float:left;height:31px;background:url(//img01.51jobcdn.com/im/2012/index/popup_bg.gif) 128px 0 repeat-x;padding:3px 4px}
+.popup .popup_right{float:left;width:4px;height:24px;background:url(//img01.51jobcdn.com/im/2012/index/popup_bg_right.gif) no-repeat}
+
+#bott{background-image:url(//img01.51jobcdn.com/im/2012/index/bottombg1.gif);width:1002px;height:41px;background-repeat:repeat-x;text-align:center}
+.pot{border-bottom:1px dotted #666;clear:both;height:5px;width:100%}
+#link_f{font-size:12px;overflow:hidden;width:330px}
+#inlink_f{float:left;width:2000%}
+#link_f1{float:left}
+#link_f2{float:left}
+.flashid{display:block;margin-bottom:7px;margin-left:9px;padding-top:19px}
+
+#zoomer{position:absolute;font-size:12px;background:none repeat scroll 0 0 #FFFFFF; border:2px solid #ea5e01}
+#zoomer img{border:1px solid #FFFFFF}
+#zoomer .joblist{float:right}
+#zoomer .joblist ul{margin:3px 0}
+#zoomer .joblist ul li{height:18px;line-height:18px;float:left;text-align:left;padding-left:8px}
+#zoomer .joblist a{color:#ea5e01;font-family:"宋体"}
+#zoomer .joblist a:hover{text-decoration:underline}
+#zoomer .intro{margin:0;color:#666666;word-break:break-all;font-family:"宋体";line-height:18px;padding:3px 8px;overflow:hidden;border-right:1px dotted #CCCCCC}
+#zoomer .alljobs{background-color:#ea5e01;float:right;height:22px;line-height:22px;text-align:center;_margin-left:-3px;border-left:1px dotted #FFFFFF;*border-left:0 none}
+#zoomer .alljobs a, #zoomer .detail a{color:#FFFFFF}
+#zoomer .alljobs a:hover, #zoomer .detail a:hover{text-decoration:underline}
+#zoomer .detail{background-color:#ea5e01;height:22px;line-height:22px;text-align:center;border-right:1px dotted #FFFFFF;*border-right:1px dotted #ea5e01}
+
+/*p1,p2,p3,p4为四种职位列宽度*/
+#zoomer.p1 .alljobs{width:139px;_width:142px}
+#zoomer.p1 .joblist{width:139px;height:98px}
+#zoomer.p1 .joblist ul li{width:131px}
+#zoomer.p1 .intro{height:86px}
+
+#zoomer.p2 .alljobs{width:278px;_width:281px}
+#zoomer.p2 .joblist{width:278px;height:63px}
+#zoomer.p2 .joblist ul li{width:131px}
+#zoomer.p2 .intro{height:50px}
+
+#zoomer.p3 .alljobs{width:157px;_width:160px}
+#zoomer.p3 .joblist{width:157px;height:98px}
+#zoomer.p3 .joblist ul li{width:149px}
+#zoomer.p3 .intro{height:86px}
+
+#zoomer.p4 .alljobs{width:189px;_width:192px}
+#zoomer.p4 .joblist{width:189px;height:98px}
+#zoomer.p4 .joblist ul li{width:189px}
+#zoomer.p4 .intro{height:86px}
+.ad_more{background:url(//img01.51jobcdn.com/im/2012/index/ad_more.gif) no-repeat;display:block;width:7px;height:7px;position:absolute;text-align:right}
+_html{height:100%;overflow:hidden}
+_body{height:100%;overflow:auto}
+#fixedLayer{top:43px;position:fixed;right:50%;margin-right:-565px;display:block;cursor:pointer;top:43px\9}
+#newart{background-image:url(//img01.51jobcdn.com/im/2012/index/info_new.gif?20130218);background-position:100% 50%;padding-top:0;padding-right:27px;padding-bottom:0;padding-left:0;background-repeat:no-repeat}
+#main .login #andyscroll{overflow:hidden;padding:0 10px;text-align:right;width:208px;height:18px;overflow:hidden}
+#main .login #andyscroll a{font:12px/18px tahoma;color:#FF7300;float:right;width:100%;text-decoration:none;display:block}
+#main .login #andyscroll a:hover{font:12px/18px tahoma;color:#F60}
+#main .login #andyscroll a:hover{color:#FF7300;font-size:12px;text-decoration:underline}
