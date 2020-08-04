@@ -1,0 +1,22 @@
+CREATE TABLE SevenDaysWeather
+(
+Id_P INT PRIMARY KEY NOT NULL,
+dateT TEXT NOT NULL,
+weather TEXT NOT NULL,
+MaxTem TEXT NOT NULL,
+MinTem TEXT NOT NULL,
+Wind TEXT NOT NUll,
+WindLevel TEXT NOT NULL,
+UpdateTime TIMESTAMP NOT NULL DEFAULT current_timestamp
+);
+
+CREATE TABLE TodayWeather
+(
+Id_P INT PRIMARY KEY NOT NULL,
+weather TEXT NOT NULL,
+MaxTem TEXT NOT NULL,
+MinTem TEXT NOT NULL,
+Wind TEXT NOT NUll,
+WindLevel TEXT NOT NULL,
+UpdateTime TIMESTAMP NOT NULL DEFAULT current_timestamp
+);

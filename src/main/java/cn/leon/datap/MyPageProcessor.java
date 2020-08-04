@@ -1,5 +1,8 @@
 package cn.leon.datap;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import us.codecraft.webmagic.Page;
 import us.codecraft.webmagic.Site;
 import us.codecraft.webmagic.processor.PageProcessor;
@@ -15,11 +18,14 @@ public class MyPageProcessor implements PageProcessor{
 	
 	@Override
 	public void process(Page page) {
-		// TODO Auto-generated method stub
-		//page.addTargetRequests(page.getHtml().links().all());
+		/*
+		 * below are 7 days data.
+		 */	
 		page.putField("cities", page.getHtml().xpath("/html/body/div[3]/div/div[2]/div[4]/div[2]/dl[1]/dd/a/text()").all());
 		
-		page.putField("links", page.getHtml().xpath("/html/body/div[3]/div/div[2]/div[4]/div[2]/dl[1]/dd/a").links().all());
+		List<String> linksList  = page.getHtml().xpath("/html/body/div[3]/div/div[2]/div[4]/div[2]/dl[1]/dd/a").links().all();
+		
+		page.addTargetRequests(getlinks(linksList));		
 		
 		page.putField("title", page.getHtml().xpath("//*[@id='7d']/ul/li/h1/text()").all());
 		
@@ -33,13 +39,21 @@ public class MyPageProcessor implements PageProcessor{
 		
 		page.putField("windlevel", page.getHtml().xpath("//*[@id=\"7d\"]/ul/li/p[3]/i/text()").all());
 		
-		//page.putField("links", page.getHtml().xpath("//div[@name='area_channel_div_abc']/span[1]/a").links().all());
 		
+	}
+
+	
+	@SuppressWarnings("null")
+	private List<String> getlinks(List<String> linksList) {
+		List<String> linkStrings = new ArrayList<String>();
+		for(String link : linksList) {
+			linkStrings.add(link.replace("weather1d", "weather"));
+		}
+		return linkStrings;
 	}
 
 	@Override
 	public Site getSite() {
-		// TODO Auto-generated method stub
 		return this.site;
 	}
 
