@@ -16,6 +16,9 @@ import java.util.List;
 public class MyPipeLine implements Pipeline{
 
 	private String sqlString = "INSERT INTO SevenDaysWeather (Id_P,dateT,weather,MaxTem,MinTem,Wind,WindLevel) VALUES ";
+	private String DeleteSql = "Delete from SevenDaysWeather where ";
+	private String UpdateSql = "update SevenDaysWeather set ";
+	
 	@Override
 	public void process(ResultItems resultItems, Task task) {
 		System.out.println("get page: " + resultItems.getRequest().getUrl());
