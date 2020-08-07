@@ -1,0 +1,1 @@
+require.config({urlArgs:"v=201511031547",baseUrl:"./",paths:{jquery:"//gbfek.dfcfw.com/libs/jquery/1.8.3/jquery.min","jquery.caret":"component/jquery.caret.min",caretie:"component/caretie",common:"common",comCookie:"component/comCookie",comUser:"component/comUser",editor:"component/editor",ajax_upload:"component/ajax_upload"},shim:{jquery:{exports:"$"}}});
