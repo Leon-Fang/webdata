@@ -31,16 +31,17 @@ public class MyPageProcessor implements PageProcessor{
 		String globalEcoData_link = "http://data.eastmoney.com/cjsj/foreign_0_2.html";
 		List<String> datalinks;
 	    if(page.getUrl().toString().equalsIgnoreCase("http://forex.eastmoney.com")) {
-			//get 新闻链接, 全球汇率 全球经济日历 主要国家利率 全球经济数据
+			//get 
 			news_link = page.getHtml().xpath("//*[@id='newsDD1']/div[2]/a").links().get();
 			datalinks = page.getHtml().xpath("//*[@id=\"newsDD1\"]/div[1]/div[1]/ul/li[2]").links().all();
 			page.putField("news_link", news_link);
 			page.putField("datalinks", datalinks);
 			page.addTargetRequest(news_link);
 		}else if(page.getUrl().toString().contains("/a/")) {
+			System.out.println("start to get news~!!!");
 			PasrseNewsPage(page);			
 		}
-		//parse 各网页内容 新闻链接, 全球汇率 全球经济日历 主要国家利率 全球经济数据
+		//parse 
 		//PasrseNewsPage(news_link,page);
 //		page.addTargetRequests(news_link);
 		/*
@@ -57,11 +58,12 @@ public class MyPageProcessor implements PageProcessor{
 			List<String> DetailNew_links = page.getHtml().xpath("//*[@id='newsListContent']").links().all();
 			List<String> PageIndex_links = page.getHtml().xpath("//*[@id='pagerNoDiv']/a").links().all();  
 			
-			List<String> DetailNewlinks = checkIfDoneThisPage(DetailNew_links);
-			
-			if(DetailNewlinks.size()>0) {				
-			    page.addTargetRequests(DetailNewlinks);
-				page.putField("DetailNews_link", DetailNewlinks);
+			List<String> ModifiedNewlinks = checkIfDoneThisPage(DetailNew_links);
+			System.out.println("DetailNew_links"+DetailNew_links);
+			System.out.println("ModifiedNewlinks:"+ModifiedNewlinks);
+			if(ModifiedNewlinks.size()>0) {				
+			    page.addTargetRequests(ModifiedNewlinks);
+				page.putField("DetailNews_link", ModifiedNewlinks);
 				page.putField("PageIndex_links", PageIndex_links);
 			    if(!PageIndex_links.isEmpty()) {
 					page.addTargetRequests(PageIndex_links);
@@ -75,6 +77,7 @@ public class MyPageProcessor implements PageProcessor{
 	private List<String> checkIfDoneThisPage(List<String> detailNew_links){
 		List<String> result = new ArrayList<String>();
 		List<String> rs = getLinkFromDB();
+		System.out.println("get from db links:"+rs);
 		for(String string : detailNew_links) {
 			if(rs.contains(string)) {
 				System.out.println("this page already done before: "+string);
@@ -85,26 +88,14 @@ public class MyPageProcessor implements PageProcessor{
 		return result;	
 	}
 
-	private List<String> getLinkFromDB(){
-		String selectString = "select link from Links order by UpdateTime desc LIMIT 40";
-		String linkString;
-		ResultSet rs = getDataFromDB(selectString);
-		List<String> resultList = new ArrayList<String>();
-		try {
-			while (rs.next()) {
-				linkString=rs.getString("link");
-			    resultList.add(linkString);
-			}
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-		return resultList;
-	}
-
-	private ResultSet getDataFromDB(String selectString) {
-		Connection connection;
-		Statement stmt;
+	private List<String> getLinkFromDB() {
+		String selectString = "select DISTINCT link from Links order by UpdateTime LIMIT 40";
+		Connection connection = null;
+		Statement stmt = null;
 		ResultSet rs;
+		String linkString;
+		List<String> resultList = new ArrayList<String>();
+		System.out.println("sql is: "+selectString);
 		try { 
 			Class.forName("org.sqlite.JDBC");   // ---...JDBC upper case!!!
 			System.out.println("loaded class");
@@ -113,15 +104,23 @@ public class MyPageProcessor implements PageProcessor{
 			stmt = connection.createStatement();
 			System.out.println("start exectuing sql");
 			rs = stmt.executeQuery(selectString);
-			System.out.println(" sql end!");
-			stmt.close();
-			connection.close();
-			return rs;
+			System.out.println(" sql end!");			
+			while (rs.next()) {
+				linkString=rs.getString("link");
+				resultList.add(linkString);
+			}
 		} catch (Exception e) {
 			System.err.println( e.getClass().getName() + ": " + e.getMessage() );
 		    System.exit(0);
-		    return null;
-	   }		
+	   }finally {
+		   try {
+			   stmt.close();
+				connection.close();
+		   } catch (Exception e2) {
+			System.out.println("db failed!!!");
+		  }
+	   }	
+	 return	resultList;
 	}
 
 	private void parseDetailNews(Page page) {

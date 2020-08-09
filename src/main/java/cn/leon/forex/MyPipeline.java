@@ -20,6 +20,7 @@ public class MyPipeline implements Pipeline{
 //	private static String sqlString;
 	@Override
 	public void process(ResultItems resultItems, Task task) {
+		System.out.println("current page is: " + resultItems.getRequest().getUrl());
 		saveAllLinks(resultItems);
 		saveFXNews2db(resultItems);
 		saveglobalForex2db(resultItems);
@@ -31,23 +32,30 @@ public class MyPipeline implements Pipeline{
 	private void saveAllLinks(ResultItems resultItems) {
 		List<String> linksList = resultItems.get("DetailNews_link");
 		if(!(linksList==null)) {
-			if(NotExistIdDB(linksList)) {
-				String LinksSqlString = "INSERT INTO Links (link) VALUES ";
-				for(String string : linksList ) {
-					LinksSqlString = LinksSqlString + "(\""
+			List<String> linksindb = getLinkFromDB();  /////--
+			System.out.println("linksList from page are:"+linksList);
+			System.out.println("End to get links from Links and linksindb are: "+linksindb);  //----
+			List<String> linksNotindb = LinksNotExistInDb(linksList,linksindb); //--
+			System.out.println("linksNotindb"+linksNotindb);
+			String LinksSqlString = "INSERT INTO Links (link) VALUES ";
+			for(String string : linksNotindb ) {
+				LinksSqlString = LinksSqlString + "(\""
 									 + string + "\"),";							 	
-				}
-				LinksSqlString = LinksSqlString.substring(0, LinksSqlString.length()-1)+";";
-				saveToDb(LinksSqlString);	
 			}
-			
+			LinksSqlString = LinksSqlString.substring(0, LinksSqlString.length()-1)+";";
+			saveToDb(LinksSqlString);				
 		}
 		
 	}
 
-	private boolean NotExistIdDB(List<String> linksList) {
-		
-		return false;
+	private List<String> LinksNotExistInDb(List<String> linksList, List<String> linksindb) {
+		List<String> result = new ArrayList<String>();
+		for(String s:linksList) {
+			if(!linksindb.contains(s)) {
+				result.add(s);
+			}
+		}
+		return result;
 	}
 
 	private boolean saveglobalEcoData2db(ResultItems resultItems) {
@@ -97,6 +105,7 @@ public class MyPipeline implements Pipeline{
 	}
 
 	private void saveToDb(String sql) {
+		System.out.println("sql to save to db is "+sql);
 		Connection connection;
 		Statement stmt;
 		try { 
@@ -118,6 +127,7 @@ public class MyPipeline implements Pipeline{
 	}
 	
 	private List<String> getLinkFromDB(){
+		System.out.println("Start to get links from Links!");
 		String selectString = "select link from Links";
 		String linkString;
 		ResultSet rs = getDataFromDB(selectString);
