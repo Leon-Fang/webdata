@@ -89,7 +89,8 @@ public class MyPageProcessor implements PageProcessor{
 	}
 
 	private List<String> getLinkFromDB() {
-		String selectString = "select DISTINCT link from Links order by UpdateTime LIMIT 40";
+//		String selectString = "select DISTINCT link from Links order by UpdateTime LIMIT 40";
+		String selectString = "select DISTINCT link from Links";
 		Connection connection = null;
 		Statement stmt = null;
 		ResultSet rs;
