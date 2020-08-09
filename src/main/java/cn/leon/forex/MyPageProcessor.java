@@ -3,11 +3,12 @@ package cn.leon.forex;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 
 import us.codecraft.webmagic.Page;
 import us.codecraft.webmagic.Site;
@@ -15,6 +16,7 @@ import us.codecraft.webmagic.processor.PageProcessor;
 
 public class MyPageProcessor implements PageProcessor{
 
+	Logger logger = LogManager.getLogger("MyPageProcessor");
 	Site site = new Site().setCharset("utf-8")
 				          .setSleepTime(2)
 				          .setTimeOut(10000)
@@ -29,18 +31,34 @@ public class MyPageProcessor implements PageProcessor{
 		String globalEcoCalendar_link = "http://forex.eastmoney.com/FC.html";
 		String mainCountryRate_link = "http://data.eastmoney.com/cjsj/globalRate.html";
 		String globalEcoData_link = "http://data.eastmoney.com/cjsj/foreign_0_2.html";
+		
+		List<String> currencyList = new ArrayList<String>();
+		String GSPUSD = "http://quote.eastmoney.com/forex/GBPUSD.html";
+		String EURUSD = "http://quote.eastmoney.com/forex/EURUSD.html";
+		String USDJPY = "http://quote.eastmoney.com/forex/USDJPY.html";
+		currencyList.add(GSPUSD);
+		currencyList.add(EURUSD);
+		currencyList.add(USDJPY);
+		
 		List<String> datalinks;
 	    if(page.getUrl().toString().equalsIgnoreCase("http://forex.eastmoney.com")) {
-			//get 
+			//add forex news links.
 			news_link = page.getHtml().xpath("//*[@id='newsDD1']/div[2]/a").links().get();
-			datalinks = page.getHtml().xpath("//*[@id=\"newsDD1\"]/div[1]/div[1]/ul/li[2]").links().all();
 			page.putField("news_link", news_link);
-			page.putField("datalinks", datalinks);
 			page.addTargetRequest(news_link);
+			
+			// add forex data links.
+			page.addTargetRequests(currencyList);
+			
+			//
 		}else if(page.getUrl().toString().contains("/a/")) {
 			System.out.println("start to get news~!!!");
 			PasrseNewsPage(page);			
+		}else if (currencyList.contains(page.getUrl().toString())) {
+			logger.info("start to get global forex data");
+			parseForexData(page);
 		}
+	    
 		//parse 
 		//PasrseNewsPage(news_link,page);
 //		page.addTargetRequests(news_link);
@@ -53,6 +71,11 @@ public class MyPageProcessor implements PageProcessor{
 		
 	}
 	
+	private void parseForexData(Page page) {
+		
+		
+	}
+
 	private void PasrseNewsPage(Page page) {		
 	    if(page.getUrl().toString().contains("/a/cwhdd")){
 			List<String> DetailNew_links = page.getHtml().xpath("//*[@id='newsListContent']").links().all();
