@@ -8,13 +8,13 @@ import us.codecraft.webmagic.proxy.SimpleProxyProvider;
 
 public class ToolRunner {
 	public static void main(String[] args) {
-		HttpClientDownloader httpClientDownloader = new HttpClientDownloader();
-		httpClientDownloader.setProxyProvider(SimpleProxyProvider.from(new Proxy("139.199.201.249", 1080)));
+//		HttpClientDownloader httpClientDownloader = new HttpClientDownloader();
+//		httpClientDownloader.setProxyProvider(SimpleProxyProvider.from(new Proxy("139.199.201.249", 1080)));
 		Spider.create(new MyPageProcessor())
 			  .addUrl("http://forex.eastmoney.com")
-			  .setDownloader(httpClientDownloader)
+//			  .setDownloader(httpClientDownloader)
 			  .addPipeline(new FilePipeline("./data_debug"))
-//			  .addPipeline(new MyPipeline())
+			  .addPipeline(new MyPipeline())
 			  .thread(1)
 			  .run();
 			  

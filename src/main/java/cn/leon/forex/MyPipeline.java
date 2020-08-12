@@ -8,6 +8,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
+import us.codecraft.webmagic.Page;
 import us.codecraft.webmagic.ResultItems;
 import us.codecraft.webmagic.Task;
 import us.codecraft.webmagic.pipeline.Pipeline;
@@ -71,8 +72,43 @@ public class MyPipeline implements Pipeline{
 	}
 
 	private void saveglobalEcoCalendar2db(ResultItems resultItems) {
-		// TODO Auto-generated method stub
+		System.out.println("get page: " + resultItems.getRequest().getUrl());
+		if(!(resultItems.get("calendarData")==null)) {
+			List<String> dataList = resultItems.get("calendarData");
+			List<String> dataList2 = new ArrayList<String>();
+			int counter = 0;
+			String sqlvalues="";
+			String sql = "";
+			String sqlo = "INSERT INTO ecocalendar (Id,publishDate,publishTime,Country,Event,ReportPeriod,PublishData,PredictedData,PreValue,importance,tendency) VALUES ";
+//					+ "("+sqlvalues+")";
+//					+"(\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\")";
+			
+			for(int i = 0; i<dataList.size(); i++) {
+				if(counter<11) {
+					dataList2.add(dataList.get(i));
+				}else {
+					counter = 0;
+					System.out.println("dataList2:"+dataList2);
+					for(int j=0; j<dataList2.size();j++) {
+					   sqlvalues += "\""+dataList2.get(j)+"\",";
+					}
+					sqlvalues = sqlvalues.substring(0, sqlvalues.length()-1);
+					sql = sqlo+"("+sqlvalues+")";
+					System.out.println("sql"+sql);
+					saveToDb(sql);
+					dataList2.clear();
+					sqlvalues="";
+					sql="";
+					dataList2.add(dataList.get(i));
+				}
+				
+				counter++;
+			}
+
+			
+		}
 		
+//		String sql1 = String.format(sqlo, args);
 	}
 
 	private void saveglobalForex2db(ResultItems resultItems) {

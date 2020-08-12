@@ -31,7 +31,7 @@ public class MyPageProcessor implements PageProcessor{
 		String globalEcoCalendar_link = "http://forex.eastmoney.com/FC.html";
 		String mainCountryRate_link = "http://data.eastmoney.com/cjsj/globalRate.html";
 		String globalEcoData_link = "http://data.eastmoney.com/cjsj/foreign_0_2.html";
-		
+/*		
 		List<String> currencyList = new ArrayList<String>();
 		String GSPUSD = "http://quote.eastmoney.com/forex/GBPUSD.html";
 		String EURUSD = "http://quote.eastmoney.com/forex/EURUSD.html";
@@ -39,6 +39,7 @@ public class MyPageProcessor implements PageProcessor{
 		currencyList.add(GSPUSD);
 		currencyList.add(EURUSD);
 		currencyList.add(USDJPY);
+*/
 		
 		List<String> datalinks;
 	    if(page.getUrl().toString().equalsIgnoreCase("http://forex.eastmoney.com")) {
@@ -47,30 +48,32 @@ public class MyPageProcessor implements PageProcessor{
 			page.putField("news_link", news_link);
 			page.addTargetRequest(news_link);
 			
-			// add forex data links.
-			page.addTargetRequests(currencyList);
+			// add forex data links.   -- all image can't parse.
+			//page.addTargetRequests(currencyList);
 			
-			//
-		}else if(page.getUrl().toString().contains("/a/")) {
+			//add eco calendar.
+			page.addTargetRequest(globalEcoCalendar_link);
+/*		}else if(page.getUrl().toString().contains("/a/")) {
 			System.out.println("start to get news~!!!");
 			PasrseNewsPage(page);			
 		}else if (currencyList.contains(page.getUrl().toString())) {
 			logger.info("start to get global forex data");
-			parseForexData(page);
+			parseForexData(page);    */
+		}else if (page.getUrl().toString().contains("/FC.html")) {
+			logger.info("start to get important data canlendar");
+			parseEcoCalendar(page);
 		}
-	    
-		//parse 
-		//PasrseNewsPage(news_link,page);
-//		page.addTargetRequests(news_link);
-		/*
-		 * check if the page is news list page.
-		 * 
-		 */
 		
 		
 		
 	}
 	
+	private void parseEcoCalendar(Page page) {
+//		List<String> title = page.getHtml().xpath("/html/body/div[1]/div[2]/div/div[4]/table/thead/tr/th/text()").all();
+		page.putField("calendarData", page.getHtml().xpath("//*[@id='tbody']/tr/td/text()").all());
+		
+	}
+
 	private void parseForexData(Page page) {
 		
 		
