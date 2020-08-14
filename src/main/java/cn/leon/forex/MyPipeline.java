@@ -71,18 +71,17 @@ public class MyPipeline implements Pipeline{
 		
 	}
 
-	private void saveglobalEcoCalendar2db(ResultItems resultItems) {
+	private void saveglobalEcoCalendar2db(ResultItems resultItems) {		
 		System.out.println("get page: " + resultItems.getRequest().getUrl());
+		String sqlgetDBdat = "select * from ecocalendar order by num LIMIT 100";
+		ResultSet resultSet =  getDataFromDB(sqlgetDBdat);
 		if(!(resultItems.get("calendarData")==null)) {
-			List<String> dataList = resultItems.get("calendarData");
+			List<String> dataList = resultItems.get("calendarData");			
 			List<String> dataList2 = new ArrayList<String>();
 			int counter = 0;
 			String sqlvalues="";
 			String sql = "";
-			String sqlo = "INSERT INTO ecocalendar (Id,publishDate,publishTime,Country,Event,ReportPeriod,PublishData,PredictedData,PreValue,importance,tendency) VALUES ";
-//					+ "("+sqlvalues+")";
-//					+"(\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\")";
-			
+			String sqlo = "INSERT INTO ecocalendar (Id,publishDate,publishTime,Country,Event,ReportPeriod,PublishData,PredictedData,PreValue,importance,tendency) VALUES ";			
 			for(int i = 0; i<dataList.size(); i++) {
 				if(counter<11) {
 					dataList2.add(dataList.get(i));
@@ -94,21 +93,40 @@ public class MyPipeline implements Pipeline{
 					}
 					sqlvalues = sqlvalues.substring(0, sqlvalues.length()-1);
 					sql = sqlo+"("+sqlvalues+")";
-					System.out.println("sql"+sql);
-					saveToDb(sql);
+					System.out.println("sql: "+sql);
+					if(!AlreadyInDb(dataList2,resultSet)) {
+						saveToDb(sql);						
+					}
 					dataList2.clear();
 					sqlvalues="";
 					sql="";
 					dataList2.add(dataList.get(i));
-				}
-				
+				}				
 				counter++;
 			}
-
-			
 		}
-		
-//		String sql1 = String.format(sqlo, args);
+	}
+
+
+	private boolean AlreadyInDb(List<String> dataList2, ResultSet dataFromDB) {
+		boolean result = false;
+		try {
+			while (dataFromDB.next()) {
+				if(dataList2.contains(dataFromDB.getString("Event")) & dataList2.contains(dataFromDB.getString("publishDate")) & dataList2.contains(dataFromDB.getString("Country"))) {
+					result = true;
+					break;
+				}
+				else {
+					System.out.println("no Event/publishDate/Country :" +dataFromDB.getString("Event") + dataFromDB.getString("publishDate") + dataFromDB.getString("Country"));
+				}
+				
+			}
+			System.out.println(dataFromDB.getFetchSize());
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return result;
 	}
 
 	private void saveglobalForex2db(ResultItems resultItems) {
@@ -146,16 +164,13 @@ public class MyPipeline implements Pipeline{
 		Statement stmt;
 		try { 
 			Class.forName("org.sqlite.JDBC");   // ---...JDBC upper case!!!
-			System.out.println("loaded class");
 			connection = DriverManager.getConnection("jdbc:sqlite:FXdata.db");
-			System.out.println("get connection");
 			stmt = connection.createStatement();
 			System.out.println("start exectuing sql");
 			stmt.executeUpdate(sql);
 			System.out.println(" sql end!");
 			stmt.close();
-			connection.close();
-			
+			connection.close();			
 		} catch (Exception e) {
 			System.err.println( e.getClass().getName() + ": " + e.getMessage() );
 		    System.exit(0);
@@ -183,21 +198,19 @@ public class MyPipeline implements Pipeline{
 		Connection connection;
 		Statement stmt;
 		ResultSet rs;
+		System.out.println("sql for query is : " + selectString);
 		try { 
 			Class.forName("org.sqlite.JDBC");   // ---...JDBC upper case!!!
-			System.out.println("loaded class");
 			connection = DriverManager.getConnection("jdbc:sqlite:FXdata.db");
-			System.out.println("get connection");
 			stmt = connection.createStatement();
 			System.out.println("start exectuing sql");
 			rs = stmt.executeQuery(selectString);
-			System.out.println(" sql end!");
+			System.out.println("sql end!");
 			stmt.close();
 			connection.close();
 			return rs;
 		} catch (Exception e) {
 			System.err.println( e.getClass().getName() + ": " + e.getMessage() );
-		    System.exit(0);
 		    return null;
 	   }		
 	}
