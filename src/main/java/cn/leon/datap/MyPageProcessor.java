@@ -43,7 +43,6 @@ public class MyPageProcessor implements PageProcessor{
 	}
 
 	
-	@SuppressWarnings("null")
 	private List<String> getlinks(List<String> linksList) {
 		List<String> linkStrings = new ArrayList<String>();
 		for(String link : linksList) {
