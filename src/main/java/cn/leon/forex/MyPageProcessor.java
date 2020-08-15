@@ -22,60 +22,29 @@ public class MyPageProcessor implements PageProcessor{
 				          .setTimeOut(10000)
 				          .setRetrySleepTime(3)
 				          .setRetryTimes(3);
-			    
 	
 	@Override
 	public void process(Page page) {
 		String news_link = "http://forex.eastmoney.com/a/cwhdd.html";
-		String globalForex_link = "http://quote.eastmoney.com/center/whsc.html";
 		String globalEcoCalendar_link = "http://forex.eastmoney.com/FC.html";
-		String mainCountryRate_link = "http://data.eastmoney.com/cjsj/globalRate.html";
-		String globalEcoData_link = "http://data.eastmoney.com/cjsj/foreign_0_2.html";
-/*		
-		List<String> currencyList = new ArrayList<String>();
-		String GSPUSD = "http://quote.eastmoney.com/forex/GBPUSD.html";
-		String EURUSD = "http://quote.eastmoney.com/forex/EURUSD.html";
-		String USDJPY = "http://quote.eastmoney.com/forex/USDJPY.html";
-		currencyList.add(GSPUSD);
-		currencyList.add(EURUSD);
-		currencyList.add(USDJPY);
-*/
-		
-		List<String> datalinks;
+
 	    if(page.getUrl().toString().equalsIgnoreCase("http://forex.eastmoney.com")) {
-			//add forex news links.
 			news_link = page.getHtml().xpath("//*[@id='newsDD1']/div[2]/a").links().get();
 			page.putField("news_link", news_link);
 			page.addTargetRequest(news_link);
 			
-			// add forex data links.   -- all image can't parse.
-			//page.addTargetRequests(currencyList);
-			
-			//add eco calendar.
 			page.addTargetRequest(globalEcoCalendar_link);
-/*		}else if(page.getUrl().toString().contains("/a/")) {
+		}else if(page.getUrl().toString().contains("/a/")) {
 			System.out.println("start to get news~!!!");
 			PasrseNewsPage(page);			
-		}else if (currencyList.contains(page.getUrl().toString())) {
-			logger.info("start to get global forex data");
-			parseForexData(page);    */
-		}else if (page.getUrl().toString().contains("/FC.html")) {
+		}else if(page.getUrl().toString().contains("/FC.html")) {
 			logger.info("start to get important data canlendar");
-			parseEcoCalendar(page);
+			parseEcoCalendar(page);   
 		}
-		
-		
-		
 	}
 	
 	private void parseEcoCalendar(Page page) {
-//		List<String> title = page.getHtml().xpath("/html/body/div[1]/div[2]/div/div[4]/table/thead/tr/th/text()").all();
 		page.putField("calendarData", page.getHtml().xpath("//*[@id='tbody']/tr/td/text()").all());
-		
-	}
-
-	private void parseForexData(Page page) {
-		
 		
 	}
 
@@ -115,8 +84,7 @@ public class MyPageProcessor implements PageProcessor{
 	}
 
 	private List<String> getLinkFromDB() {
-//		String selectString = "select DISTINCT link from Links order by UpdateTime LIMIT 40";
-		String selectString = "select DISTINCT link from Links";
+		String selectString = "select DISTINCT link from Links order by UpdateTime LIMIT 40";
 		Connection connection = null;
 		Statement stmt = null;
 		ResultSet rs;

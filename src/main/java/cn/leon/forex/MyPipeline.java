@@ -16,18 +16,13 @@ import us.codecraft.webmagic.pipeline.Pipeline;
 
 public class MyPipeline implements Pipeline{
 	private String NewsSqlString = "INSERT INTO fxNews (articleTitle,articletime,articlecontent) VALUES ";
-	private String NewsUpdate;
-//	private String values1;
-//	private static String sqlString;
+
 	@Override
 	public void process(ResultItems resultItems, Task task) {
 		System.out.println("current page is: " + resultItems.getRequest().getUrl());
 		saveAllLinks(resultItems);
 		saveFXNews2db(resultItems);
-		saveglobalForex2db(resultItems);
 		saveglobalEcoCalendar2db(resultItems);
-		savemainCountryRate2db(resultItems);
-		saveglobalEcoData2db(resultItems);
 	}	
 	
 	private void saveAllLinks(ResultItems resultItems) {
@@ -58,24 +53,17 @@ public class MyPipeline implements Pipeline{
 		}
 		return result;
 	}
-
-	private boolean saveglobalEcoData2db(ResultItems resultItems) {
-	   Boolean result = false;
-	   
-       return result;
-       
-	}
-
-	private void savemainCountryRate2db(ResultItems resultItems) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	private void saveglobalEcoCalendar2db(ResultItems resultItems) {		
+	
+	private void saveglobalEcoCalendar2db(ResultItems resultItems){		
 		System.out.println("get page: " + resultItems.getRequest().getUrl());
-		String sqlgetDBdat = "select * from ecocalendar order by num LIMIT 100";
-		ResultSet resultSet =  getDataFromDB(sqlgetDBdat);
 		if(!(resultItems.get("calendarData")==null)) {
+			String sqlgetDBdat = "select * from ecocalendar order by num LIMIT 200";
+			List<String> wantedStrings = new ArrayList<String>();
+			wantedStrings.add("publishDate");
+			wantedStrings.add("Event");
+			wantedStrings.add("Country");
+			List<String> resultSet =  getDataFromDB2(sqlgetDBdat,wantedStrings);
+			System.out.println("list get from db: " + resultSet);
 			List<String> dataList = resultItems.get("calendarData");			
 			List<String> dataList2 = new ArrayList<String>();
 			int counter = 0;
@@ -87,13 +75,11 @@ public class MyPipeline implements Pipeline{
 					dataList2.add(dataList.get(i));
 				}else {
 					counter = 0;
-					System.out.println("dataList2:"+dataList2);
 					for(int j=0; j<dataList2.size();j++) {
 					   sqlvalues += "\""+dataList2.get(j)+"\",";
 					}
 					sqlvalues = sqlvalues.substring(0, sqlvalues.length()-1);
 					sql = sqlo+"("+sqlvalues+")";
-					System.out.println("sql: "+sql);
 					if(!AlreadyInDb(dataList2,resultSet)) {
 						saveToDb(sql);						
 					}
@@ -108,29 +94,15 @@ public class MyPipeline implements Pipeline{
 	}
 
 
-	private boolean AlreadyInDb(List<String> dataList2, ResultSet dataFromDB) {
+	private boolean AlreadyInDb(List<String> dataList2, List<String> dataFromDB) {
 		boolean result = false;
-		try {
-			while (dataFromDB.next()) {
-				if(dataList2.contains(dataFromDB.getString("Event")) & dataList2.contains(dataFromDB.getString("publishDate")) & dataList2.contains(dataFromDB.getString("Country"))) {
-					result = true;
-					break;
-				}
-				else {
-					System.out.println("no Event/publishDate/Country :" +dataFromDB.getString("Event") + dataFromDB.getString("publishDate") + dataFromDB.getString("Country"));
-				}
-				
+		for (String s :dataList2 ) {
+			if(dataFromDB.contains(s) & dataFromDB.contains(s) & dataFromDB.contains(s)) {
+				result = true;
+				break;
 			}
-			System.out.println(dataFromDB.getFetchSize());
-			
-		} catch (SQLException e) {
-			e.printStackTrace();
 		}
 		return result;
-	}
-
-	private void saveglobalForex2db(ResultItems resultItems) {
-		
 	}
 
 	private void saveFXNews2db(ResultItems resultItems) {
@@ -145,17 +117,9 @@ public class MyPipeline implements Pipeline{
 			System.out.println("li2 " + li2);
 			NewsSqlString =String.format("INSERT INTO fxNews (articleTitle,articletime,articlecontent) VALUES (\"%s\",\"%s\",\"%s\")",li0,li1,li2);
 			saveToDb(NewsSqlString);	
-/*
-			values1 =  " (\""
-						  + li0 + "\" ,\""
-						  + li1 + "\" ,\""
-						  + li2 + "\" ,"
-						  + ") " + ",";
-*/
 			}
  //           sqlString = sqlString.substring(0, sqlString.length()-1)+";";
-			System.out.println("sql : " + NewsSqlString);			
-//			saveToDb(NewSqlString);			
+			System.out.println("sql : " + NewsSqlString);		
 	}
 
 	private void saveToDb(String sql) {
@@ -177,27 +141,47 @@ public class MyPipeline implements Pipeline{
 	}
 	}
 	
-	private List<String> getLinkFromDB(){
-		System.out.println("Start to get links from Links!");
-		String selectString = "select link from Links";
+	private List<String> getLinkFromDB() {
+//		String selectString = "select DISTINCT link from Links order by UpdateTime LIMIT 40";
+		String selectString = "select DISTINCT link from Links";
+		Connection connection = null;
+		Statement stmt = null;
+		ResultSet rs;
 		String linkString;
-		ResultSet rs = getDataFromDB(selectString);
 		List<String> resultList = new ArrayList<String>();
-		try {
+		System.out.println("sql is: "+selectString);
+		try { 
+			Class.forName("org.sqlite.JDBC");   // ---...JDBC upper case!!!
+			System.out.println("loaded class");
+			connection = DriverManager.getConnection("jdbc:sqlite:FXdata.db");
+			System.out.println("get connection");
+			stmt = connection.createStatement();
+			System.out.println("start exectuing sql");
+			rs = stmt.executeQuery(selectString);
+			System.out.println(" sql end!");			
 			while (rs.next()) {
 				linkString=rs.getString("link");
-			    resultList.add(linkString);
+				resultList.add(linkString);
 			}
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-		return resultList;
+		} catch (Exception e) {
+			System.err.println( e.getClass().getName() + ": " + e.getMessage() );
+		    System.exit(0);
+	   }finally {
+		   try {
+			   stmt.close();
+				connection.close();
+		   } catch (Exception e2) {
+			System.out.println("db failed!!!");
+		  }
+	   }	
+	 return	resultList;
 	}
 
-	private ResultSet getDataFromDB(String selectString) {
+	private List<String> getDataFromDB2(String selectString, List<String> wantedStrings) {
 		Connection connection;
 		Statement stmt;
 		ResultSet rs;
+		List<String> resultList = new ArrayList<String>();
 		System.out.println("sql for query is : " + selectString);
 		try { 
 			Class.forName("org.sqlite.JDBC");   // ---...JDBC upper case!!!
@@ -205,14 +189,23 @@ public class MyPipeline implements Pipeline{
 			stmt = connection.createStatement();
 			System.out.println("start exectuing sql");
 			rs = stmt.executeQuery(selectString);
+			try {
+				while (rs.next()) {
+					for(String s:wantedStrings) {
+						resultList.add(rs.getString(s));
+					}
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
 			System.out.println("sql end!");
 			stmt.close();
 			connection.close();
-			return rs;
 		} catch (Exception e) {
 			System.err.println( e.getClass().getName() + ": " + e.getMessage() );
-		    return null;
-	   }		
+	   }
+		return resultList;		
 	}
+	
 
 }

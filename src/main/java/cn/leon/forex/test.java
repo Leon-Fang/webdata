@@ -1,5 +1,7 @@
 package cn.leon.forex;
 
+import static org.assertj.core.api.Assertions.not;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -7,6 +9,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.apache.http.cookie.SM;
 
 public class test {
 
@@ -18,10 +22,9 @@ public class test {
 	}
 	private static List<String> getLinkFromDB() throws SQLException{
 		System.out.println("Start to get links from Links!");
-		String selectString = "select link from Links";
+		String selectString2 = "select link from Links";
 		String linkString;
-		ResultSet rs = getDataFromDB(selectString);
-		System.out.println("size : "+ rs.getFetchSize());
+		ResultSet rs = getDataFromDB(selectString2,false);
 		List<String> resultList = new ArrayList<String>();
 		try {
 			while (rs.next()) {
@@ -34,10 +37,10 @@ public class test {
 		return resultList;
 	}
 
-	private static ResultSet getDataFromDB(String selectString) {
-		Connection connection;
-		Statement stmt;
-		ResultSet rs;
+	private static ResultSet getDataFromDB(String selectString, boolean canCLose) {
+		Connection connection = null;
+		Statement stmt = null;
+		ResultSet rs = null;
 		System.out.println("sql for query is : " + selectString);
 		try { 
 			Class.forName("org.sqlite.JDBC");   // ---...JDBC upper case!!!
@@ -46,13 +49,14 @@ public class test {
 			System.out.println("start exectuing sql");
 			rs = stmt.executeQuery(selectString);
 			System.out.println("sql end!");
-			stmt.close();
-			connection.close();
-			return rs;
+			if(canCLose) {
+				stmt.close();
+				connection.close();
+			}
 		} catch (Exception e) {
 			System.err.println( e.getClass().getName() + ": " + e.getMessage() );
-		    return null;
-	   }		
+	    }
+		return rs;
 	}
 
 }
