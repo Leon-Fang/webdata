@@ -1,4 +1,4 @@
-package cn.leon.forex;
+package cn.leon.jobs;
 
 import static org.assertj.core.api.Assertions.not;
 

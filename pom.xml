@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>cn.leon</groupId>
-  <artifactId>forex</artifactId>
+  <artifactId>jobs</artifactId>
   <version>0.0.1-SNAPSHOT</version>
   <build>
 		<!-- Source directory configuration -->
@@ -24,7 +24,7 @@
 		</plugins>
 	</build><packaging>jar</packaging>
 
-  <name>forex</name>
+  <name>jobs</name>
   <url>http://maven.apache.org</url>
 
   <properties>

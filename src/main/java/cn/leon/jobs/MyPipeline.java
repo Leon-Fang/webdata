@@ -1,4 +1,4 @@
-package cn.leon.forex;
+package cn.leon.jobs;
 
 import java.sql.Connection;
 import java.sql.DriverManager;

@@ -1,4 +1,4 @@
-package cn.leon.forex;
+package cn.leon.jobs;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -25,22 +25,24 @@ public class MyPageProcessor implements PageProcessor{
 	
 	@Override
 	public void process(Page page) {
-		String news_link = "http://forex.eastmoney.com/a/cwhdd.html";
-		String globalEcoCalendar_link = "http://forex.eastmoney.com/FC.html";
-
-	    if(page.getUrl().toString().equalsIgnoreCase("http://forex.eastmoney.com")) {
-			news_link = page.getHtml().xpath("//*[@id='newsDD1']/div[2]/a").links().get();
-			page.putField("news_link", news_link);
-			page.addTargetRequest(news_link);
-			
-			page.addTargetRequest(globalEcoCalendar_link);
-		}else if(page.getUrl().toString().contains("/a/")) {
-			System.out.println("start to get news~!!!");
-			PasrseNewsPage(page);			
-		}else if(page.getUrl().toString().contains("/FC.html")) {
-			logger.info("start to get important data canlendar");
-			parseEcoCalendar(page);   
-		}
+		/*
+		 * String news_link = "http://forex.eastmoney.com/a/cwhdd.html"; String
+		 * globalEcoCalendar_link = "http://forex.eastmoney.com/FC.html";
+		 * 
+		 * if(page.getUrl().toString().equalsIgnoreCase("http://forex.eastmoney.com")) {
+		 * news_link =
+		 * page.getHtml().xpath("//*[@id='newsDD1']/div[2]/a").links().get();
+		 * page.putField("news_link", news_link); page.addTargetRequest(news_link);
+		 * 
+		 * page.addTargetRequest(globalEcoCalendar_link); }else
+		 * if(page.getUrl().toString().contains("/a/")) {
+		 * System.out.println("start to get news~!!!"); PasrseNewsPage(page); }else
+		 * if(page.getUrl().toString().contains("/FC.html")) {
+		 * logger.info("start to get important data canlendar"); parseEcoCalendar(page);
+		 * }
+		 */
+		page.putField("linnks: ", page.getHtml().links().all());
+		
 	}
 	
 	private void parseEcoCalendar(Page page) {
