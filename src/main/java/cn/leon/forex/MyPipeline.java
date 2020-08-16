@@ -34,12 +34,14 @@ public class MyPipeline implements Pipeline{
 			List<String> linksNotindb = LinksNotExistInDb(linksList,linksindb); //--
 			System.out.println("linksNotindb"+linksNotindb);
 			String LinksSqlString = "INSERT INTO Links (link) VALUES ";
-			for(String string : linksNotindb ) {
-				LinksSqlString = LinksSqlString + "(\""
-									 + string + "\"),";							 	
-			}
-			LinksSqlString = LinksSqlString.substring(0, LinksSqlString.length()-1)+";";
-			saveToDb(LinksSqlString);				
+			if(linksNotindb.size()>0) {
+				for(String string : linksNotindb ) {
+					LinksSqlString = LinksSqlString + "(\""
+										 + string + "\"),";							 	
+				}
+				LinksSqlString = LinksSqlString.substring(0, LinksSqlString.length()-1)+";";
+				saveToDb(LinksSqlString);		
+			}	
 		}
 		
 	}
