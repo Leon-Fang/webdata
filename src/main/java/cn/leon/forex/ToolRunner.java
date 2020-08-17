@@ -13,7 +13,7 @@ public class ToolRunner {
 		Spider.create(new MyPageProcessor())
 			  .addUrl("http://forex.eastmoney.com")
 //			  .setDownloader(httpClientDownloader)
-			  .addPipeline(new FilePipeline("./data_debug"))
+//			  .addPipeline(new FilePipeline("./data"))
 			  .addPipeline(new MyPipeline())
 			  .thread(1)
 			  .run();
