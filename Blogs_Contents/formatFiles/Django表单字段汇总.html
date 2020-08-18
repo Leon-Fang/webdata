@@ -1,0 +1,625 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>Django表单字段汇总</h1> 
+ <small>阅读:&nbsp;20401&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：6 </small> 
+ <hr> 
+ <h3>Field.clean(value)[source]</h3> 
+ <p>虽然表单字段的Field类主要使用在Form类中，但也可以直接实例化它们来使用，以便更好地了解它们是如何工作的。每个Field的实例都有一个clean()方法，它接受一个参数，然后返回“清洁的”数据或者抛出一个<code>django.forms.ValidationError</code>异常：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">django</span> <span class="kn">import</span> <span class="n">forms</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">f</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">EmailField</span><span class="p">()</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">f</span><span class="o">.</span><span class="n">clean</span><span class="p">(</span><span class="s1">'foo@example.com'</span><span class="p">)</span>
+<span class="s1">'foo@example.com'</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">f</span><span class="o">.</span><span class="n">clean</span><span class="p">(</span><span class="s1">'invalid email address'</span><span class="p">)</span>
+<span class="n">Traceback</span> <span class="p">(</span><span class="n">most</span> <span class="n">recent</span> <span class="n">call</span> <span class="n">last</span><span class="p">):</span>
+<span class="o">...</span>
+<span class="n">ValidationError</span><span class="p">:</span> <span class="p">[</span><span class="s1">'Enter a valid email address.'</span><span class="p">]</span>
+</pre>
+ </div> 
+ <p>这个clean方法经常被我们用来在开发或测试过程中对数据进行验证和测试。</p> 
+ <h2>一、核心字段参数</h2> 
+ <p>以下的参数是每个Field类都可以使用的。 </p> 
+ <h3>1. required</h3> 
+ <p>给字段添加必填属性，不能空着。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">django</span> <span class="kn">import</span> <span class="n">forms</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">f</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">CharField</span><span class="p">()</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">f</span><span class="o">.</span><span class="n">clean</span><span class="p">(</span><span class="s1">'foo'</span><span class="p">)</span>
+<span class="s1">'foo'</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">f</span><span class="o">.</span><span class="n">clean</span><span class="p">(</span><span class="s1">''</span><span class="p">)</span>
+<span class="n">Traceback</span> <span class="p">(</span><span class="n">most</span> <span class="n">recent</span> <span class="n">call</span> <span class="n">last</span><span class="p">):</span>
+<span class="o">...</span>
+<span class="n">ValidationError</span><span class="p">:</span> <span class="p">[</span><span class="s1">'This field is required.'</span><span class="p">]</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">f</span><span class="o">.</span><span class="n">clean</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
+<span class="n">Traceback</span> <span class="p">(</span><span class="n">most</span> <span class="n">recent</span> <span class="n">call</span> <span class="n">last</span><span class="p">):</span>
+<span class="o">...</span>
+<span class="n">ValidationError</span><span class="p">:</span> <span class="p">[</span><span class="s1">'This field is required.'</span><span class="p">]</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">f</span><span class="o">.</span><span class="n">clean</span><span class="p">(</span><span class="s1">' '</span><span class="p">)</span>
+<span class="s1">' '</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">f</span><span class="o">.</span><span class="n">clean</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="s1">'0'</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">f</span><span class="o">.</span><span class="n">clean</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+<span class="s1">'True'</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">f</span><span class="o">.</span><span class="n">clean</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+<span class="s1">'False'</span>
+</pre>
+ </div> 
+ <p>若要表示一个字段不是必需的，设置required=False：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; f = forms.CharField(required=False)
+&gt;&gt;&gt; f.clean('foo')
+'foo'
+&gt;&gt;&gt; f.clean('')
+''
+&gt;&gt;&gt; f.clean(None)
+''
+&gt;&gt;&gt; f.clean(0)
+'0'
+&gt;&gt;&gt; f.clean(True)
+'True'
+&gt;&gt;&gt; f.clean(False)
+'False'
+</pre>
+ </div> 
+ <h3>2. label</h3> 
+ <p>label参数用来给字段添加‘人类友好’的提示信息。如果没有设置这个参数，那么就用字段的首字母大写名字。比如：</p> 
+ <p>下面的例子，前两个字段有，最后的comment没有label参数：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">django</span> <span class="kn">import</span> <span class="n">forms</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="k">class</span> <span class="nc">CommentForm</span><span class="p">(</span><span class="n">forms</span><span class="o">.</span><span class="n">Form</span><span class="p">):</span>
+<span class="o">...</span>     <span class="n">name</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s1">'Your name'</span><span class="p">)</span>
+<span class="o">...</span>     <span class="n">url</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">URLField</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s1">'Your website'</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<span class="o">...</span>     <span class="n">comment</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">CharField</span><span class="p">()</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">f</span> <span class="o">=</span> <span class="n">CommentForm</span><span class="p">(</span><span class="n">auto_id</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="k">print</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+<span class="o">&lt;</span><span class="n">tr</span><span class="o">&gt;&lt;</span><span class="n">th</span><span class="o">&gt;</span><span class="n">Your</span> <span class="n">name</span><span class="p">:</span><span class="o">&lt;/</span><span class="n">th</span><span class="o">&gt;&lt;</span><span class="n">td</span><span class="o">&gt;&lt;</span><span class="nb">input</span> <span class="nb">type</span><span class="o">=</span><span class="s2">"text"</span> <span class="n">name</span><span class="o">=</span><span class="s2">"name"</span> <span class="n">required</span> <span class="o">/&gt;&lt;/</span><span class="n">td</span><span class="o">&gt;&lt;/</span><span class="n">tr</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="n">tr</span><span class="o">&gt;&lt;</span><span class="n">th</span><span class="o">&gt;</span><span class="n">Your</span> <span class="n">website</span><span class="p">:</span><span class="o">&lt;/</span><span class="n">th</span><span class="o">&gt;&lt;</span><span class="n">td</span><span class="o">&gt;&lt;</span><span class="nb">input</span> <span class="nb">type</span><span class="o">=</span><span class="s2">"url"</span> <span class="n">name</span><span class="o">=</span><span class="s2">"url"</span> <span class="o">/&gt;&lt;/</span><span class="n">td</span><span class="o">&gt;&lt;/</span><span class="n">tr</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="n">tr</span><span class="o">&gt;&lt;</span><span class="n">th</span><span class="o">&gt;</span><span class="n">Comment</span><span class="p">:</span><span class="o">&lt;/</span><span class="n">th</span><span class="o">&gt;&lt;</span><span class="n">td</span><span class="o">&gt;&lt;</span><span class="nb">input</span> <span class="nb">type</span><span class="o">=</span><span class="s2">"text"</span> <span class="n">name</span><span class="o">=</span><span class="s2">"comment"</span> <span class="n">required</span> <span class="o">/&gt;&lt;/</span><span class="n">td</span><span class="o">&gt;&lt;/</span><span class="n">tr</span><span class="o">&gt;</span>
+</pre>
+ </div> 
+ <h3>3. label_suffix</h3> 
+ <p>Django默认为上面的label参数后面加个冒号后缀，如果想自定义，可以使用<code>label_suffix</code>参数。比如下面的例子用“？”代替了冒号：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; class ContactForm(forms.Form):
+...     age = forms.IntegerField()
+...     nationality = forms.CharField()
+...     captcha_answer = forms.IntegerField(label='2 + 2', label_suffix=' =')
+&gt;&gt;&gt; f = ContactForm(label_suffix='?')
+&gt;&gt;&gt; print(f.as_p())
+<span class="nt">&lt;p&gt;&lt;label</span> <span class="na">for=</span><span class="s">"id_age"</span><span class="nt">&gt;</span>Age?<span class="nt">&lt;/label&gt;</span> <span class="nt">&lt;input</span> <span class="na">id=</span><span class="s">"id_age"</span> <span class="na">name=</span><span class="s">"age"</span> <span class="na">type=</span><span class="s">"number"</span> <span class="err">required</span> <span class="nt">/&gt;&lt;/p&gt;</span>
+<span class="nt">&lt;p&gt;&lt;label</span> <span class="na">for=</span><span class="s">"id_nationality"</span><span class="nt">&gt;</span>Nationality?<span class="nt">&lt;/label&gt;</span> <span class="nt">&lt;input</span> <span class="na">id=</span><span class="s">"id_nationality"</span> <span class="na">name=</span><span class="s">"nationality"</span> <span class="na">type=</span><span class="s">"text"</span> <span class="err">required</span> <span class="nt">/&gt;&lt;/p&gt;</span>
+<span class="nt">&lt;p&gt;&lt;label</span> <span class="na">for=</span><span class="s">"id_captcha_answer"</span><span class="nt">&gt;</span>2 + 2 =<span class="nt">&lt;/label&gt;</span> <span class="nt">&lt;input</span> <span class="na">id=</span><span class="s">"id_captcha_answer"</span> <span class="na">name=</span><span class="s">"captcha_answer"</span> <span class="na">type=</span><span class="s">"number"</span> <span class="err">required</span> <span class="nt">/&gt;&lt;/p&gt;</span>
+</pre>
+ </div> 
+ <h3>4. initial</h3> 
+ <p>为HTML页面中表单元素定义初始值。也就是input元素的value参数的值，如下所示：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">django</span> <span class="kn">import</span> <span class="n">forms</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="k">class</span> <span class="nc">CommentForm</span><span class="p">(</span><span class="n">forms</span><span class="o">.</span><span class="n">Form</span><span class="p">):</span>
+<span class="o">...</span>     <span class="n">name</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">initial</span><span class="o">=</span><span class="s1">'Your name'</span><span class="p">)</span>
+<span class="o">...</span>     <span class="n">url</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">URLField</span><span class="p">(</span><span class="n">initial</span><span class="o">=</span><span class="s1">'http://'</span><span class="p">)</span>
+<span class="o">...</span>     <span class="n">comment</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">CharField</span><span class="p">()</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">f</span> <span class="o">=</span> <span class="n">CommentForm</span><span class="p">(</span><span class="n">auto_id</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="k">print</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+<span class="o">&lt;</span><span class="n">tr</span><span class="o">&gt;&lt;</span><span class="n">th</span><span class="o">&gt;</span><span class="n">Name</span><span class="p">:</span><span class="o">&lt;/</span><span class="n">th</span><span class="o">&gt;&lt;</span><span class="n">td</span><span class="o">&gt;&lt;</span><span class="nb">input</span> <span class="nb">type</span><span class="o">=</span><span class="s2">"text"</span> <span class="n">name</span><span class="o">=</span><span class="s2">"name"</span> <span class="n">value</span><span class="o">=</span><span class="s2">"Your name"</span> <span class="n">required</span> <span class="o">/&gt;&lt;/</span><span class="n">td</span><span class="o">&gt;&lt;/</span><span class="n">tr</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="n">tr</span><span class="o">&gt;&lt;</span><span class="n">th</span><span class="o">&gt;</span><span class="n">Url</span><span class="p">:</span><span class="o">&lt;/</span><span class="n">th</span><span class="o">&gt;&lt;</span><span class="n">td</span><span class="o">&gt;&lt;</span><span class="nb">input</span> <span class="nb">type</span><span class="o">=</span><span class="s2">"url"</span> <span class="n">name</span><span class="o">=</span><span class="s2">"url"</span> <span class="n">value</span><span class="o">=</span><span class="s2">"http://"</span> <span class="n">required</span> <span class="o">/&gt;&lt;/</span><span class="n">td</span><span class="o">&gt;&lt;/</span><span class="n">tr</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="n">tr</span><span class="o">&gt;&lt;</span><span class="n">th</span><span class="o">&gt;</span><span class="n">Comment</span><span class="p">:</span><span class="o">&lt;/</span><span class="n">th</span><span class="o">&gt;&lt;</span><span class="n">td</span><span class="o">&gt;&lt;</span><span class="nb">input</span> <span class="nb">type</span><span class="o">=</span><span class="s2">"text"</span> <span class="n">name</span><span class="o">=</span><span class="s2">"comment"</span> <span class="n">required</span> <span class="o">/&gt;&lt;/</span><span class="n">td</span><span class="o">&gt;&lt;/</span><span class="n">tr</span><span class="o">&gt;</span>
+</pre>
+ </div> 
+ <p>你可能会问为什么不在渲染表单的时候传递一个包含初始化值的字典给它，不是更方便？因为如果这么做，你将触发表单的验证过程，此时输出的HTML页面将包含验证中产生的错误，如下所示：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; class CommentForm(forms.Form):
+...     name = forms.CharField()
+...     url = forms.URLField()
+...     comment = forms.CharField()
+&gt;&gt;&gt; default_data = {'name': 'Your name', 'url': 'http://'}
+&gt;&gt;&gt; f = CommentForm(default_data, auto_id=False)
+&gt;&gt;&gt; print(f)
+<span class="nt">&lt;tr&gt;&lt;th&gt;</span>Name:<span class="nt">&lt;/th&gt;&lt;td&gt;&lt;input</span> <span class="na">type=</span><span class="s">"text"</span> <span class="na">name=</span><span class="s">"name"</span> <span class="na">value=</span><span class="s">"Your name"</span> <span class="err">required</span> <span class="nt">/&gt;&lt;/td&gt;&lt;/tr&gt;</span>
+<span class="nt">&lt;tr&gt;&lt;th&gt;</span>Url:<span class="nt">&lt;/th&gt;&lt;td&gt;&lt;ul</span> <span class="na">class=</span><span class="s">"errorlist"</span><span class="nt">&gt;&lt;li&gt;</span>Enter a valid URL.<span class="nt">&lt;/li&gt;&lt;/ul&gt;&lt;input</span> <span class="na">type=</span><span class="s">"url"</span> <span class="na">name=</span><span class="s">"url"</span> <span class="na">value=</span><span class="s">"http://"</span> <span class="err">required</span> <span class="nt">/&gt;&lt;/td&gt;&lt;/tr&gt;</span>
+<span class="nt">&lt;tr&gt;&lt;th&gt;</span>Comment:<span class="nt">&lt;/th&gt;&lt;td&gt;&lt;ul</span> <span class="na">class=</span><span class="s">"errorlist"</span><span class="nt">&gt;&lt;li&gt;</span>This field is required.<span class="nt">&lt;/li&gt;&lt;/ul&gt;&lt;input</span> <span class="na">type=</span><span class="s">"text"</span> <span class="na">name=</span><span class="s">"comment"</span> <span class="err">required</span> <span class="nt">/&gt;&lt;/td&gt;&lt;/tr&gt;</span>
+</pre>
+ </div> 
+ <p>这就是为什么initial参数只用在未绑定的表单上。</p> 
+ <p>还要注意，如果提交表单时某个字段的值没有填写，initial的值不会作为“默认”的数据。initial值只用于原始表单的显示：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; class CommentForm(forms.Form):
+...     name = forms.CharField(initial='Your name')
+...     url = forms.URLField(initial='http://')
+...     comment = forms.CharField()
+&gt;&gt;&gt; data = {'name': '', 'url': '', 'comment': 'Foo'}
+&gt;&gt;&gt; f = CommentForm(data)
+&gt;&gt;&gt; f.is_valid()
+False
+# The form does *not* fall back to using the initial values.
+&gt;&gt;&gt; f.errors
+{'url': ['This field is required.'], 'name': ['This field is required.']}
+</pre>
+ </div> 
+ <p>除了常量之外，你还可以传递一个可调用的对象：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span> <span class="nn">datetime</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="k">class</span> <span class="nc">DateForm</span><span class="p">(</span><span class="n">forms</span><span class="o">.</span><span class="n">Form</span><span class="p">):</span>
+<span class="o">...</span>     <span class="n">day</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">DateField</span><span class="p">(</span><span class="n">initial</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="k">print</span><span class="p">(</span><span class="n">DateForm</span><span class="p">())</span>
+<span class="o">&lt;</span><span class="n">tr</span><span class="o">&gt;&lt;</span><span class="n">th</span><span class="o">&gt;</span><span class="n">Day</span><span class="p">:</span><span class="o">&lt;/</span><span class="n">th</span><span class="o">&gt;&lt;</span><span class="n">td</span><span class="o">&gt;&lt;</span><span class="nb">input</span> <span class="nb">type</span><span class="o">=</span><span class="s2">"text"</span> <span class="n">name</span><span class="o">=</span><span class="s2">"day"</span> <span class="n">value</span><span class="o">=</span><span class="s2">"12/23/2008"</span> <span class="n">required</span> <span class="o">/&gt;&lt;</span><span class="n">td</span><span class="o">&gt;&lt;/</span><span class="n">tr</span><span class="o">&gt;</span>
+</pre>
+ </div> 
+ <h3>5. widget</h3> 
+ <p>最重要的参数之一，指定渲染Widget时使用的widget类，也就是这个form字段在HTML页面中是显示为文本输入框？密码输入框？单选按钮？多选框？还是别的....</p> 
+ <h3>6. help_text</h3> 
+ <p>该参数用于设置字段的辅助描述文本。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">django</span> <span class="kn">import</span> <span class="n">forms</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="k">class</span> <span class="nc">HelpTextContactForm</span><span class="p">(</span><span class="n">forms</span><span class="o">.</span><span class="n">Form</span><span class="p">):</span>
+<span class="o">...</span>     <span class="n">subject</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">help_text</span><span class="o">=</span><span class="s1">'100 characters max.'</span><span class="p">)</span>
+<span class="o">...</span>     <span class="n">message</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">CharField</span><span class="p">()</span>
+<span class="o">...</span>     <span class="n">sender</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">EmailField</span><span class="p">(</span><span class="n">help_text</span><span class="o">=</span><span class="s1">'A valid email address, please.'</span><span class="p">)</span>
+<span class="o">...</span>     <span class="n">cc_myself</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">f</span> <span class="o">=</span> <span class="n">HelpTextContactForm</span><span class="p">(</span><span class="n">auto_id</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="k">print</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">as_table</span><span class="p">())</span>
+<span class="o">&lt;</span><span class="n">tr</span><span class="o">&gt;&lt;</span><span class="n">th</span><span class="o">&gt;</span><span class="n">Subject</span><span class="p">:</span><span class="o">&lt;/</span><span class="n">th</span><span class="o">&gt;&lt;</span><span class="n">td</span><span class="o">&gt;&lt;</span><span class="nb">input</span> <span class="nb">type</span><span class="o">=</span><span class="s2">"text"</span> <span class="n">name</span><span class="o">=</span><span class="s2">"subject"</span> <span class="n">maxlength</span><span class="o">=</span><span class="s2">"100"</span> <span class="n">required</span> <span class="o">/&gt;&lt;</span><span class="n">br</span> <span class="o">/&gt;&lt;</span><span class="n">span</span> <span class="n">class</span><span class="o">=</span><span class="s2">"helptext"</span><span class="o">&gt;</span><span class="mi">100</span> <span class="n">characters</span> <span class="nb">max</span><span class="o">.&lt;/</span><span class="n">span</span><span class="o">&gt;&lt;/</span><span class="n">td</span><span class="o">&gt;&lt;/</span><span class="n">tr</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="n">tr</span><span class="o">&gt;&lt;</span><span class="n">th</span><span class="o">&gt;</span><span class="n">Message</span><span class="p">:</span><span class="o">&lt;/</span><span class="n">th</span><span class="o">&gt;&lt;</span><span class="n">td</span><span class="o">&gt;&lt;</span><span class="nb">input</span> <span class="nb">type</span><span class="o">=</span><span class="s2">"text"</span> <span class="n">name</span><span class="o">=</span><span class="s2">"message"</span> <span class="n">required</span> <span class="o">/&gt;&lt;/</span><span class="n">td</span><span class="o">&gt;&lt;/</span><span class="n">tr</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="n">tr</span><span class="o">&gt;&lt;</span><span class="n">th</span><span class="o">&gt;</span><span class="n">Sender</span><span class="p">:</span><span class="o">&lt;/</span><span class="n">th</span><span class="o">&gt;&lt;</span><span class="n">td</span><span class="o">&gt;&lt;</span><span class="nb">input</span> <span class="nb">type</span><span class="o">=</span><span class="s2">"email"</span> <span class="n">name</span><span class="o">=</span><span class="s2">"sender"</span> <span class="n">required</span> <span class="o">/&gt;&lt;</span><span class="n">br</span> <span class="o">/&gt;</span><span class="n">A</span> <span class="n">valid</span> <span class="n">email</span> <span class="n">address</span><span class="p">,</span> <span class="n">please</span><span class="o">.&lt;/</span><span class="n">td</span><span class="o">&gt;&lt;/</span><span class="n">tr</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="n">tr</span><span class="o">&gt;&lt;</span><span class="n">th</span><span class="o">&gt;</span><span class="n">Cc</span> <span class="n">myself</span><span class="p">:</span><span class="o">&lt;/</span><span class="n">th</span><span class="o">&gt;&lt;</span><span class="n">td</span><span class="o">&gt;&lt;</span><span class="nb">input</span> <span class="nb">type</span><span class="o">=</span><span class="s2">"checkbox"</span> <span class="n">name</span><span class="o">=</span><span class="s2">"cc_myself"</span> <span class="o">/&gt;&lt;/</span><span class="n">td</span><span class="o">&gt;&lt;/</span><span class="n">tr</span><span class="o">&gt;</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="k">print</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">as_ul</span><span class="p">()))</span>
+<span class="o">&lt;</span><span class="n">li</span><span class="o">&gt;</span><span class="n">Subject</span><span class="p">:</span> <span class="o">&lt;</span><span class="nb">input</span> <span class="nb">type</span><span class="o">=</span><span class="s2">"text"</span> <span class="n">name</span><span class="o">=</span><span class="s2">"subject"</span> <span class="n">maxlength</span><span class="o">=</span><span class="s2">"100"</span> <span class="n">required</span> <span class="o">/&gt;</span> <span class="o">&lt;</span><span class="n">span</span> <span class="n">class</span><span class="o">=</span><span class="s2">"helptext"</span><span class="o">&gt;</span><span class="mi">100</span> <span class="n">characters</span> <span class="nb">max</span><span class="o">.&lt;/</span><span class="n">span</span><span class="o">&gt;&lt;/</span><span class="n">li</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="n">li</span><span class="o">&gt;</span><span class="n">Message</span><span class="p">:</span> <span class="o">&lt;</span><span class="nb">input</span> <span class="nb">type</span><span class="o">=</span><span class="s2">"text"</span> <span class="n">name</span><span class="o">=</span><span class="s2">"message"</span> <span class="n">required</span> <span class="o">/&gt;&lt;/</span><span class="n">li</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="n">li</span><span class="o">&gt;</span><span class="n">Sender</span><span class="p">:</span> <span class="o">&lt;</span><span class="nb">input</span> <span class="nb">type</span><span class="o">=</span><span class="s2">"email"</span> <span class="n">name</span><span class="o">=</span><span class="s2">"sender"</span> <span class="n">required</span> <span class="o">/&gt;</span> <span class="n">A</span> <span class="n">valid</span> <span class="n">email</span> <span class="n">address</span><span class="p">,</span> <span class="n">please</span><span class="o">.&lt;/</span><span class="n">li</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="n">li</span><span class="o">&gt;</span><span class="n">Cc</span> <span class="n">myself</span><span class="p">:</span> <span class="o">&lt;</span><span class="nb">input</span> <span class="nb">type</span><span class="o">=</span><span class="s2">"checkbox"</span> <span class="n">name</span><span class="o">=</span><span class="s2">"cc_myself"</span> <span class="o">/&gt;&lt;/</span><span class="n">li</span><span class="o">&gt;</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="k">print</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">as_p</span><span class="p">())</span>
+<span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="n">Subject</span><span class="p">:</span> <span class="o">&lt;</span><span class="nb">input</span> <span class="nb">type</span><span class="o">=</span><span class="s2">"text"</span> <span class="n">name</span><span class="o">=</span><span class="s2">"subject"</span> <span class="n">maxlength</span><span class="o">=</span><span class="s2">"100"</span> <span class="n">required</span> <span class="o">/&gt;</span> <span class="o">&lt;</span><span class="n">span</span> <span class="n">class</span><span class="o">=</span><span class="s2">"helptext"</span><span class="o">&gt;</span><span class="mi">100</span> <span class="n">characters</span> <span class="nb">max</span><span class="o">.&lt;/</span><span class="n">span</span><span class="o">&gt;&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="n">Message</span><span class="p">:</span> <span class="o">&lt;</span><span class="nb">input</span> <span class="nb">type</span><span class="o">=</span><span class="s2">"text"</span> <span class="n">name</span><span class="o">=</span><span class="s2">"message"</span> <span class="n">required</span> <span class="o">/&gt;&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="n">Sender</span><span class="p">:</span> <span class="o">&lt;</span><span class="nb">input</span> <span class="nb">type</span><span class="o">=</span><span class="s2">"email"</span> <span class="n">name</span><span class="o">=</span><span class="s2">"sender"</span> <span class="n">required</span> <span class="o">/&gt;</span> <span class="n">A</span> <span class="n">valid</span> <span class="n">email</span> <span class="n">address</span><span class="p">,</span> <span class="n">please</span><span class="o">.&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="n">Cc</span> <span class="n">myself</span><span class="p">:</span> <span class="o">&lt;</span><span class="nb">input</span> <span class="nb">type</span><span class="o">=</span><span class="s2">"checkbox"</span> <span class="n">name</span><span class="o">=</span><span class="s2">"cc_myself"</span> <span class="o">/&gt;&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</pre>
+ </div> 
+ <h3>7. error_messages</h3> 
+ <p>该参数允许你覆盖字段引发异常时的默认信息。 传递的是一个字典，其键为你想覆盖的错误信息。 例如，下面是默认的错误信息：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">django</span> <span class="kn">import</span> <span class="n">forms</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">generic</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">CharField</span><span class="p">()</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">generic</span><span class="o">.</span><span class="n">clean</span><span class="p">(</span><span class="s1">''</span><span class="p">)</span>
+<span class="n">Traceback</span> <span class="p">(</span><span class="n">most</span> <span class="n">recent</span> <span class="n">call</span> <span class="n">last</span><span class="p">):</span>
+  <span class="o">...</span>
+<span class="n">ValidationError</span><span class="p">:</span> <span class="p">[</span><span class="s1">'This field is required.'</span><span class="p">]</span>
+</pre>
+ </div> 
+ <p>而下面是自定义的错误信息：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; name = forms.CharField(error_messages={'required': 'Please enter your name'})
+&gt;&gt;&gt; name.clean('')
+Traceback (most recent call last):
+  ...
+ValidationError: ['Please enter your name']
+</pre>
+ </div> 
+ <p>可以指定多种类型的键，不仅仅针对‘requeired’错误，参考下面的内容。</p> 
+ <h3>8. validators</h3> 
+ <p>指定一个列表，其中包含了为字段进行验证的函数。也就是说，如果你自定义了验证方法，不用Django内置的验证功能，那么要通过这个参数，将字段和自定义的验证方法链接起来。</p> 
+ <h3>9. localize</h3> 
+ <p>localize参数帮助实现表单数据输入的本地化。</p> 
+ <h3>10. disabled</h3> 
+ <p>设置有该属性的字段在前端页面中将显示为不可编辑状态。</p> 
+ <p>该参数接收布尔值，当设置为True时，使用HTML的disabled属性禁用表单域，以使用户无法编辑该字段。即使非法篡改了前端页面的属性，向服务器提交了该字段的值，也将依然被忽略。</p> 
+ <h2>二、 Django表单内置的Field类</h2> 
+ <p>对于每个字段类，介绍其默认的widget，当输入为空时返回的值，以及采取何种验证方式。‘规范化为’表示转换为PYthon的何种对象。可用的错误信息键，表示该字段可自定义错误信息的类型（字典的键）。</p> 
+ <h3>1. BooleanField</h3> 
+ <ul> 
+  <li>默认的Widget：CheckboxInput</li> 
+  <li>空值：False</li> 
+  <li>规范化为：Python的True或者False</li> 
+  <li>可用的错误信息键：required</li> 
+ </ul> 
+ <h3>2. CharField</h3> 
+ <ul> 
+  <li>默认的Widget：TextInput</li> 
+  <li>空值：与empty_value给出的任何值。</li> 
+  <li>规范化为：一个Unicode 对象。</li> 
+  <li>验证<code>max_length</code>或<code>min_length</code>，如果设置了这两个参数。 否则，所有的输入都是合法的。</li> 
+  <li>可用的错误信息键：min_length, max_length, required</li> 
+ </ul> 
+ <p>有四个可选参数：</p> 
+ <ul> 
+  <li>max_length，min_length：设置字符串的最大和最小长度。</li> 
+  <li>strip：如果True（默认），去除输入的前导和尾随空格。</li> 
+  <li>empty_value：用来表示“空”的值。 默认为空字符串。</li> 
+ </ul> 
+ <h3>3. ChoiceField</h3> 
+ <ul> 
+  <li>默认的Widget：Select</li> 
+  <li>空值：''（一个空字符串）</li> 
+  <li>规范化为：一个Unicode 对象。</li> 
+  <li>验证给定的值是否在选项列表中。</li> 
+  <li>可用的错误信息键：required, invalid_choice</li> 
+ </ul> 
+ <p>参数choices：用来作为该字段选项的一个二元组组成的可迭代对象（例如，列表或元组）或者一个可调用对象。格式与用于和ORM模型字段的choices参数相同。</p> 
+ <h3>4. TypedChoiceField</h3> 
+ <p>像ChoiceField一样，只是还有两个额外的参数：coerce和empty_value。</p> 
+ <ul> 
+  <li>默认的Widget：Select</li> 
+  <li>空值：empty_value参数设置的值。</li> 
+  <li>规范化为：coerce参数类型的值。</li> 
+  <li>验证给定的值在选项列表中存在并且可以被强制转换。</li> 
+  <li>可用的错误信息的键：required, invalid_choice</li> 
+ </ul> 
+ <h3>5. DateField</h3> 
+ <ul> 
+  <li>默认的Widget：DateInput</li> 
+  <li>空值：None</li> 
+  <li>规范化为：datetime.date对象。</li> 
+  <li>验证给出的值是一个datetime.date、datetime.datetime 或指定日期格式的字符串。</li> 
+  <li>错误信息的键：required, invalid</li> 
+ </ul> 
+ <p>接收一个可选的参数：input_formats。一个格式的列表，用于转换字符串为datetime.date对象。</p> 
+ <p>如果没有提供input_formats，默认的输入格式为：</p> 
+ <div class="codehilite">
+  <pre><span></span>['%Y-%m-%d',      # '2006-10-25'
+ '%m/%d/%Y',      # '10/25/2006'
+ '%m/%d/%y']      # '10/25/06'
+</pre>
+ </div> 
+ <p>另外，如果你在设置中指定<code>USE_L10N=False</code>，以下的格式也将包含在默认的输入格式中：</p> 
+ <div class="codehilite">
+  <pre><span></span>['%b %d %Y',      # 'Oct 25 2006'
+ '%b %d, %Y',     # 'Oct 25, 2006'
+ '%d %b %Y',      # '25 Oct 2006'
+ '%d %b, %Y',     # '25 Oct, 2006'
+ '%B %d %Y',      # 'October 25 2006'
+ '%B %d, %Y',     # 'October 25, 2006'
+ '%d %B %Y',      # '25 October 2006'
+ '%d %B, %Y']     # '25 October, 2006'
+</pre>
+ </div> 
+ <h3>6. DateTimeField</h3> 
+ <ul> 
+  <li>默认的Widget：DateTimeInput</li> 
+  <li>空值：None</li> 
+  <li>规范化为：Python的datetime.datetime对象。</li> 
+  <li>验证给出的值是一个datetime.datetime、datetime.date或指定日期格式的字符串。</li> 
+  <li>错误信息的键：required, invalid</li> 
+ </ul> 
+ <p>接收一个可选的参数：input_formats</p> 
+ <p>如果没有提供input_formats，默认的输入格式为：</p> 
+ <div class="codehilite">
+  <pre><span></span>['%Y-%m-%d %H:%M:%S',    # '2006-10-25 14:30:59'
+ '%Y-%m-%d %H:%M',       # '2006-10-25 14:30'
+ '%Y-%m-%d',             # '2006-10-25'
+ '%m/%d/%Y %H:%M:%S',    # '10/25/2006 14:30:59'
+ '%m/%d/%Y %H:%M',       # '10/25/2006 14:30'
+ '%m/%d/%Y',             # '10/25/2006'
+ '%m/%d/%y %H:%M:%S',    # '10/25/06 14:30:59'
+ '%m/%d/%y %H:%M',       # '10/25/06 14:30'
+ '%m/%d/%y']             # '10/25/06'
+</pre>
+ </div> 
+ <h3>7. DecimalField</h3> 
+ <ul> 
+  <li>默认的Widget：当Field.localize是False时为NumberInput，否则为TextInput。</li> 
+  <li>空值：None</li> 
+  <li>规范化为：Python decimal对象。</li> 
+  <li>验证给定的值为一个十进制数。 忽略前导和尾随的空白。</li> 
+  <li>错误信息的键：<code>max_whole_digits</code>, <code>max_digits</code>, <code>max_decimal_places</code>,<code>max_value</code>, invalid, required,<code>min_value</code></li> 
+ </ul> 
+ <p>接收四个可选的参数：</p> 
+ <p>max_value,min_value:允许的值的范围，需要赋值decimal.Decimal对象，不能直接给个整数类型。</p> 
+ <p>max_digits：值允许的最大位数（小数点之前和之后的数字总共的位数，前导的零将被删除）。</p> 
+ <p>decimal_places：允许的最大小数位。</p> 
+ <h3>8. DurationField</h3> 
+ <ul> 
+  <li>默认的Widget：TextInput</li> 
+  <li>空值：None</li> 
+  <li>规范化为：Python timedelta。</li> 
+  <li>验证给出的值是一个字符串，而且可以转换为timedelta对象。</li> 
+  <li>错误信息的键：required, invalid.</li> 
+ </ul> 
+ <h3>9. EmailField</h3> 
+ <ul> 
+  <li>默认的Widget：EmailInput</li> 
+  <li>空值：''（一个空字符串）</li> 
+  <li>规范化为：Unicode 对象。</li> 
+  <li>使用正则表达式验证给出的值是一个合法的邮件地址。</li> 
+  <li>错误信息的键：required, invalid</li> 
+ </ul> 
+ <p>两个可选的参数用于验证，max_length 和min_length。 </p> 
+ <h3>10. FileField</h3> 
+ <ul> 
+  <li>默认的Widget：ClearableFileInput</li> 
+  <li>空值：None</li> 
+  <li>规范化为：一个UploadedFile对象，它封装文件内容和文件名到一个对象内。</li> 
+  <li>验证非空的文件数据已经绑定到表单。</li> 
+  <li>错误信息的键：missing, invalid, required, empty, max_length</li> 
+ </ul> 
+ <p>具有两个可选的参数用于验证：max_length 和 allow_empty_file。 </p> 
+ <h3>11. FilePathField</h3> 
+ <ul> 
+  <li>默认的Widget：Select</li> 
+  <li>空值：None</li> 
+  <li>规范化为：Unicode 对象。</li> 
+  <li>验证选择的选项在选项列表中存在。</li> 
+  <li>错误信息的键：required, invalid_choice</li> 
+ </ul> 
+ <p>这个字段允许从一个特定的目录选择文件。 它有五个额外的参数，其中的path是必须的：</p> 
+ <p>path：要列出的目录的绝对路径。 这个目录必须存在。</p> 
+ <p>recursive：如果为False（默认值），只用直接位于path下的文件或目录作为选项。如果为True，将递归访问这个目录，其内所有的子目录和文件都将作为选项。</p> 
+ <p>match：正则表达模式；只有具有与此表达式匹配的文件名称才被允许作为选项。</p> 
+ <p><code>allow_files</code>：可选。默认为True。表示是否应该包含指定位置的文件。它和<code>allow_folders</code>必须有一个为True。</p> 
+ <p><code>allow_folders</code>可选。默认为False。表示是否应该包含指定位置的目录。</p> 
+ <h3>12. FloatField</h3> 
+ <ul> 
+  <li>默认的Widget：当Field.localize是False时为NumberInput，否则为TextInput。</li> 
+  <li>空值：None</li> 
+  <li>规范化为：Float 对象。</li> 
+  <li>验证给定的值是一个浮点数。</li> 
+  <li>错误信息的键：max_value, invalid, required, min_value</li> 
+ </ul> 
+ <p>接收两个可选的参数用于验证，max_value和min_value，控制允许的值的范围。</p> 
+ <h3>13. ImageField</h3> 
+ <ul> 
+  <li>默认的Widget：ClearableFileInput</li> 
+  <li>空值：None</li> 
+  <li>规范化为：一个UploadedFile 象，它封装文件内容和文件名为一个单独的对象。</li> 
+  <li>验证文件数据已绑定到表单，并且该文件是Pillow可以解析的图像格式。</li> 
+  <li>错误信息的键：missing, invalid, required, empty, invalid_image</li> 
+ </ul> 
+ <p>使用ImageField需要安装Pillow（pip install pillow）。如果在上传图片时遇到图像损坏错误，通常意味着使用了Pillow不支持的格式。</p> 
+ <h3>14. IntegerField</h3> 
+ <ul> 
+  <li>默认的Widget：当Field.localize是False时为NumberInput，否则为TextInput。</li> 
+  <li>空值：None</li> 
+  <li>规范化为：Python 整数或长整数。</li> 
+  <li>验证给定值是一个整数。 允许前导和尾随空格，类似Python的int()函数。</li> 
+  <li>错误信息的键：max_value, invalid, required, min_value</li> 
+ </ul> 
+ <p>两个可选参数：max_value和min_value，控制允许的值的范围。</p> 
+ <h3>15. GenericIPAddressField</h3> 
+ <p>包含IPv4或IPv6地址的字段。</p> 
+ <ul> 
+  <li>默认的Widget：TextInput</li> 
+  <li>空值：''（一个空字符串）</li> 
+  <li>规范化为：一个Unicode对象。 </li> 
+  <li>验证给定值是有效的IP地址。</li> 
+  <li>错误信息的键：required, invalid</li> 
+ </ul> 
+ <p>有两个可选参数：protocol和unpack_ipv4</p> 
+ <h3>16. MultipleChoiceField</h3> 
+ <ul> 
+  <li>默认的Widget：SelectMultiple</li> 
+  <li>空值：[]（一个空列表）</li> 
+  <li>规范化为：一个Unicode 对象列表。</li> 
+  <li>验证给定值列表中的每个值都存在于选择列表中。</li> 
+  <li>错误信息的键：invalid_list, invalid_choice, required</li> 
+ </ul> 
+ <h3>17. TypedMultipleChoiceField</h3> 
+ <p>类似MultipleChoiceField，除了需要两个额外的参数，coerce和empty_value。</p> 
+ <ul> 
+  <li>默认的Widget：SelectMultiple</li> 
+  <li>空值：empty_value</li> 
+  <li>规范化为：coerce参数提供的类型值列表。</li> 
+  <li>验证给定值存在于选项列表中并且可以强制。</li> 
+  <li>错误信息的键：required, invalid_choice</li> 
+ </ul> 
+ <h3>18. NullBooleanField</h3> 
+ <ul> 
+  <li>默认的Widget：NullBooleanSelect</li> 
+  <li>空值：None</li> 
+  <li>规范化为：Python None, False 或True 值。</li> 
+  <li>不验证任何内容（即，它从不引发ValidationError）。</li> 
+ </ul> 
+ <h3>19.RegexField</h3> 
+ <ul> 
+  <li>默认的Widget：TextInput</li> 
+  <li>空值：''（一个空字符串）</li> 
+  <li>规范化为：一个Unicode 对象。</li> 
+  <li>验证给定值与某个正则表达式匹配。</li> 
+  <li>错误信息的键：required, invalid</li> 
+ </ul> 
+ <p>需要一个必需的参数：regex，需要匹配的正则表达式。</p> 
+ <p>还可以接收max_length，min_length和strip参数，类似CharField。</p> 
+ <h3>20. SlugField</h3> 
+ <ul> 
+  <li>默认的Widget：TextInput</li> 
+  <li>空值：''（一个空字符串）</li> 
+  <li>规范化为：一个Unicode 对象。</li> 
+  <li>验证给定的字符串只包括字母、数字、下划线及连字符。</li> 
+  <li>错误信息的键：required, invalid</li> 
+ </ul> 
+ <p>此字段用于在表单中表示模型的SlugField。</p> 
+ <h3>21. TimeField</h3> 
+ <ul> 
+  <li>默认的Widget：TextInput</li> 
+  <li>空值：None</li> 
+  <li>规范化为：一个Python 的datetime.time 对象。</li> 
+  <li>验证给定值是datetime.time或以特定时间格式格式化的字符串。</li> 
+  <li>错误信息的键：required, invalid</li> 
+ </ul> 
+ <p>接收一个可选的参数：input_formats，用于尝试将字符串转换为有效的datetime.time对象的格式列表。</p> 
+ <p>如果没有提供input_formats，默认的输入格式为：</p> 
+ <div class="codehilite">
+  <pre><span></span>'%H:%M:%S',     # '14:30:59'
+'%H:%M',        # '14:30'
+</pre>
+ </div> 
+ <h3>22. URLField</h3> 
+ <ul> 
+  <li>默认的Widget：URLInput</li> 
+  <li>空值：''（一个空字符串）</li> 
+  <li>规范化为：一个Unicode 对象。</li> 
+  <li>验证给定值是个有效的URL。</li> 
+  <li>错误信息的键：required, invalid</li> 
+ </ul> 
+ <p>可选参数：max_length和min_length</p> 
+ <h3>23. UUIDField</h3> 
+ <ul> 
+  <li>默认的Widget：TextInput</li> 
+  <li>空值：''（一个空字符串）</li> 
+  <li>规范化为：UUID对象。</li> 
+  <li>错误信息的键：required, invalid</li> 
+ </ul> 
+ <h3>24. ComboField</h3> 
+ <ul> 
+  <li>默认的Widget：TextInput</li> 
+  <li>空值：''（一个空字符串）</li> 
+  <li>规范化为：Unicode 对象。</li> 
+  <li>根据指定为ComboField的参数的每个字段验证给定值。</li> 
+  <li>错误信息的键：required, invalid</li> 
+ </ul> 
+ <p>接收一个额外的必选参数：fields，用于验证字段值的字段列表（按提供它们的顺序）。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">django.forms</span> <span class="kn">import</span> <span class="n">ComboField</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">f</span> <span class="o">=</span> <span class="n">ComboField</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">20</span><span class="p">),</span> <span class="n">EmailField</span><span class="p">()])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">f</span><span class="o">.</span><span class="n">clean</span><span class="p">(</span><span class="s1">'test@example.com'</span><span class="p">)</span>
+<span class="s1">'test@example.com'</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">f</span><span class="o">.</span><span class="n">clean</span><span class="p">(</span><span class="s1">'longemailaddress@example.com'</span><span class="p">)</span>
+<span class="n">Traceback</span> <span class="p">(</span><span class="n">most</span> <span class="n">recent</span> <span class="n">call</span> <span class="n">last</span><span class="p">):</span>
+<span class="o">...</span>
+<span class="n">ValidationError</span><span class="p">:</span> <span class="p">[</span><span class="s1">'Ensure this value has at most 20 characters (it has 28).'</span><span class="p">]</span>
+</pre>
+ </div> 
+ <h3>25. MultiValueField</h3> 
+ <ul> 
+  <li>默认的Widget：TextInput</li> 
+  <li>空值：''（一个空字符串）</li> 
+  <li>规范化为：子类的compress方法返回的类型。</li> 
+  <li>根据指定为MultiValueField的参数的每个字段验证给定值。</li> 
+  <li>错误信息的键：incomplete, invalid, required</li> 
+ </ul> 
+ <h3>26. SplitDateTimeField</h3> 
+ <ul> 
+  <li>默认的Widget：SplitDateTimeWidget</li> 
+  <li>空值：None</li> 
+  <li>规范化为：Python datetime.datetime 对象。</li> 
+  <li>验证给定的值是datetime.datetime或以特定日期时间格式格式化的字符串。</li> 
+  <li>错误信息的键：invalid_date, invalid, required, invalid_time</li> 
+ </ul> 
+ <h3>三、创建自定义字段</h3> 
+ <p>如果内置的Field真的不能满足你的需求，还可以自定义Field。 </p> 
+ <p>只需要创建一个<code>django.forms.Field</code>的子类，并实现clean()和<code>__init__()</code>构造方法。<code>__init__()</code>构造方法需要接收前面提过的那些核心参数，比如widget、required,、label、help_text、initial。</p> 
+ <p>还可以通过覆盖<code>get_bound_field()</code>方法来自定义访问字段的方式。</p> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/153"> <i class="fa fa-arrow-left"></i>&nbsp;Django表单API详解</a> 
+  <a class="float-right" href="/course/django/155"> 表单的Widgets&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 6</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/154">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.1080.1080.50/006xIWURly8g3w3jk5kmcj30u00u03zs.jpg?Expires=1562507709&amp;ssig=ZhQEgD7Ax2&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>Django表单 字段定义</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 蔷薇-Nina </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年7月14日 23:19</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1453">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>这两个参数不知道怎么用,老师能不能举个例子帮助理解下</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户3805729621 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年10月16日 16:15</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/776">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva3.sinaimg.cn/crop.0.0.180.180.50/56d50a4ejw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>老师，您好，html中没有生成输入框，代码如下： &lt;form class="form-horizontal" action="." method="post"&gt; {% csrf_token %} &lt;!-- {{ form.as_p }} --&gt; &lt;div class="form-group"&gt; &lt;label for="{{ form.username.id_for_label }}" class="col-md-5 control-label" style="color:red"&gt;&lt;span class="glyphicon glyphicon-user"&gt;&lt;/span&gt;Username&lt;/label&gt; &lt;div class="col-md-6 text-left"&gt;{{ form.username }}&lt;/div&gt; &lt;/div&gt; &lt;div class="form-group"&gt; &lt;label for="{{ form.password.id_for_label }}" class="col-md-5 control-label" style="color:blue"&gt;&lt;span class="glyphicon glyphicon-floppy-open"&gt;&lt;/span&gt;Password&lt;/label&gt; &lt;div class="col-md-6 text-left"&gt;{{ form.password }}&lt;/div&gt; &lt;/div&gt; &lt;input type="submit" value="Login"&gt; &lt;/form&gt; 查看网页时，只显示了username和password的字段我中，没有显示输入框，请老师指点一二。谢谢。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; Hope重生 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年10月11日 15:02</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/769">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva3.sinaimg.cn/crop.0.0.180.180.50/56d50a4ejw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>搞定了，在视图中用local()方法，所以，才没有用显示</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> Hope重生 &nbsp;&nbsp;回复&nbsp;&nbsp; Hope重生 </span> 
+      <em>2018年10月11日 15:18</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/770">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.4.272.681.681.50/006IGSB9ly8fghn7478iqj30j60y2wfa.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>自定义的错误信息会报错呢 ValueError: dictionary update sequence element #0 has length 1; 2 is required</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 软妹不太软QAQ </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年10月11日 10:59</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/768">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.960.960.50/006xIWURly8fo9wxo24vzj30qo0qoaaz.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>请问博主，经本人亲自尝试，发现自定义的error_messages错误提示信息无效！另外调用自定义的validators方法也是不起作用！为什么？怎么解决之？还请赐教。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 蔷薇-Nina </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年2月27日 09:52</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/220">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

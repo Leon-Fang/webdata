@@ -1,0 +1,365 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>14. 重用app</h1> 
+ <small>阅读:&nbsp;11776&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：9 </small> 
+ <hr> 
+ <p>在开发Django项目的过程中，有一些app是经常需要用到的，比如用户注册和登录app。你每次开发一个新项目，就重新写一个用户系统？不需要的，直接重用先前写好的就行了。有时候，我们需要将自己写的app分发给同事，分享给朋友，或者在互联网上发布，让全世界的用户使用。比如发布到Django官方的app仓库：https://djangopackages.org/ 。这都需要打包、分发和重用我们的app。</p> 
+ <p>Django的子系统重用是基于app级别的。也就是一个项目可以包含多个互相独立的app，不同项目之间没有关系。但是，一个app可以属于多个项目，可以在任何地点、任何时间和任何项目中被重用。</p> 
+ <p>一个app要能被重用，首先在设计和开发它的阶段，就要考虑后期重用的问题。你需要将该app运行时所必须的全部文件、资源、配置、数据等等都封装在一个整体内。如果有任何一部分重要的内容，放置在app之外，比如最初项目的其它目录下，都将引起重用失败。</p> 
+ <p>Django需要使用setuptools和pip来打包我们的app，所以请先安装他们。对于当前的Python3.6，自带了这两个工具，不需要额外安装。</p> 
+ <h2>一、 打包app</h2> 
+ <p>打包的本质，就是封装你的源代码和文件成为一种新的数据包装格式，有利于传输、分发和安装。在Django中打包一个app只需要下面八个步骤：</p> 
+ <h3>1. 文件准备</h3> 
+ <p>在你的Django项目目录外面，为我们的login应用，准备一个父目录，这里取名<code>django-login-register</code>。</p> 
+ <p><strong>额外提醒：</strong></p> 
+ <p>为你的app选择一个合适的名字：在取名前，去PyPi搜索一下是否有重名或冲突的app（包）已经存在。建议给app的名字加上“django-”的前缀。名字不能和任何Django的<code>contrib packages</code>中的app重名，例如auth、admin、messages等等。</p> 
+ <h3>2. 拷贝文件</h3> 
+ <p>将mysite/login目录中的所有内容拷贝到<code>django-login-register</code>目录内。将login/migrations目录中，除了<code>__init__.py</code>外的文件全部删除，这些被删除的文件是我们先前在本地数据库的操作记录，不应该打包到里面。</p> 
+ <h3>3. 创建说明文档</h3> 
+ <p>创建一个说明文档<code>django-login-register/README.rst</code>，写入下面的内容：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="o">=====</span>
+<span class="err">登录和注册系统</span>
+<span class="o">=====</span>
+<span class="c1">## 这是一个用户登录和注册教学项目</span>
+<span class="c1">## 这是一个可重用的登录和注册APP</span>
+<span class="c1">## 该项目教程发布在www.liujiangblog.com</span>
+
+<span class="c1">## 简单的使用步骤：</span>
+
+<span class="mf">1.</span> <span class="err">创建虚拟环境</span>
+<span class="mf">2.</span> <span class="err">使用</span><span class="n">pip安装第三方依赖</span>
+<span class="mf">3.</span> <span class="err">添加相应的路由</span>
+<span class="mf">4.</span> <span class="err">配置</span><span class="n">settings</span>
+<span class="mf">5.</span> <span class="err">运行</span><span class="n">migrate命令</span><span class="err">，创建数据库和数据表</span>
+<span class="mf">6.</span> <span class="err">链接你的</span><span class="n">index页面</span>
+<span class="mf">7.</span> <span class="err">运行</span><span class="n">python</span> <span class="n">manage</span><span class="o">.</span><span class="n">py</span> <span class="n">runserver启动服务器</span>
+
+
+<span class="c1">## 路由设置：</span>
+
+<span class="kn">from</span> <span class="nn">django.contrib</span> <span class="kn">import</span> <span class="n">admin</span>
+<span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">path</span><span class="p">,</span> <span class="n">include</span>
+<span class="kn">from</span> <span class="nn">login</span> <span class="kn">import</span> <span class="n">views</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'admin/'</span><span class="p">,</span> <span class="n">admin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">urls</span><span class="p">),</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'index/'</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">index</span><span class="p">),</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'login/'</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">login</span><span class="p">),</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'register/'</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">register</span><span class="p">),</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'logout/'</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">logout</span><span class="p">),</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'confirm/'</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">user_confirm</span><span class="p">),</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'captcha/'</span><span class="p">,</span> <span class="n">include</span><span class="p">(</span><span class="s1">'captcha.urls'</span><span class="p">))</span>   
+<span class="p">]</span>
+
+
+
+<span class="c1">## settings配置：</span>
+
+<span class="mf">1.</span> <span class="err">在</span><span class="n">INSTALLED_APPS中添加</span><span class="err">‘</span><span class="n">login</span><span class="err">’，</span><span class="s1">'captcha'</span>
+<span class="mf">2.</span> <span class="err">默认使用</span><span class="n">Sqlite数据库</span>
+<span class="mf">3.</span> <span class="n">LANGUAGE_CODE</span> <span class="o">=</span> <span class="s1">'zh-hans'</span>
+<span class="mf">4.</span> <span class="n">TIME_ZONE</span> <span class="o">=</span> <span class="s1">'Asia/Shanghai'</span>
+<span class="mf">5.</span> <span class="n">USE_TZ</span> <span class="o">=</span> <span class="bp">False</span>
+
+<span class="c1"># 邮件服务设置</span>
+<span class="mf">6.</span> <span class="n">EMAIL_BACKEND</span> <span class="o">=</span> <span class="s1">'django.core.mail.backends.smtp.EmailBackend'</span>
+<span class="mf">7.</span> <span class="n">EMAIL_HOST</span> <span class="o">=</span> <span class="s1">'smtp.sina.com'</span>
+<span class="mf">8.</span> <span class="n">EMAIL_PORT</span> <span class="o">=</span> <span class="mi">25</span>
+<span class="mf">9.</span> <span class="n">EMAIL_HOST_USER</span> <span class="o">=</span> <span class="s1">'xxxx@sina.com'</span>
+<span class="mf">10.</span> <span class="n">EMAIL_HOST_PASSWORD</span> <span class="o">=</span> <span class="s1">'xxxxx'</span>
+
+<span class="c1"># 注册有效期天数</span>
+<span class="mf">11.</span> <span class="n">CONFIRM_DAYS</span> <span class="o">=</span> <span class="mi">7</span>
+</pre>
+ </div> 
+ <p>这其实是一个纯文本文件，内容和格式完全自由，但核心要点是注明你的app功能和简单的使用方法。</p> 
+ <h3>4. 添加授权声明</h3> 
+ <p>创建一个<code>django-login-register/LICENSE</code>版权申明文件。大多数Django相关的app都基于BSD版权。如果不是发布到正式场合，可以不写。</p> 
+ <h3>5. 创建setup.py脚本</h3> 
+ <p>创建一个<code>django-login-register/setup.py</code>文件，包含了编译和安装app的配置细节。这种配置脚本的具体语法，请前往setuptools的官方文档获取详细的教程。下面是一个范例，大多数情况下，你在此基础上改改就可以了：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">setuptools</span> <span class="kn">import</span> <span class="n">find_packages</span><span class="p">,</span> <span class="n">setup</span>
+
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">),</span> <span class="s1">'README.rst'</span><span class="p">),</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">'utf-8'</span><span class="p">)</span> <span class="k">as</span> <span class="n">readme</span><span class="p">:</span>
+    <span class="n">README</span> <span class="o">=</span> <span class="n">readme</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+
+<span class="c1"># allow setup.py to be run from any path</span>
+<span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">normpath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">),</span> <span class="n">os</span><span class="o">.</span><span class="n">pardir</span><span class="p">)))</span>
+
+<span class="n">setup</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s1">'django-login-register'</span><span class="p">,</span>
+    <span class="n">version</span><span class="o">=</span><span class="s1">'1.0'</span><span class="p">,</span>
+    <span class="n">packages</span><span class="o">=</span><span class="n">find_packages</span><span class="p">(),</span>
+    <span class="n">include_package_data</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+    <span class="n">license</span><span class="o">=</span><span class="s1">'BSD License'</span><span class="p">,</span>  <span class="c1"># example license</span>
+    <span class="n">description</span><span class="o">=</span><span class="s1">'一个通用的用户注册和登录系统'</span><span class="p">,</span>
+    <span class="n">long_description</span><span class="o">=</span><span class="n">README</span><span class="p">,</span>
+    <span class="n">url</span><span class="o">=</span><span class="s1">'https://www.liujiangblog.com/'</span><span class="p">,</span>
+    <span class="n">author</span><span class="o">=</span><span class="s1">'liujiang'</span><span class="p">,</span>
+    <span class="n">author_email</span><span class="o">=</span><span class="s1">'yourname@example.com'</span><span class="p">,</span>
+    <span class="n">classifiers</span><span class="o">=</span><span class="p">[</span>
+        <span class="s1">'Environment :: Web Environment'</span><span class="p">,</span>
+        <span class="s1">'Framework :: Django'</span><span class="p">,</span>
+        <span class="s1">'Framework :: Django :: 2.2'</span><span class="p">,</span>  <span class="c1"># replace "X.Y" as appropriate</span>
+        <span class="s1">'Intended Audience :: Developers'</span><span class="p">,</span>
+        <span class="s1">'License :: OSI Approved :: BSD License'</span><span class="p">,</span>  <span class="c1"># example license</span>
+        <span class="s1">'Operating System :: OS Independent'</span><span class="p">,</span>
+        <span class="s1">'Programming Language :: Python'</span><span class="p">,</span>
+        <span class="c1"># Replace these appropriately if you are stuck on Python 2.</span>
+        <span class="s1">'Programming Language :: Python :: 3'</span><span class="p">,</span>
+        <span class="s1">'Programming Language :: Python :: 3.6'</span><span class="p">,</span>
+        <span class="s1">'Programming Language :: Python :: 3.7'</span><span class="p">,</span>
+        <span class="s1">'Topic :: Internet :: WWW/HTTP'</span><span class="p">,</span>
+        <span class="s1">'Topic :: Internet :: WWW/HTTP :: Dynamic Content'</span><span class="p">,</span>
+    <span class="p">],</span>
+<span class="p">)</span>
+</pre>
+ </div> 
+ <p>例子中的配置项看起来有点复杂，实际简单得不要不要的。耐心点，就完全不是问题。</p> 
+ <p>需要注意的是，如果你的readme文件中有中文，那么在setup.py文件的open方法中要指定<code>encoding='utf-8'</code>，否则会出现编码错误。</p> 
+ <h3>6. 创建MANIFEST文件</h3> 
+ <p>默认情况下，只有Python的模块和包会被打包进我们的app内。为了包含一些其它的文件，比如静态文件、templates模板等非Python语言编写的文件，需要创建一个<code>django-login-register/MANIFEST.in</code>文件，并写入下面的内容：</p> 
+ <div class="codehilite">
+  <pre><span></span>include LICENSE
+include README.rst
+recursive-include login/static *
+recursive-include login/templates *
+recursive-include docs *
+</pre>
+ </div> 
+ <h3>7. 添加doc目录</h3> 
+ <p>该步骤可选，但是强烈推荐将详细的说明文档一起打包。创建一个空的目录<code>django-login-register/docs</code>，用于放置app相关的所有文档。同时确认在<code>django-login-register/MANIFEST.in</code>文件内有一行<code>recursive-include docs *</code>。需要注意的是，如果docs目录是空的，那么它不会被打包进去。</p> 
+ <h3>8. 执行打包动作</h3> 
+ <p>在<code>django-login-register</code>目录内，运行<code>python setup.py sdist</code>命令。这将会创建一个dist目录，并生成<code>django-login-register-1.0.tar.gz</code>文件。同时生成一个<code>django_login_register.egg-info</code>文件夹。</p> 
+ <p>八个步骤完成了，我们的app也就打包好了。</p> 
+ <h2>二、使用打包好的app</h2> 
+ <p>实际使用时，我们只需要使用<code>django-login-register-1.0.tar.gz</code>这个文件就可以了。</p> 
+ <p>在安装包的时候，最好是以个人用户的身份安装，而不是全系统范围的身份。这样可以有效减少给别的用户带去的影响或被别的用户影响。当然，最好的方式是在virtualenv环境，这种类似隔离的沙盒环境中使用（此时，不需要<code>--user</code>选项）。</p> 
+ <p><strong>安装：</strong></p> 
+ <div class="codehilite">
+  <pre><span></span>pip install --user django-login-register-1.0.tar.gz
+</pre>
+ </div> 
+ <div class="codehilite">
+  <pre><span></span>(venv) D:\work\for_test\dj_test\venv\Scripts&gt;pip install d:\django-login-register-1.0.tar.gz
+Processing d:\django-login-register-1.0.tar.gz
+Installing collected packages: django-login-register
+  Running setup.py install for django-login-register ... done
+Successfully installed django-login-register-1.0
+
+(venv) D:\work\for_test\dj_test\venv\Scripts&gt;pip list
+Package               Version
+--------------------- ---------
+certifi               2018.8.13
+chardet               3.0.4
+Django                2.0.7
+django-login-register 1.0
+idna                  2.7
+Pillow                5.4.1
+pip                   10.0.1
+pytz                  2018.5
+requests              2.19.1
+setuptools            39.1.0
+urllib3               1.23
+</pre>
+ </div> 
+ <p>在windows中使用<code>--user</code>选项会将文件安装到你的用户目录，而不是python目录中，所以建议不使用这个选项。另外，windows下使用cmd命令行时候，记得使用管理员权限打开。</p> 
+ <p>在虚拟环境中使用pip安装的时候，一定要注意pip和Python的对应关系，所有的重点都是，你必须确保包被安装在了正确的位置。</p> 
+ <p>最后需要提醒的是，这种方式安装后，app的文件会放在Python环境的site-packages中，而不是以源代码的形式放在我们认为的项目中。我们可以import login，可以在settings中注册‘login’，但要修改login中的源码，则需要去site-packages中。</p> 
+ <p>一定要注意，pip安装的时候，使用的名字是django-login-register-1.0.tar.gz，而不是<code>pip install login</code>。实际使用中import的时候是‘import login’，而不是‘import django-login-register’。</p> 
+ <p>安装成功后，再安装依赖包django-simple-captcha等等，然后在新Django项目的<code>INSTALLED_APPS</code>设置中注册<code>login</code>和captcha，按照使用说明，添加路由，修改settings配置，创建数据表，链接新的index页面，然后启动服务器，就可以使用这个app了。</p> 
+ <p><strong>卸载方法：</strong></p> 
+ <div class="codehilite">
+  <pre><span></span>pip uninstall django-login-register
+</pre>
+ </div> 
+ <p>对于新手，一定要清楚的是：<strong>以使用一个第三方库的形式来重用这个app</strong></p> 
+ <p>重用的过程有些细节可能这里没有仔细说明，但都能见招拆招，解决起来并不麻烦，而且都是基本知识。</p> 
+ <h2>三、发布你的app</h2> 
+ <p>可以通过下面的方式发布你的app：</p> 
+ <ul> 
+  <li>通过邮件的形式将app发送给朋友</li> 
+  <li>将app上传到你的网站</li> 
+  <li>将app推送到一个公开的仓库，例如PyPI，github等。</li> 
+ </ul> 
+ <p>在https://packaging.python.org/distributing/#uploading-your-project-to-pypi中有如何上传到PyPI的教程。</p> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/115"> <i class="fa fa-arrow-left"></i>&nbsp;13. Github管理项目</a> 
+  <a class="float-right" href="/course/django/116"> 实战二：Django2.2之CMDB资产管理系统&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 9</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/277">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax4.sinaimg.cn/crop.0.0.996.996.50/007BdTgily8fzbps9owh0j30ro0roabv.jpg?KID=imgbed,tva&amp;Expires=1581862695&amp;ssig=QuGTBCPJoI" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>博主，打包安装后，import login 导入不了包，Python环境的site-packages里面有安装好的文件，是哪里有问题啊</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 北元2019 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年2月16日 19:21</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1905">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax2.sinaimg.cn/crop.0.0.479.479.50/0062WGOKly8g8i9t3ciy6j30db0db3zc.jpg?KID=imgbed,tva&amp;Expires=1577208181&amp;ssig=QQnadWObTM" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>做到这里真的是太开心了 假装自己发布了一个大项目 :happyface:</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 八合一大腹肌 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年12月27日 12:02</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1807">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva1.sinaimg.cn/crop.49.72.540.540.50/c488253bjw1e7mksfb0wtj20go0p1n26.jpg?KID=imgbed,tva&amp;Expires=1576497331&amp;ssig=xUVaviFZn9" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>标记-markup~~~ 顺利~~~ Go on~~</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 时光贝影 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年12月26日 16:41</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1802">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/default/images/default_avatar_male_50.gif?Expires=1565604483&amp;ssig=D2sCFKU%2BOM&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>博主，在打包的时候出现了 SyntaxError: Non-UTF-8 code starting with '\xb8' in file setup.py on line 18, but no encoding declared; see http://python.org/dev/peps/pep-0263/ for details 参考csdn的解决方案在setup.py文件开头添加 # coding=gbk 然后出现了这个错误 UnicodeDecodeError: 'utf-8' codec can't decode byte 0xb5 in position 44: invalid start byte 请问一下这个出错怎么解决</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户5534500230 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年8月20日 17:37</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1575">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?Expires=1566005137&amp;ssig=WT35MhxJ6H&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>如果你的readme文件中有中文，那么在setup.py文件的open方法中要指定encoding='utf-8'，否则会出现编码错误。 出现编码问题，一半原因是使用了中文。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 用户5534500230 </span> 
+      <em>2019年8月21日 10:46</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1576">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/default/images/default_avatar_male_50.gif?Expires=1563332894&amp;ssig=D6%2Fzy%2FJgK9&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>评论啥时候可以支持markdown呀?</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户0173110620 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年7月17日 10:09</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1478">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?Expires=1563275830&amp;ssig=bpp9YzPFp%2F&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>为了安全，暂不开放。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 用户0173110620 </span> 
+      <em>2019年7月17日 11:18</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1482">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/default/images/default_avatar_male_50.gif?Expires=1563332894&amp;ssig=D6%2Fzy%2FJgK9&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>`mysite/login目录中的所有内容拷贝到django-login-register目录内。`请问包含 login文件夹本身吗? 为什么`一定要注意，pip安装的时候，使用的名字是django-login-register-1.0.tar.gz，而不是pip install login。实际使用中import的时候是‘import login’，而不是‘import django-login-register’。`, 有点不太明白?</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户0173110620 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年7月17日 10:09</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1477">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?Expires=1563275830&amp;ssig=bpp9YzPFp%2F&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>两种情况你自己都尝试一下就明白了。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 用户0173110620 </span> 
+      <em>2019年7月17日 11:17</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1481">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

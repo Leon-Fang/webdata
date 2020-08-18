@@ -1,0 +1,239 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>实战二：Django2.2之CMDB资产管理系统</h1> 
+ <small>阅读:&nbsp;57128&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：10 </small> 
+ <hr> 
+ <h3><strong>全新升级！</strong></h3> 
+ <h3>项目基于<strong>Django2.2</strong>、<strong>Adminlet-2.4.10</strong>、Python3.7、Pycharm2018、windows10</h3> 
+ <h3>2019年4月重磅更新！同时推出相应的视频教程！</h3> 
+ <hr> 
+ <h2>一、概述</h2> 
+ <p>其实，一开始写这个实战项目，我是拒绝的，因为复杂，因为很多内容其实和Django无关，因为要考虑的问题太多。可是，如果不写一个有点含金量、贴近运维实际的项目，那么教程又流于形式，与一些不痛不痒的文章没什么区别。</p> 
+ <p><strong>说明：本项目不是一个完整的CMDB系统，主要针对其最重要的资产管理系统。</strong></p> 
+ <p>本实战项目主要是给大家提供一个基本思路和大致解决方案，而不是让你抄了代码就直接上线的。这里不考虑特别细的细节，也无法实现所有的业务逻辑，更不能作为考核的对象，所以请不要纠结这个地方应该是这样，那个地方不应该是那样的问题，而是关注原来CMDB是这么回事，可以通过哪种技术途径实现，大概要什么样的技术这些问题，主要的代码片段是哪些。</p> 
+ <p><strong>整个项目最麻烦的就是数据的规格性、合法性、完整性和数据类型的验证</strong>。不同的环境生成不同的数据，为了保证程序的健壮性，必须进行一系列的逻辑判断，这些都需要根据实际情况实际解决。作为一个教程的实战项目，不可能考虑得面面俱到，并且覆盖所有情况。<strong>这里我默认客户端发送过来的数据是规整的，数据类型是正确的</strong>。</p> 
+ <p><strong>重要说明：</strong></p> 
+ <ol> 
+  <li>默认你已经有了一定的Python和Django基础，否则请学习网站的相关部分内容；</li> 
+  <li>默认你具有一定的Linux操作系统基础，最好是运维人员；</li> 
+ </ol> 
+ <p>本项目的所有代码可以从Github上下载，地址为：</p> 
+ <div class="codehilite">
+  <pre><span></span>https://github.com/feixuelove1009/CMDB
+</pre>
+ </div> 
+ <p>在Linux下直接使用：</p> 
+ <div class="codehilite">
+  <pre><span></span>git clone https://github.com/feixuelove1009/CMDB
+</pre>
+ </div> 
+ <p>在Windows下，通过Pycharm就可下载，当然也可以使用git软件下载。</p> 
+ <h2>二、项目展示</h2> 
+ <p><strong>仪表盘：</strong></p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/116-1.png"></p> 
+ <p><strong>折叠状态的仪表盘：</strong></p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/116-2.png"></p> 
+ <p><strong>资产总表：</strong></p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/116-3.png"></p> 
+ <p><strong>侧边栏缩放的资产总表：</strong></p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/116-4.png"></p> 
+ <p><strong>资产详细表一：</strong></p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/116-5.png"></p> 
+ <p><strong>资产详细表二：</strong></p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/116-6.png"></p> 
+ <p>项目的前端使用的是开源的AdminLTE 2.4.10模板，不仅美观大方，而且基于Bootstrap的特性，对移动设备和小屏端有很好的支持。</p> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/277"> <i class="fa fa-arrow-left"></i>&nbsp;14. 重用app</a> 
+  <a class="float-right" href="/course/django/117"> 1.项目需求分析&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 10</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/116">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif?KID=imgbed,tva&amp;Expires=1588221367&amp;ssig=UP1avoRhwC" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>这个图文的和视频中讲的有什么不一样的吗</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 卝棑屾 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年4月30日 17:39</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2057">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva2.sinaimg.cn/crop.0.0.180.180.50/88d81163jw8f3lpqro6w3j2050050wer.jpg?KID=imgbed,tva&amp;Expires=1566808210&amp;ssig=Dct%2BnjLhWs" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>不错，又更新了！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; DuoyiChen </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年8月26日 13:34</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1591">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.0.0.996.996.50/007FOjP8ly8g110pu8dzvj30ro0ron0h.jpg?Expires=1563287325&amp;ssig=grQrexy228&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>做完两个项目基本，可以找工作了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 墨古_10734 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年7月18日 17:04</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1497">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif?KID=imgbed,tva&amp;Expires=1573115759&amp;ssig=YTg7ZqA54P" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>找到工作了？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 飞人小e &nbsp;&nbsp;回复&nbsp;&nbsp; 墨古_10734 </span> 
+      <em>2019年11月7日 13:36</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1702">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>为什么我再ubuntu中把您的程序下载下来后按着步骤操作，最后访问网页的时候显示File "/home/mingyuegx/Desktop/liujiangblog_project_2/assets/views.py", line 23, in dashboard up_rate = round(upline/total*100) ZeroDivisionError: division by zero</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 明跃高悬 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年4月9日 22:20</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/368">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>问题解决了，是我自己没有新建数据，多以不能显示。再次谢谢作者的教程，对我的帮助很大。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 明跃高悬 &nbsp;&nbsp;回复&nbsp;&nbsp; 明跃高悬 </span> 
+      <em>2018年4月9日 22:50</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/369">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif?KID=imgbed,tva&amp;Expires=1594007976&amp;ssig=cOSSrjEygV" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>为了避免除数是0，我把total*100 改为了（total*100 + 0.001）</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 用户5352955166 &nbsp;&nbsp;回复&nbsp;&nbsp; 明跃高悬 </span> 
+      <em>2020年7月6日 09:02</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2128">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.960.960.50/006xIWURly8fo9wxo24vzj30qo0qoaaz.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>感觉这个实例有点复杂。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 蔷薇-Nina </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年3月14日 23:57</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/307">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>建立一个有用户账号管理的CMDB系统。楼主能否给一个推荐的项目目录结构啊？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 罗西奥拓 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年1月16日 09:35</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/127">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.426.66.1066.1066.50/005EMUrrly8flohkwuo2uj31hc0xce81.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>有又更新了！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; wenlei890929 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2017年11月29日 17:15</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/68">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

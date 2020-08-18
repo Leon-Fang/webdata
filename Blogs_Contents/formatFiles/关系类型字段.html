@@ -1,0 +1,783 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>关系类型字段</h1> 
+ <small>阅读:&nbsp;70194&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：27 </small> 
+ <hr> 
+ <p>除了我们前面说过的普通类型字段，Django还定义了一组关系类型字段，用来表示模型与模型之间的关系。</p> 
+ <h2>一、多对一（ForeignKey）</h2> 
+ <p>多对一的关系，通常被称为外键。外键字段类的定义如下：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kr">class</span> <span class="nx">ForeignKey</span><span class="p">(</span><span class="nx">to</span><span class="p">,</span> <span class="nx">on_delete</span><span class="p">,</span> <span class="o">**</span><span class="nx">options</span><span class="p">)[</span><span class="nx">source</span><span class="p">]</span>
+</pre>
+ </div> 
+ <p>外键需要两个位置参数，一个是关联的模型，另一个是<code>on_delete</code>选项。实际上，在目前版本中，<code>on_delete</code>选项也可以不设置，但Django极力反对如此，因此在Django2.0版本后，该选项会设置为必填。</p> 
+ <p><strong>外键要定义在‘多’的一方！</strong></p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
+
+<span class="k">class</span> <span class="nc">Car</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">manufacturer</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="s1">'Manufacturer'</span><span class="p">,</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># ...</span>
+
+<span class="k">class</span> <span class="nc">Manufacturer</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="c1"># ...</span>
+    <span class="k">pass</span>
+</pre>
+ </div> 
+ <p>上面的例子中，每辆车都会有一个生产工厂，一个工厂可以生产N辆车，于是用一个外键字段manufacturer表示，并放在Car模型中。注意，此manufacturer非彼Manufacturer模型类，它是一个字段的名称。在Django的模型定义中，经常出现类似的英文单词大小写不同，一定要注意区分！</p> 
+ <p>如果要关联的对象在另外一个app中，可以显式的指出。下例假设Manufacturer模型存在于production这个app中，则Car模型的定义如下：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="k">class</span> <span class="nc">Car</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">manufacturer</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="s1">'production.Manufacturer'</span><span class="p">,</span>      <span class="c1"># 关键在这里！！</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">,</span>
+    <span class="p">)</span>
+</pre>
+ </div> 
+ <p>如果要创建一个递归的外键，也就是自己关联自己的的外键，使用下面的方法：</p> 
+ <div class="codehilite">
+  <pre><span></span>models.ForeignKey('self', on_delete=models.CASCADE)
+</pre>
+ </div> 
+ <p>核心在于‘self’这个引用。什么时候需要自己引用自己的外键呢？典型的例子就是评论系统！一条评论可以被很多人继续评论，如下所示：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="k">class</span> <span class="nc">Comment</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">title</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">128</span><span class="p">)</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">TextField</span><span class="p">()</span>
+    <span class="n">parent_comment</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="s1">'self'</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
+    <span class="c1"># .....</span>
+</pre>
+ </div> 
+ <p>注意上面的外键字段定义的是父评论，而不是子评论。为什么呢？因为外键要放在‘多’的一方！</p> 
+ <p>在实际的数据库后台，Django会为每一个外键添加<code>_id</code>后缀，并以此创建数据表里的一列。在上面的工厂与车的例子中，Car模型对应的数据表中，会有一列叫做<code>manufacturer_id</code>。但实际上，在Django代码中你不需要使用这个列名，除非你书写原生的SQL语句，一般我们都直接使用字段名<code>manufacturer</code>。</p> 
+ <p>关系字段的定义还有个小坑。在后面我们会讲到的<code>verbose_name</code>参数用于设置字段的别名。很多情况下，为了方便，我们都会设置这么个值，并且作为字段的第一位置参数。但是对于关系字段，其第一位置参数永远是关系对象，不能是<code>verbose_name</code>，一定要注意！</p> 
+ <h3>参数说明：</h3> 
+ <p>外键还有一些重要的参数，说明如下：</p> 
+ <h3>on_delete</h3> 
+ <p><strong>注意：这个参数在Django2.0之后，不可以省略了，需要显式的指定！这也是除了路由编写方式外，Django2和Django1.x最大的不同点之一！</strong></p> 
+ <p>当一个被外键关联的对象被删除时，Django将模仿<code>on_delete</code>参数定义的SQL约束执行相应操作。比如，你有一个可为空的外键，并且你想让它在关联的对象被删除时，自动设为null，可以如下定义：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="n">user</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+    <span class="n">User</span><span class="p">,</span>
+    <span class="n">models</span><span class="o">.</span><span class="n">SET_NULL</span><span class="p">,</span>
+    <span class="n">blank</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+    <span class="n">null</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+<span class="p">)</span>
+</pre>
+ </div> 
+ <p>该参数可选的值都内置在<code>django.db.models</code>中，包括：</p> 
+ <ul> 
+  <li>CASCADE：模拟SQL语言中的<code>ON DELETE CASCADE</code>约束，将定义有外键的模型对象同时删除！（该操作为当前Django版本的默认操作！）</li> 
+  <li>PROTECT:阻止上面的删除操作，但是弹出<code>ProtectedError</code>异常</li> 
+  <li>SET_NULL：将外键字段设为null，只有当字段设置了<code>null=True</code>时，方可使用该值。</li> 
+  <li>SET_DEFAULT:将外键字段设为默认值。只有当字段设置了default参数时，方可使用。</li> 
+  <li>DO_NOTHING：什么也不做。</li> 
+  <li>SET()：设置为一个传递给SET()的值或者一个回调函数的返回值。注意大小写。</li> 
+ </ul> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.conf</span> <span class="kn">import</span> <span class="n">settings</span>
+<span class="kn">from</span> <span class="nn">django.contrib.auth</span> <span class="kn">import</span> <span class="n">get_user_model</span>
+<span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
+
+<span class="k">def</span> <span class="nf">get_sentinel_user</span><span class="p">():</span>
+    <span class="k">return</span> <span class="n">get_user_model</span><span class="p">()</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get_or_create</span><span class="p">(</span><span class="n">username</span><span class="o">=</span><span class="s1">'deleted'</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+<span class="k">class</span> <span class="nc">MyModel</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">user</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="n">settings</span><span class="o">.</span><span class="n">AUTH_USER_MODEL</span><span class="p">,</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">SET</span><span class="p">(</span><span class="n">get_sentinel_user</span><span class="p">),</span>
+    <span class="p">)</span>
+</pre>
+ </div> 
+ <h3>limit_choices_to</h3> 
+ <p>该参数用于限制外键所能关联的对象，只能用于Django的ModelForm（Django的表单模块）和admin后台，对其它场合无限制功能。其值可以是一个字典、Q对象或者一个返回字典或Q对象的函数调用，如下例所示：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="n">staff_member</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+    <span class="n">User</span><span class="p">,</span>
+    <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">,</span>
+    <span class="n">limit_choices_to</span><span class="o">=</span><span class="p">{</span><span class="s1">'is_staff'</span><span class="p">:</span> <span class="bp">True</span><span class="p">},</span>
+<span class="p">)</span>
+</pre>
+ </div> 
+ <p>这样定义，则ModelForm的<code>staff_member</code>字段列表中，只会出现那些<code>is_staff=True</code>的Users对象，这一功能对于admin后台非常有用。</p> 
+ <p>可以参考下面的方式，使用函数调用：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="k">def</span> <span class="nf">limit_pub_date_choices</span><span class="p">():</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s1">'pub_date__lte'</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="o">.</span><span class="n">utcnow</span><span class="p">()}</span>
+
+<span class="c1"># ...</span>
+<span class="n">limit_choices_to</span> <span class="o">=</span> <span class="n">limit_pub_date_choices</span>
+<span class="c1"># ...</span>
+</pre>
+ </div> 
+ <h3>related_name</h3> 
+ <p>用于关联对象反向引用模型的名称。以前面车和工厂的例子解释，就是从工厂反向关联到车的关系名称。</p> 
+ <p>通常情况下，这个参数我们可以不设置，Django会默认以模型的小写加上<code>_set</code>作为反向关联名，比如对于工厂就是<code>car_set</code>，如果你觉得<code>car_set</code>还不够直观，可以如下定义：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="k">class</span> <span class="nc">Car</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">manufacturer</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="s1">'production.Manufacturer'</span><span class="p">,</span>      
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s1">'car_producted_by_this_manufacturer'</span><span class="p">,</span>  <span class="c1"># 看这里！！</span>
+    <span class="p">)</span>
+</pre>
+ </div> 
+ <p>也许我定义了一个蹩脚的词，但表达的意思很清楚。以后从工厂对象反向关联到它所生产的汽车，就可以使用<code>maufacturer.car_producted_by_this_manufacturer</code>了。</p> 
+ <p>如果你不想为外键设置一个反向关联名称，可以将这个参数设置为“+”或者以“+”结尾，如下所示：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="n">user</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+    <span class="n">User</span><span class="p">,</span>
+    <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">,</span>
+    <span class="n">related_name</span><span class="o">=</span><span class="s1">'+'</span><span class="p">,</span>
+<span class="p">)</span>
+</pre>
+ </div> 
+ <h3>related_query_name</h3> 
+ <p>反向关联查询名。用于从目标模型反向过滤模型对象的名称。（过滤和查询在后续章节会介绍）</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="k">class</span> <span class="nc">Tag</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">article</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="n">Article</span><span class="p">,</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s2">"tags"</span><span class="p">,</span>
+        <span class="n">related_query_name</span><span class="o">=</span><span class="s2">"tag"</span><span class="p">,</span>       <span class="c1"># 注意这一行</span>
+    <span class="p">)</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">255</span><span class="p">)</span>
+
+<span class="c1"># 现在可以使用‘tag’作为查询名了</span>
+<span class="n">Article</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">tag__name</span><span class="o">=</span><span class="s2">"important"</span><span class="p">)</span>
+</pre>
+ </div> 
+ <h3>to_field</h3> 
+ <p>默认情况下，外键都是关联到被关联对象的主键上（一般为id）。如果指定这个参数，可以关联到指定的字段上，但是该字段必须具有<code>unique=True</code>属性，也就是具有唯一属性。</p> 
+ <h3>db_constraint</h3> 
+ <p>默认情况下，这个参数被设为True，表示遵循数据库约束，这也是大多数情况下你的选择。如果设为False，那么将无法保证数据的完整性和合法性。在下面的场景中，你可能需要将它设置为False：</p> 
+ <ul> 
+  <li>有历史遗留的不合法数据，没办法的选择</li> 
+  <li>你正在分割数据表</li> 
+ </ul> 
+ <p>当它为False，并且你试图访问一个不存在的关系对象时，会抛出DoesNotExist 异常。</p> 
+ <h3>swappable</h3> 
+ <p>控制迁移框架的动作，如果当前外键指向一个可交换的模型。使用场景非常稀少，通常请将该参数保持默认的True。</p> 
+ <h2>二、多对多（ManyToManyField）</h2> 
+ <p>多对多关系在数据库中也是非常常见的关系类型。比如一本书可以有好几个作者，一个作者也可以写好几本书。多对多的字段可以定义在任何的一方，请尽量定义在符合人们思维习惯的一方，但不要同时都定义。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kr">class</span> <span class="nx">ManyToManyField</span><span class="p">(</span><span class="nx">to</span><span class="p">,</span> <span class="o">**</span><span class="nx">options</span><span class="p">)[</span><span class="nx">source</span><span class="p">]</span>
+</pre>
+ </div> 
+ <p>多对多关系需要一个位置参数：关联的对象模型。它的用法和外键多对一基本类似。</p> 
+ <p><strong>在数据库后台，Django实际上会额外创建一张用于体现多对多关系的中间表</strong>。默认情况下，该表的名称是“多对多字段名+关联对象模型名+一个独一无二的哈希码”，例如‘author_books_9cdf4’，当然你也可以通过<code>db_table</code>选项，自定义表名。</p> 
+ <h3>参数说明：</h3> 
+ <h3>related_name</h3> 
+ <p>参考外键的相同参数。</p> 
+ <h3>related_query_name</h3> 
+ <p>参考外键的相同参数。</p> 
+ <h3>limit_choices_to</h3> 
+ <p>参考外键的相同参数。但是对于使用<code>through</code>参数自定义中间表的多对多字段无效。</p> 
+ <h3>symmetrical</h3> 
+ <p>默认情况下，Django中的多对多关系是对称的。看下面的例子：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
+
+<span class="k">class</span> <span class="nc">Person</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">friends</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span><span class="s2">"self"</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>Django认为，如果我是你的朋友，那么你也是我的朋友，这是一种对称关系，Django不会为Person模型添加<code>person_set</code>属性用于反向关联。如果你不想使用这种对称关系，可以将symmetrical设置为False，这将强制Django为反向关联添加描述符。</p> 
+ <h3>through</h3> 
+ <h3>（定义中间表）</h3> 
+ <p>如果你想自定义多对多关系的那张额外的关联表，可以使用这个参数！参数的值为一个中间模型。</p> 
+ <p>最常见的使用场景是你需要为多对多关系添加额外的数据，比如两个人建立QQ好友的时间。</p> 
+ <p>通常情况下，这张表在数据库内的结构是这个样子的：</p> 
+ <div class="codehilite">
+  <pre><span></span>中间表的id列....模型对象的id列.....被关联对象的id列
+# 各行数据
+</pre>
+ </div> 
+ <p>如果自定义中间表并添加时间字段，则在数据库内的表结构如下：</p> 
+ <div class="codehilite">
+  <pre><span></span>中间表的id列....模型对象的id列.....被关联对象的id列.....时间对象列
+# 各行数据
+</pre>
+ </div> 
+ <p>看下面的例子：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
+
+<span class="k">class</span> <span class="nc">Person</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">Group</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">128</span><span class="p">)</span>
+    <span class="n">members</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span>
+        <span class="n">Person</span><span class="p">,</span>
+        <span class="n">through</span><span class="o">=</span><span class="s1">'Membership'</span><span class="p">,</span>       <span class="c1">## 自定义中间表</span>
+        <span class="n">through_fields</span><span class="o">=</span><span class="p">(</span><span class="s1">'group'</span><span class="p">,</span> <span class="s1">'person'</span><span class="p">),</span>
+    <span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">Membership</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>  <span class="c1"># 这就是具体的中间表模型</span>
+    <span class="n">group</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Group</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
+    <span class="n">person</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Person</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
+    <span class="n">inviter</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="n">Person</span><span class="p">,</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s2">"membership_invites"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">invite_reason</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">64</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>上面的代码中，通过<code>class Membership(models.Model)</code>定义了一个新的模型，用来保存Person和Group模型的多对多关系，并且同时增加了‘邀请人’和‘邀请原因’的字段。</p> 
+ <p><strong>through参数在某些使用场景中是必须的，至关重要，请务必掌握！</strong></p> 
+ <h3>through_fields</h3> 
+ <p>接着上面的例子。Membership模型中包含两个关联Person的外键，Django无法确定到底使用哪个作为和Group关联的对象。所以，在这个例子中，必须显式的指定<code>through_fields</code>参数，用于定义关系。</p> 
+ <p><code>through_fields</code>参数接收一个二元元组('field1', 'field2')，field1是指向定义有多对多关系的模型的外键字段的名称，这里是Membership中的‘group’字段（注意大小写），另外一个则是指向目标模型的外键字段的名称，这里是Membership中的‘person’，而不是‘inviter’。</p> 
+ <p>再通俗的说，就是<code>through_fields</code>参数指定从中间表模型Membership中选择哪两个字段，作为关系连接字段。</p> 
+ <h3>db_table</h3> 
+ <p>设置中间表的名称。不指定的话，则使用默认值。</p> 
+ <h3>db_constraint</h3> 
+ <p>参考外键的相同参数。</p> 
+ <h3>swappable</h3> 
+ <p>参考外键的相同参数。</p> 
+ <p><strong>ManyToManyField多对多字段不支持Django内置的validators验证功能。</strong></p> 
+ <p><strong>null参数对ManyToManyField多对多字段无效！设置null=True毫无意义</strong></p> 
+ <h2>三、一对一（OneToOneField）</h2> 
+ <p>一对一关系类型的定义如下：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kr">class</span> <span class="nx">OneToOneField</span><span class="p">(</span><span class="nx">to</span><span class="p">,</span> <span class="nx">on_delete</span><span class="p">,</span> <span class="nx">parent_link</span><span class="o">=</span><span class="nx">False</span><span class="p">,</span> <span class="o">**</span><span class="nx">options</span><span class="p">)[</span><span class="nx">source</span><span class="p">]</span>
+</pre>
+ </div> 
+ <p>从概念上讲，一对一关系非常类似具有<code>unique=True</code>属性的外键关系，但是反向关联对象只有一个。这种关系类型多数用于当一个模型需要从别的模型扩展而来的情况。比如，Django自带auth模块的User用户表，如果你想在自己的项目里创建用户模型，又想方便的使用Django的认证功能，那么一个比较好的方案就是在你的用户模型里，使用一对一关系，添加一个与auth模块User模型的关联字段。</p> 
+ <p>该关系的第一位置参数为关联的模型，其用法和前面的多对一外键一样。</p> 
+ <p>如果你没有给一对一关系设置<code>related_name</code>参数，Django将使用当前模型的小写名作为默认值。</p> 
+ <p>看下面的例子：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.conf</span> <span class="kn">import</span> <span class="n">settings</span>
+<span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
+
+<span class="c1"># 两个字段都使用一对一关联到了Django内置的auth模块中的User模型</span>
+<span class="k">class</span> <span class="nc">MySpecialUser</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">user</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">OneToOneField</span><span class="p">(</span>
+        <span class="n">settings</span><span class="o">.</span><span class="n">AUTH_USER_MODEL</span><span class="p">,</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">supervisor</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">OneToOneField</span><span class="p">(</span>
+        <span class="n">settings</span><span class="o">.</span><span class="n">AUTH_USER_MODEL</span><span class="p">,</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s1">'supervisor_of'</span><span class="p">,</span>
+    <span class="p">)</span>
+</pre>
+ </div> 
+ <p>这样下来，你的User模型将拥有下面的属性：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; user = User.objects.get(pk=1)
+&gt;&gt;&gt; hasattr(user, 'myspecialuser')
+True
+&gt;&gt;&gt; hasattr(user, 'supervisor_of')
+True
+</pre>
+ </div> 
+ <p>OneToOneField一对一关系拥有和多对一外键关系一样的额外可选参数，只是多了一个parent_link参数。</p> 
+ <hr> 
+ <p>跨模块的模型：</p> 
+ <p>有时候，我们关联的模型并不在当前模型的文件内，没关系，就像我们导入第三方库一样的从别的模块内导入进来就好，如下例所示：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
+<span class="kn">from</span> <span class="nn">geography.models</span> <span class="kn">import</span> <span class="n">ZipCode</span>
+
+<span class="k">class</span> <span class="nc">Restaurant</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="c1"># ...</span>
+    <span class="n">zip_code</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="n">ZipCode</span><span class="p">,</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">SET_NULL</span><span class="p">,</span>
+        <span class="n">blank</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+        <span class="n">null</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+    <span class="p">)</span>
+</pre>
+ </div> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/95"> <i class="fa fa-arrow-left"></i>&nbsp;模型和字段</a> 
+  <a class="float-right" href="/course/django/97"> 字段的参数&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 27</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/96">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.0.0.996.996.50/006xIWURly8gehjmghiqfj30ro0roq53.jpg?KID=imgbed,tva&amp;Expires=1591289035&amp;ssig=NX%2BU5OBrH%2F" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>博主，OneToOneField可以理解成继承吗？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 蔷薇-Nina </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年6月6日 23:07</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2102">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_female_50.gif?KID=imgbed,tva&amp;Expires=1581932817&amp;ssig=YounANkeQn" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>为什么这个User没有定义？需要导入什么吗？ 作者麻烦解释一下 Traceback (most recent call last): File "&lt;input&gt;", line 1, in &lt;module&gt; NameError: name 'User' is not defined</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户6976047326 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年3月1日 14:26</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1930">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.996.996.50/006lshPKly8foh3gs90l9j30ro0roabz.jpg?Expires=1564115408&amp;ssig=QZQosFqDKw&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>models.CASCADE 后面用不用加（） ？？？ 在pycharm中自动补全中后面有括号</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 里丶拉 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年7月26日 11:31</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1521">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?Expires=1564021609&amp;ssig=sDnqEcPtge&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>不能加。IDE自动补全不是万能的</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 里丶拉 </span> 
+      <em>2019年7月27日 08:54</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1523">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.667.667.50/005LQChzly8ftiffa4ixvj30ij0ijgmo.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>“而不是子评论。为什么呢？因为外键要放在‘多’的一方！” 为什么 父评论 是比较多的一方 ？ 能解释一下吗 ？谢谢</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 还不错的Tarzan </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年6月4日 09:51</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1383">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>一个父评论下可以有多个子评论，而一个子评论只能属于某个特定的父评论，所以这是个外键，一对多的关系。并且子评论是多的一方，父评论是‘一’的一方。根据Django模型的定义原则，外键放在多的一方。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 还不错的Tarzan </span> 
+      <em>2019年6月6日 10:25</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1391">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.1080.1080.50/006xIWURly8g3w3jk5kmcj30u00u03zs.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>如果你仔细推敲原文，其实博主没写错。只不过初学者会觉得文中有点饶，容易误解而已。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 蔷薇-Nina &nbsp;&nbsp;回复&nbsp;&nbsp; 还不错的Tarzan </span> 
+      <em>2019年6月11日 23:26</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1399">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.0.170.170.50/006tWIPVjw8f48jgpx676j304q04qt8h.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>老师，related_name小节下面第二行是不是写错了？Django应该是默认以模型的小写+‘_set'作为反向关联名吧？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; Zzz321A </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年4月7日 10:03</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1227">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.960.960.50/006xIWURly8fymbr91qcaj30qo0qo40k.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>你说得对。博主没有细说这个。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 蔷薇-Nina &nbsp;&nbsp;回复&nbsp;&nbsp; Zzz321A </span> 
+      <em>2019年6月11日 23:21</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1398">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva4.sinaimg.cn/crop.40.1.454.454.50/c31d03b6jw1ete01z7zl5j20eo0crmyp.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>感觉写了很多平时根本用不到的内容。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 御前四品带刀展护卫 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年3月6日 16:41</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1118">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.996.996.50/006SrEWNly8fzbt02svrsj30ro0ro0zu.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>博主前面说过，“参考书式的讲解，可能比较晦涩，但绝对是你入门之后，最好的帮手，我们可以时不时，在需要的情况下，回头再翻翻，然后恍然大悟”，这篇教程是像字典那样把知识点罗列起来，很多字可能确实不常用，但是你以后遇到了可以来这里查看是什么意思。你觉得没用，不深究就行了，快速带过。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 学到老单到老 &nbsp;&nbsp;回复&nbsp;&nbsp; 御前四品带刀展护卫 </span> 
+      <em>2019年5月29日 17:33</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1362">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva1.sinaimg.cn/crop.0.0.180.180.50/59bd64d7jw1e8qgp5bmzyj2050050aa8.jpg?KID=imgbed,tva&amp;Expires=1582614437&amp;ssig=Zs%2BojNF9QX" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>你们俩说的都有道理。我看第一遍的时候傻乎乎地一个个细节都从头看到尾，有一点不懂我就觉得好痛苦。 现在觉得应该是好读书不求甚解。我也打算挑重点看，不重要的晦涩的东西就一遍过，知道一个大概，留下一个印象就好了。加油，fighting！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 定期换名字啦啦 &nbsp;&nbsp;回复&nbsp;&nbsp; 学到老单到老 </span> 
+      <em>2020年2月25日 12:09</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1920">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>django2.0.1+xadmin，在models中，A类有a,b,c三个CharField类型字段，B类中d,外键关联ForeignKey，关联到指定的字段b或c，咋关联啊？d就自动关联到a字段的值了。跪求老师和在座的各位大神们，帮忙解答下，实在没办法了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 茶卡幻想 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年7月11日 00:27</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/565">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/default/images/default_avatar_female_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>ForeignKey('User')和ForeignKey(User)有什么区别呢，感觉应该是一样的呀</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; tonylaw114 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年5月18日 00:24</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/487">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.0.0.996.996.50/0080wR24ly8gay1c9vm0gj30ro0ro406.jpg?KID=imgbed,tva&amp;Expires=1581257699&amp;ssig=NpbGp5qG09" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>加引号时User模型可以在引用的模型之后，不加引号的话只能在前边先定义好User</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 小德没尾巴 &nbsp;&nbsp;回复&nbsp;&nbsp; tonylaw114 </span> 
+      <em>2020年2月9日 19:15</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1874">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.180.180.50/67179639jw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>through段落倒数第二句: ‘邀请时间’的字段。 应该是"邀请原因"的字段.~</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 孤竹孙 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年5月5日 10:57</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/435">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.0.2.1125.1125.50/006ag9fjly8fngkfmdwz8j30v90vejuq.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>请问博主，假如我有一个5行*6列的表，其中有的行 每一列都有数据，有的行只有其中3列有数据。那么在adminsite显示的时候，可否让那些没有值的charfield不显示呢？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; Littlesoldier1996 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年3月24日 04:47</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/326">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>参考http://www.liujiangblog.com/course/django/158</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; Littlesoldier1996 </span> 
+      <em>2018年3月24日 09:59</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/327">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.0.2.1125.1125.50/006ag9fjly8fngkfmdwz8j30v90vejuq.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>博主您好，我看了您发给我的链接。其中exclude可以不显示某一特定的列，但是我想实现的是仅显示一列中有值的内容，而不显示没有值的内容。请问用什么方法可以做到呢？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> Littlesoldier1996 &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2018年3月28日 00:15</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/335">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 12em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>ModelAdmin.empty_value_display</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; Littlesoldier1996 </span> 
+      <em>2018年3月28日 09:02</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/336">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 16em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.0.2.1125.1125.50/006ag9fjly8fngkfmdwz8j30v90vejuq.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>谢谢您的回复。但是我查到的关于empty_value_display的用法只是说这个可以改变empty value的显示形式（比如‘None’或者其他自定义形式）但是没有说可以不显示，请问是需要override这个类吗？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> Littlesoldier1996 &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2018年3月28日 17:22</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/339">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 20em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>灵活一下...</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; Littlesoldier1996 </span> 
+      <em>2018年3月29日 08:32</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/342">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva3.sinaimg.cn/crop.0.0.180.180.50/8ceed1a9jw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>测试</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 鸭蛋石Leo &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2018年9月17日 10:13</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/733">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.960.960.50/006xIWURly8fo9wxo24vzj30qo0qoaaz.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>为什么models.OneToOneField(to=User)，若加上参数to_field=User.name则报错？（注：User.name已设为唯一约束）</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 蔷薇-Nina </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年3月12日 22:32</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/299">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>问题描述不清晰。根据报错信息具体分析吧。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 蔷薇-Nina </span> 
+      <em>2018年3月13日 08:34</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/302">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>对应mysql外键的on delete， on update 关键字</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 王蕾-wl </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年1月22日 11:31</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/148">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>没有</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 王蕾-wl </span> 
+      <em>2018年1月22日 21:57</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/149">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

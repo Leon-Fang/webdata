@@ -1,0 +1,1145 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>Part 1：请求与响应</h1> 
+ <small>阅读:&nbsp;186292&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：56 </small> 
+ <hr> 
+ <h2>一、 新建项目</h2> 
+ <p>进入你期望的项目保存目录，运行下面的命令：</p> 
+ <div class="codehilite">
+  <pre><span></span>$ django-admin startproject mysite
+</pre>
+ </div> 
+ <p>这将在目录下生成一个mysite目录，也就是你的这个Django项目的根目录。它包含了一系列自动生成的目录和文件，具备各自专有的用途。</p> 
+ <p>注意：在给项目命名的时候必须避开Django和Python的保留关键字，比如“django”，“test”等，否则会引起冲突和莫名的错误。对于mysite的放置位置，不建议放在传统的/var/wwww目录下，它会具有一定的数据暴露危险，因此Django建议你将项目文件放在例如/home/mycode类似的位置。</p> 
+ <p>一个新建立的项目结构大概如下：</p> 
+ <div class="codehilite">
+  <pre><span></span>mysite/
+    manage.py
+    mysite/
+        __init__.py
+        settings.py
+        urls.py
+        wsgi.py
+</pre>
+ </div> 
+ <p>各文件和目录解释：</p> 
+ <ul> 
+  <li>外层的<code>mysite/</code>目录与Django无关，只是你项目的容器，可以任意重命名。</li> 
+  <li><code>manage.py</code>：一个命令行工具，用于与Django进行不同方式的交互脚本，非常重要！</li> 
+  <li>内层的<code>mysite/</code>目录是真正的项目文件包裹目录，它的名字是你引用内部文件的包名，例如：<code>mysite.urls</code>。</li> 
+  <li><code>mysite/__init__.py</code>:一个定义包的空文件。</li> 
+  <li><code>mysite/settings.py</code>:项目的主配置文件，非常重要！</li> 
+  <li><code>mysite/urls.py</code>:路由文件，所有的任务都是从这里开始分配，相当于Django驱动站点的内容表格，非常重要！</li> 
+  <li><code>mysite/wsgi.py</code>:一个基于WSGI的web服务器进入点，提供底层的网络通信功能，通常不用关心。</li> 
+ </ul> 
+ <p><strong>PS：</strong>这一部分，我们可以在Pycharm环境下进行，参考上节内容。</p> 
+ <h2>二、 启动开发服务器</h2> 
+ <p>进入mystie项目的根目录，输入下面的命令：</p> 
+ <div class="codehilite">
+  <pre><span></span>$ python manage.py runserver
+</pre>
+ </div> 
+ <p>你会看到下面的提示，这表明Django的开发服务器已经启动，开始提供Web服务了：</p> 
+ <div class="codehilite">
+  <pre><span></span>Performing system checks...
+
+System check identified no issues (0 silenced).
+
+You have unapplied migrations; your app may not work properly until they are applied.
+Run 'python manage.py migrate' to apply them.
+
+四月 17, 2019 - 15:50:53
+Django version 2.2, using settings 'mysite.settings'
+Starting development server at [http://127.0.0.1:8000/](http://127.0.0.1:8000/)
+Quit the server with CONTROL-C.&lt;/pre&gt;
+</pre>
+ </div> 
+ <p><strong>Django提供了一个用于开发的web服务器，使你无需配置一个类似Ngnix的生产服务器，就能让站点运行起来。</strong>这是一个由Python编写的轻量级服务器，简易并且不安全，因此不要将它用于生产环境。 </p> 
+ <p>打开浏览器，访问<code>http://127.0.0.1:8000/</code>，你将看到Django的火箭欢迎界面，一切OK！</p> 
+ <p>Django的开发服务器（以后简称服务器）默认运行在内部的8000端口，如果你想指定端口，请在命令中显示给出：</p> 
+ <div class="codehilite">
+  <pre><span></span>$ python manage.py runserver <span class="m">8080</span>
+</pre>
+ </div> 
+ <p>如果想修改服务器的ip地址，请按下面的方式运行命令，比如：</p> 
+ <div class="codehilite">
+  <pre><span></span>$ python manage.py runserver <span class="m">0</span>:8000
+</pre>
+ </div> 
+ <p>0 是 0.0.0.0 的简写，Django将运行在0.0.0.0:8000上，整个局域网内都将可以访问站点，而不只是是本机。</p> 
+ <p>注意： <strong>Django的开发服务器具有自动重载功能，当你的代码有修改，每隔一段时间服务器将自动更新。</strong>但是，有一些例如增加文件的动作，不会触发服务器重载，这时就需要你自己手动重启。</p> 
+ <p>PS: 这一步操作在Pycharm里只需要简单地按下绿色三角：</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/87-1.png"></p> 
+ <h2>三、 创建投票应用(app)</h2> 
+ <p>在 Django 中，每一个应用（app）都是一个 Python 包，并且遵循着相同的约定。Django 自带一个工具，可以帮你生成应用的基础目录结构。</p> 
+ <p>app应用与project项目的区别：</p> 
+ <ul> 
+  <li>一个app实现某个功能，比如博客、公共档案数据库或者简单的投票系统；</li> 
+  <li>一个project是配置文件和多个app的集合，这些app组合成整个站点；</li> 
+  <li>一个project可以包含多个app；</li> 
+  <li>一个app可以属于多个project！</li> 
+ </ul> 
+ <p>app的存放位置可以是任何地点，但是通常都将它们放在与<code>manage.py</code>脚本同级的目录下，这样方便导入文件。</p> 
+ <p>进入mysite项目根目录，确保与<code>manage.py</code>文件处于同一级，输入下述命令：</p> 
+ <p><code>$ python manage.py startapp polls</code></p> 
+ <p>系统会自动生成 polls应用的目录，其结构如下：</p> 
+ <div class="codehilite">
+  <pre><span></span>polls/
+    __init__.py
+    admin.py
+    apps.py
+    migrations/
+        __init__.py
+    models.py
+    tests.py
+    views.py
+</pre>
+ </div> 
+ <p>在Pycharm中，没有可以创建app的图形化按钮，需要在下方的<code>Terminal</code>终端中输入命令：</p> 
+ <div class="codehilite">
+  <pre><span></span>python manage.py startapp polls
+</pre>
+ </div> 
+ <p>这样也能创建polls应用。</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/87-2.png"></p> 
+ <p>通过前面在Pycharm中创建工程的方式有个方便之处，点击Terminal后，会自动进入虚拟环境。</p> 
+ <h2>四、编写第一个视图</h2> 
+ <p>在<code>polls/views.py</code>文件中，编写代码：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.http</span> <span class="kn">import</span> <span class="n">HttpResponse</span>
+
+<span class="k">def</span> <span class="nf">index</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="s2">"Hello, world. You're at the polls index."</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>为了调用该视图，我们还需要编写urlconf，也就是路由路径。现在，在polls目录中新建一个文件，名字为<code>urls.py</code>，在其中输入代码如下：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">path</span>
+
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">views</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">''</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">'index'</span><span class="p">),</span>
+<span class="p">]</span>
+</pre>
+ </div> 
+ <p>此时，目录的文件结构是这样的：</p> 
+ <div class="codehilite">
+  <pre><span></span>polls/
+    __init__.py
+    admin.py
+    apps.py
+    migrations/
+        __init__.py
+    models.py
+    tests.py
+    urls.py
+    views.py
+</pre>
+ </div> 
+ <p>我们先不用深究urls.py中代码的具体含义。</p> 
+ <p>接下来，在项目的<strong>主urls.py文件</strong>中添加<code>urlpattern</code>条目，指向我们刚才建立的polls这个app独有的urls文件，这里需要导入include模块。打开<code>mysite/urls.py</code>文件，代码如下：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.contrib</span> <span class="kn">import</span> <span class="n">admin</span>
+<span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">include</span><span class="p">,</span> <span class="n">path</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'polls/'</span><span class="p">,</span> <span class="n">include</span><span class="p">(</span><span class="s1">'polls.urls'</span><span class="p">)),</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'admin/'</span><span class="p">,</span> <span class="n">admin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">urls</span><span class="p">),</span>
+<span class="p">]</span>
+</pre>
+ </div> 
+ <p>include语法相当于多级路由，它把接收到的url地址去除与此项匹配的部分，将剩下的字符串传递给下一级路由urlconf进行判断。在路由的章节，有更加详细的用法指导。</p> 
+ <p>include的背后是一种即插即用的思想。项目根路由不关心具体app的路由策略，只管往指定的二级路由转发，实现了应用解耦。app所属的二级路由可以根据自己的需要随意编写，不会和其它的app路由发生冲突。app目录可以放置在任何位置，而不用修改路由。这是软件设计里很常见的一种模式。</p> 
+ <p>建议：除了admin路由外，尽量给每个app设计自己独立的二级路由。</p> 
+ <p>好了，路由设置成功后，启动服务器，然后在浏览器中访问地址<code>http://localhost:8000/polls/</code>。一切正常的话，你将看到<code>“Hello, world. You’re at the polls index.”</code></p> 
+ <hr> 
+ <h3><strong>path()方法：</strong></h3> 
+ <p>路由系统中最重要的path()方法可以接收4个参数，其中2个是必须的：<code>route</code>和<code>view</code>，以及2个可选的参数：<code>kwargs</code>和<code>name</code>。</p> 
+ <p><strong>route：</strong></p> 
+ <p>route 是一个匹配 URL 的准则（类似正则表达式）。当 Django 响应一个请求时，它会从 urlpatterns 的第一项开始，按顺序依次匹配列表中的项，直到找到匹配的项，然后执行该条目映射的视图函数或下级路由，其后的条目将不再继续匹配。因此，url路由的编写顺序非常重要！</p> 
+ <p>需要注意的是，route不会匹配 GET 和 POST 参数或域名。例如，URLconf 在处理请求 <code>https://www.example.com/myapp/</code>时，它会尝试匹配 <code>myapp/</code>。处理请求 <code>https://www.example.com/myapp/?page=3</code> 时，也只会尝试匹配 <code>myapp/</code>。</p> 
+ <p><strong>view：</strong></p> 
+ <p>view指的是处理当前url请求的视图函数。当Django匹配到某个路由条目时，自动将封装的<code>HttpRequest</code>对象作为第一个参数，被“捕获”的参数以关键字参数的形式，传递给该条目指定的视图view。</p> 
+ <p><strong>kwargs：</strong></p> 
+ <p>任意数量的关键字参数可以作为一个字典传递给目标视图。</p> 
+ <p><strong>name：</strong></p> 
+ <p>对你的URL进行命名，让你能够在Django的任意处，尤其是模板内显式地引用它。这是一个非常强大的功能，相当于给URL取了个全局变量名，不会将url匹配地址写死。</p> 
+ <p>path()方法的四个参数，每个都非常有讲究，这里先做基本的介绍，在后面有详细的论述。</p> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/86"> <i class="fa fa-arrow-left"></i>&nbsp;第一个Django应用</a> 
+  <a class="float-right" href="/course/django/88"> Part 2：模型与后台&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 56</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/87">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.0.0.132.132.50/0077UURily8fqgv9e45tuj303o03o745.jpg?KID=imgbed,tva&amp;Expires=1590323646&amp;ssig=zW7wwRlXui" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>刘老师，我出现了这个错误，我非常肯定没有非法字符串 from django.urls import path ^ SyntaxError: invalid character in identifier 在mysite/mysite/urls.py下 from django.contrib import admin from django.urls import include, path urlpatterns = [ path('goods/',include("goods.urls")), path('admin/', admin.site.urls), ] 您帮我看看</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 锦鲤鱼打挺7988 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年5月24日 17:37</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2073">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva4.sinaimg.cn/crop.204.546.1638.1638.50/c3b34977jw1ev60m66r45j21kw23u7wh.jpg?KID=imgbed,tva&amp;Expires=1592218132&amp;ssig=5ag%2FulSdnm" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>好巧，看到你头像的时候正在听龙珠超的bgm</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> Nemo-轩 &nbsp;&nbsp;回复&nbsp;&nbsp; 锦鲤鱼打挺7988 </span> 
+      <em>2020年6月15日 15:50</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2116">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva4.sinaimg.cn/crop.0.0.512.512.50/67fea1d6jw8evylp9d1zcj20e80e8ab3.jpg?KID=imgbed,tva&amp;Expires=1595417809&amp;ssig=y889cQBpmZ" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>缩进问题</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 唱歌老跑调儿 &nbsp;&nbsp;回复&nbsp;&nbsp; 锦鲤鱼打挺7988 </span> 
+      <em>2020年7月22日 16:37</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2150">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva1.sinaimg.cn/crop.0.0.180.180.50/bf5ab98djw1f4em1r0za0j2050050jro.jpg?KID=imgbed,tva&amp;Expires=1584621454&amp;ssig=NgQrURveJP" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>刘老师，为什么我按照步骤操作，会报以下错误： django.core.exceptions.ImproperlyConfigured: The included URLconf '&lt;module 'polls.urls' from 'C:\\Users\\zhixiang.zheng7\\PycharmProjects\\untitled1\\polls\\urls.py'&gt;' does not appear to have any patterns in it. If you see valid patterns in the file then the issue is probably caused by a circular import. 三个文件都是按照步骤操作的</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 奇葩的岁月 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年3月19日 17:40</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1973">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1586851613&amp;ssig=EAgcKENHyi" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>url编写有问题，或者是缺少配置，总之是url匹配不上。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 奇葩的岁月 </span> 
+      <em>2020年4月14日 13:14</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2020">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.0.0.1010.1010.50/007eSccCly8fu7oo7mnooj30s20s20un.jpg?KID=imgbed,tva&amp;Expires=1571226394&amp;ssig=Aa34uCaE5I" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>刘老师，您好。您的资料非常详细，刚刚学完python基础语法和pycharm。 可能是配置环境有问题吧，我按照您的教成做。在项目中的views中，加入如下代码： from django.contrib import admin from django.urls import include from django.urls import path urlpatterns = [ path('polls/', include('polls.urls')), path('admin/', admin.site.urls), ] 编译时出错了，返回很多错误，最后如下： django.core.exceptions.ImproperlyConfigured: Requested setting INSTALLED_APPS, but settings are not configured. You must either define the environment variable DJANGO_SETTINGS_MODULE or call settings.configure() before accessing settings. 请问这是什么原因造成的呢？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 徒儿活着 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年10月16日 16:49</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1659">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.0.0.1010.1010.50/007eSccCly8fu7oo7mnooj30s20s20un.jpg?KID=imgbed,tva&amp;Expires=1571226394&amp;ssig=Aa34uCaE5I" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我只找到问题了，原来是pycharm社区版惹的祸，django的script的环境要自己配置，不能直接通过python run。还是要下载个专业版，社区版对我们新手来说太多坑了。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 徒儿活着 &nbsp;&nbsp;回复&nbsp;&nbsp; 徒儿活着 </span> 
+      <em>2019年10月22日 14:58</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1677">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif?KID=imgbed,tva&amp;Expires=1567662376&amp;ssig=rYW0nJpqxk" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>不知道是不是版本的问题。用了Python2.7+django 1.11.24，代码需要做少许改动： polls\urls.py(注意需要用url，这个版本没有path这个模块): from django.conf.urls import url import views urlpatterns = [ url('', views.index, name='index'), ] mysite\urls.py(只需要在django.conf.urls import加上inlcude就可以了)： from django.conf.urls import url, include from django.contrib import admin urlpatterns = [ url(r'^admin/', admin.site.urls), url(r'^polls/', include('polls.urls')) ]</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 胖胖爱足球 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年9月5日 10:52</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1613">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.664.664.50/0075uynLly8ftz7gvzo59j30ig0igq3n.jpg?Expires=1563269341&amp;ssig=MlmhO5O0cu&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>创建App： 点击 Tools &gt; Run manager.py Task... ， 这个可以创建App。 startapp mysite</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 小鱼儿与花无缺_101 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年7月16日 17:16</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1462">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.664.664.50/0075uynLly8ftz7gvzo59j30ig0igq3n.jpg?Expires=1563269341&amp;ssig=MlmhO5O0cu&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>创建App： 点击 Tools &gt; Run manager.py Task... ， 这个可以创建App startapp mysite</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 小鱼儿与花无缺_101 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年7月16日 17:15</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1461">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.240.240.600.600.50/007aMCC9ly8fyqlwq21uxj30u00u041r.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>为啥http://127.0.0.1:8000/我的老是显示连接失败 ，我检查了一遍，也没有错误呀</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; hiphop柠檬 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年6月13日 16:46</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1401">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>`localhost:8000` 不好吗？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 滑稽嘿 &nbsp;&nbsp;回复&nbsp;&nbsp; hiphop柠檬 </span> 
+      <em>2019年6月19日 16:11</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1410">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.664.664.50/0075uynLly8ftz7gvzo59j30ig0igq3n.jpg?Expires=1563294077&amp;ssig=NQfR1FkZTg&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>是http://127.0.0.1:8000/polls 好吗</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 小鱼儿与花无缺_101 &nbsp;&nbsp;回复&nbsp;&nbsp; hiphop柠檬 </span> 
+      <em>2019年7月16日 23:23</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1473">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.996.996.50/a2366742ly8g29lk0pge2j20ro0rot9k.jpg?Expires=1563328364&amp;ssig=oyVmKVAkgv&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>http://127.0.0.1:8000/没有设置url匹配，所以会404。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 木村拓七199 &nbsp;&nbsp;回复&nbsp;&nbsp; hiphop柠檬 </span> 
+      <em>2019年7月17日 16:46</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1487">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.664.664.50/0075uynLly8ftz7gvzo59j30ig0igq3n.jpg?Expires=1563294077&amp;ssig=NQfR1FkZTg&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>是http://127.0.0.1:8000/polls，因为要访问这个APP的内容，这是路径</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 小鱼儿与花无缺_101 &nbsp;&nbsp;回复&nbsp;&nbsp; hiphop柠檬 </span> 
+      <em>2019年7月18日 10:57</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1492">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.180.180.50/74361d3bjw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>老师：django 可以完成测试平台的开发 吗？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; sony耳机 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年4月23日 17:55</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1277">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>django本质上是开发基于http的bs服务，一切以此为基础的应用都是可以开发的。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; sony耳机 </span> 
+      <em>2019年4月23日 20:35</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1279">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.0.0.690.690.50/006TUGrzly8fhtplm7cdmj30j60j6dju.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>不错的django教程，继续学习</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户6323004997 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年3月26日 09:37</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1180">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.664.664.50/005GegUYly8fdvdpxhrdbj30ig0igglo.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我就纳闷了，为什么在polls 的urls。py中 from . import views 总是提示找不到该模块</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; Destiny_ffcc </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年11月20日 11:18</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/878">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.664.664.50/005GegUYly8fdvdpxhrdbj30ig0igglo.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>函数后面没写：</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> Destiny_ffcc &nbsp;&nbsp;回复&nbsp;&nbsp; Destiny_ffcc </span> 
+      <em>2018年11月20日 11:49</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/879">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.996.996.50/005BWgDtly8fnydpwqdeqj30ro0romyq.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我也是一直找不到view模块，请问您是在最后加了一个“:”解决的么？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 今天我带钥匙了么 &nbsp;&nbsp;回复&nbsp;&nbsp; Destiny_ffcc </span> 
+      <em>2018年12月24日 19:50</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/977">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 12em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.48.104.497.497.50/e42ca35bly8g04zg3chcaj20hs0hsjsn.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>不是view模块，是views模块</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 蜗牛寻找Sky &nbsp;&nbsp;回复&nbsp;&nbsp; 今天我带钥匙了么 </span> 
+      <em>2019年2月13日 18:45</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1065">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>作者加油</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 小小TT_22022 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年9月10日 11:04</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/725">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/default/images/default_avatar_female_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>刘老师你好,问题已解决，应该是用http://127.0.0.1:8000/polls访问而不是http://127.0.0.1:8000</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户6534498631 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年7月21日 15:10</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/633">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/default/images/default_avatar_female_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>用127.0.0.1:8000报下面的错误： Page not found (404) Request Method: GET Request URL: http://127.0.0.1:8000/ Using the URLconf defined in vote.urls, Django tried these URL patterns, in this order: ^polls/ ^admin/ The empty path didn't match any of these. You're seeing this error because you have DEBUG = True in your Django settings file. Change that to False, and Django will display a standard 404 page.</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户6534498631 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年7月20日 22:27</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/629">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/default/images/default_avatar_female_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>刘老师你好，我用您写的http://localhost:8000/polls/可以运行， 但是用http://127.0.0.1:8000/总显示404应该是哪里的原因</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户6534498631 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年7月20日 22:25</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/628">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.664.664.50/006VQax6ly8fix7scg3xlj30ig0iggml.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>应该是类型吧</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 流年强少 &nbsp;&nbsp;回复&nbsp;&nbsp; 用户6534498631 </span> 
+      <em>2019年5月27日 08:00</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1356">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.664.664.50/0075uynLly8ftz7gvzo59j30ig0igq3n.jpg?Expires=1563294077&amp;ssig=NQfR1FkZTg&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>是http://127.0.0.1:8000/polls 好吗，因为要找路径啊</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 小鱼儿与花无缺_101 &nbsp;&nbsp;回复&nbsp;&nbsp; 用户6534498631 </span> 
+      <em>2019年7月16日 23:25</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1474">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.996.996.50/a2366742ly8g29lk0pge2j20ro0rot9k.jpg?Expires=1563328364&amp;ssig=oyVmKVAkgv&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>因为你没有给localhost:8000/设置url，只是设置了localhost:8000/polls/。你可以在项目urls手动设置一个path('',xxx)试试。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 木村拓七199 &nbsp;&nbsp;回复&nbsp;&nbsp; 用户6534498631 </span> 
+      <em>2019年7月17日 17:03</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1489">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.16.3.288.288.50/a220119fly8fi250oshakj208z08cwfe.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>题主您好，首先非常感谢你的分享，收获颇丰。 在实现您的项目过程中，我发现有以下地方可以做补充和纠正： 1.在新建一个polls的项目包之后，建view，并添加好index函数之后，需要返回mysite的项目包中的setting.py文件中的INSTALLED_APPS = [‘。。。]模块中添加‘polls'（也就是我新建app项目的名称）。 2.另外在mysite/urls.py中，我直接加入了： from django.urls import path from django.conf.urls import include,url urlpatterns = [ path('polls/', include('polls.urls')), ] 就成功了。和您给出的项目略显不同。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 多的是不知道的luck </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年6月6日 16:22</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/525">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>这是一个连续的教程，一步一步从浅到深，不要轻易下结论。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 多的是不知道的luck </span> 
+      <em>2018年7月18日 21:28</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/608">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.0.0.511.511.50/786bd96bly8fj30sz9jd4j20e70e8dfv.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>是不是少了点什么？我每次路径映射都是404NOT FOUND。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 邻村一吊毛欺我年幼矮无力 &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2018年7月19日 15:50</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/614">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 12em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>将你的代码和文字中的代码进行详细的对比。 没有人可以在不知道你的代码的情况下，准确的判断出问题所在。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 邻村一吊毛欺我年幼矮无力 </span> 
+      <em>2018年7月19日 18:35</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/615">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.996.996.50/a2366742ly8g29lk0pge2j20ro0rot9k.jpg?Expires=1563328364&amp;ssig=oyVmKVAkgv&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>1.installed_apps主要是给模型用，在这里不设置也行。2.你的djano版本一致的话，不需要 from django.conf.urls import include,url呀，不是很明白你的问题所在。djanog1和django 2比较大的区别就是这里，你可看看文档。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 木村拓七199 &nbsp;&nbsp;回复&nbsp;&nbsp; 多的是不知道的luck </span> 
+      <em>2019年7月17日 17:00</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1488">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.996.996.50/006XpgxZly8fnugxe3e7ej30ro0rowfv.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>你这样把大家的微博ID都暴露了。。。。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; yangyang5214 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年5月28日 18:20</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/504">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>url(r'^polls/', include('polls.urls'))， include报错显示unresolved inference django版本号：1.1.6 python 2.7</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户5549008274 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年5月10日 14:33</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/468">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.996.996.50/a2366742ly8g29lk0pge2j20ro0rot9k.jpg?Expires=1563328364&amp;ssig=oyVmKVAkgv&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>注意版本差异呀，py2和py3,django1和dajngo2都是有区别的，你最好按照文章配置来。不按照的话，请查看相应版本去解决问题。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 木村拓七199 &nbsp;&nbsp;回复&nbsp;&nbsp; 用户5549008274 </span> 
+      <em>2019年7月17日 17:06</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1490">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>from django.conf.urls import url from . import views</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户6038779905 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年5月4日 17:06</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/430">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>没有</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 用户6038779905 </span> 
+      <em>2018年5月5日 09:26</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/433">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>python manage.py runserver的时候提示这个 Model class django.contrib.contenttypes.models.ContentType doesn't declare an explicit app_label and isn't in an application in INSTALLED_APPS. 而且我已经把app的名字添加进入了。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 陈国海的马甲 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年4月19日 23:35</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/398">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>是通过django-admin startproject 命令创建的项目吗？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 陈国海的马甲 </span> 
+      <em>2018年4月20日 11:21</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/399">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>是的啊</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 陈国海的马甲 &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2018年4月24日 22:12</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/407">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>1.11</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 陈国海的马甲 &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2018年4月24日 22:13</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/408">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 12em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>解决了，刘老师 from django.conf.urls import url 没有导入url。。擦</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 陈国海的马甲 &nbsp;&nbsp;回复&nbsp;&nbsp; 陈国海的马甲 </span> 
+      <em>2018年4月24日 22:22</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/409">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.996.996.50/dc82ebfcly8fo7vm6esqgj20ro0ro41n.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>url(r'^polls/', include('polls.urls')),改成path('',include('polls.urls')) django 2.0</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 陈翔的小丽丽 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年4月16日 19:28</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/387">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva4.sinaimg.cn/crop.0.0.180.180.50/62d2d311jw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>感谢博主的教程！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 王小坏很奇怪 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年3月31日 15:40</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/357">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.180.180.50/574cdd81jw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>感谢分享，写的很好。 对‘在Pycharm中，没有可以创建app的图形化按钮' 这句有点补充， new project-&gt;Django(more settings) 下面可以加入Application name:那一栏可以填入app的名字，点击create后Pycharm会自动创建</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 孤隼翼 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2017年12月17日 18:54</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/95">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>在新建工程的时候，可以指定第一个app，但是往后，就不行了。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 孤隼翼 </span> 
+      <em>2017年12月17日 18:57</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/96">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.996.996.50/c3d26465ly8fqqbaxwz4vj20ro0rodib.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>pycharm的命令行可以创建吧</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 海盗小船雷小瑶 &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2018年4月29日 16:30</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/421">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.180.180.50/af88bc17jw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>清晰易懂，楼主给力！！！！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; MX_Andy1 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2017年11月17日 16:40</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/42">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.0.0.996.996.50/006NOTDCly8fkzkjtrpktj30ro0roadp.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>向博主看齐 以后也学习博主这样 感觉风格有点相似于廖大大O(∩_∩)O哈哈~ 是才搭建没多久的站吗？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; VivaMeet67 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2017年11月15日 11:50</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/36">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>新站稚嫩，多帮忙宣传宣传，拜谢！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; VivaMeet67 </span> 
+      <em>2017年11月15日 21:32</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/37">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>少了一步 把应用添加到setting app 里</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 我在的城市没有昵 &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2017年12月6日 09:27</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/70">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 12em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.996.996.50/a2366742ly8g29lk0pge2j20ro0rot9k.jpg?Expires=1563328364&amp;ssig=oyVmKVAkgv&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>当前是不需要的，下面介绍到模型了就需要注册了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 木村拓七199 &nbsp;&nbsp;回复&nbsp;&nbsp; 我在的城市没有昵 </span> 
+      <em>2019年7月17日 17:07</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1491">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.240.53.597.597.50/9d6668d1ly8fecyq2h1yaj20qo0qo3zj.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>可以看得出刘江对Django的很多细节上的苛刻追求很严谨，看了几个教程，没有一个是讲的这么细的，细到一个重要的函数的参数都详细的讲解一遍，收获颇丰，十分感谢！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; HiramJoyce </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2017年11月13日 11:01</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/33">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>谢谢夸奖！^-^ 肯定还有不足之处！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; HiramJoyce </span> 
+      <em>2017年11月13日 11:20</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/34">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

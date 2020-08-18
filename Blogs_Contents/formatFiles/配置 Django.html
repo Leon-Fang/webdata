@@ -1,0 +1,183 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>配置 Django</h1> 
+ <small>阅读:&nbsp;24091&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：1 </small> 
+ <hr> 
+ <p>Django项目的设置文件位于项目同名目录下，名叫<code>settings.py</code>。这个模块，集合了整个项目方方面面的设置属性，是项目启动和提供服务的根本保证。</p> 
+ <h2>一、简述</h2> 
+ <p><code>settings.py</code>文件本质上是一个Python模块，带有模块级别的变量。</p> 
+ <p>下面是一些示例设置：</p> 
+ <div class="codehilite">
+  <pre><span></span>ALLOWED_HOSTS = ['www.example.com']
+DEBUG = False
+DEFAULT_FROM_EMAIL = 'webmaster@example.com'
+</pre>
+ </div> 
+ <p>注：当DEBUG为False时，必须设置<code>ALLOWED_HOSTS</code>的值。</p> 
+ <p>配置<code>settings.py</code>时：</p> 
+ <ul> 
+  <li>不允许出现Python层面的语法错误；</li> 
+  <li>可以使用普通的Python语法动态地设置，例如：<code>MY_SETTING = [str(i) for i in range(30)]</code>；</li> 
+  <li>可以从其它设置文件导入值。</li> 
+ </ul> 
+ <h2>二、指定配置文件</h2> 
+ <p>当你使用Django时，你必须告诉它你要使用哪个配置文件来启动服务。也就是给环境变量<code>DJANGO_SETTINGS_MODULE</code>赋值。这个值要使用Python路径的语法，例如<code>mysite.settings</code>，而不是操作系统的文件路径语法。 注意，被设置的配置文件应该在Python的导入查找路径中。</p> 
+ <p>默认情况下，我们是不需要设置这个变量的，直接启动项目就可以。但是，有时候就会有需要使用别的配置启动项目的情形。</p> 
+ <p><strong>django-admin命令：</strong></p> 
+ <p>当使用django-admin命令时， 可以设置临时环境变量，或者每次运行该工具时显式地指定配置文件。</p> 
+ <p>例如在Unix Bash shell下：</p> 
+ <div class="codehilite">
+  <pre><span></span>export DJANGO_SETTINGS_MODULE=mysite.settings
+django-admin runserver
+</pre>
+ </div> 
+ <p>在Windows shell下，也就是cmd环境：</p> 
+ <div class="codehilite">
+  <pre><span></span>set DJANGO_SETTINGS_MODULE=mysite.settings
+django-admin runserver
+</pre>
+ </div> 
+ <p>使用<code>--settings</code>命令行参数可以手工指定：</p> 
+ <div class="codehilite">
+  <pre><span></span>django-admin runserver --settings=mysite.settings
+</pre>
+ </div> 
+ <p>如果是在服务器环境中，比如mod_wsgi网关接口，需要告诉WSGI，你准备使用哪个设置文件。这可以使用<code>os.environ</code>实现：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">'DJANGO_SETTINGS_MODULE'</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'mysite.settings'</span>
+</pre>
+ </div> 
+ <p>再次强调，所有上面的操作都要求<code>mysite.settings</code>必须在查找路径中，否则要用绝对路径。</p> 
+ <h2>三、默认配置</h2> 
+ <p>Django的配置文件并不需要定义所有的选项，每个选项都有一个默认值，这些默认值位于<code>django/conf/global_settings.py</code>模块中。</p> 
+ <p>Django加载配置的顺序是这样的：</p> 
+ <ol> 
+  <li>从<code>global_settings.py</code>中加载默认配置；</li> 
+  <li>从指定的配置文件中加载（通常是settings.py），如有必要则覆盖<code>global_settings.py</code>中的默认配置。</li> 
+ </ol> 
+ <p>有一个简单的方法可以查看当前有哪些设置与默认的设置不一样了，也就是<code>python manage.py diffsettings</code>命令。</p> 
+ <h2>四、在Django环境中使用settings</h2> 
+ <p>所谓的在Django环境中，指的是要使用settings的模块（可以简单的理解为局域网内主机），必须是Django工作状态中能够链接的模块，不能是孤零零，额外的一个Python脚本（外部主机）。这时，可以通过导入<code>django.conf.settings</code>来使用配置文件。 例如：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.conf</span> <span class="kn">import</span> <span class="n">settings</span>
+
+<span class="k">if</span> <span class="n">settings</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">:</span>
+    <span class="c1"># Do something</span>
+</pre>
+ </div> 
+ <p>注意，<code>django.conf.settings</code>不是一个模块，而是一个对象。 所以不可以单独导入每个配置项：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.conf.settings</span> <span class="kn">import</span> <span class="n">DEBUG</span>  <span class="c1"># 这是错误的做法</span>
+</pre>
+ </div> 
+ <h2>五、不要在运行时更改设置</h2> 
+ <p>请不要在Django项目运行时改变设置。 例如，不要在视图中这样做：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.conf</span> <span class="kn">import</span> <span class="n">settings</span>
+
+<span class="n">settings</span><span class="o">.</span><span class="n">DEBUG</span> <span class="o">=</span> <span class="bp">True</span>   <span class="c1"># 不要这么做</span>
+</pre>
+ </div> 
+ <h2>六、注意安全</h2> 
+ <p>因为<code>settings.py</code>经常会包含敏感的信息，例如管理员、远程主机、数据库的用户名或密码，你应该尽一切可能来限制对它的访问。 例如，修改它的文件权限使得只有你和Web服务器使用者可以读取它。</p> 
+ <h2>七、添加自己的配置项</h2> 
+ <p>如果要添加自己的配置项，需遵循以下准则：</p> 
+ <ul> 
+  <li>配置项名称必须全为大写。</li> 
+  <li>不要使用一个已经存在的设置</li> 
+ </ul> 
+ <h2>八、自定义默认设置</h2> 
+ <p>如果你想让默认值来自其它地方而不是<code>django.conf.global_settings</code>，你可以传递一个提供默认设置的模块或类作为<code>default_settings</code>参数（或第一个位置参数）给configure()方法调用。</p> 
+ <p>在下面的示例中，默认的设置来自<code>myapp_defaults</code>，并且单独设置DEBUG为True，而不论它在<code>myapp_defaults</code>中的值是什么：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.conf</span> <span class="kn">import</span> <span class="n">settings</span>
+<span class="kn">from</span> <span class="nn">myapp</span> <span class="kn">import</span> <span class="n">myapp_defaults</span>
+
+<span class="n">settings</span><span class="o">.</span><span class="n">configure</span><span class="p">(</span><span class="n">default_settings</span><span class="o">=</span><span class="n">myapp_defaults</span><span class="p">,</span> <span class="n">DEBUG</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>下面的示例和上面一样，只是使用<code>myapp_defaults</code>作为一个位置参数：</p> 
+ <div class="codehilite">
+  <pre><span></span>settings.configure(myapp_defaults, DEBUG=True)
+</pre>
+ </div> 
+ <p>正常情况下，还是不要用这种方式覆盖默认值。Django的默认配置文件还是很可靠的，你可以安全地使用它们。 注意，如果你使用自己写的默认模块，它将完全取代Django的默认模块，你必须指定每个可能用到的配置项的值。 完整的配置项清单，参考<code>django.conf.settings.global_settings</code>模块。</p> 
+ <h2>九、<code>configure()</code>或<code>DJANGO_SETTINGS_MODULE</code>二者只能用一</h2> 
+ <p>如果你没有设置<code>DJANGO_SETTINGS_MODULE</code>环境变量，你必须使用configure()方法来加载配置。。</p> 
+ <p>如果你没有设置<code>DJANGO_SETTINGS_MODULE</code>，也没有调用configure()，在首次调用配置文件时Django 将引发一个ImportError异常。也就是我们最常见的问题：为啥我启动不了Django？为什么我的脚本不能调用Django的功能？为什么我的代码无法链接到Django内部？</p> 
+ <p>如果你设置了<code>DJANGO_SETTINGS_MODULE</code>，并访问了一下设置，然后又调用configure()，Django 将引发一个RuntimeError异常，表示已经有配置，不要重复配置。 </p> 
+ <p>有个属性正好可以用于种情况，防止出现异常：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.conf</span> <span class="kn">import</span> <span class="n">settings</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">settings</span><span class="o">.</span><span class="n">configured</span><span class="p">:</span>
+    <span class="n">settings</span><span class="o">.</span><span class="n">configure</span><span class="p">(</span><span class="n">myapp_defaults</span><span class="p">,</span> <span class="n">DEBUG</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p><strong>总结：<code>configure()</code>或<code>DJANGO_SETTINGS_MODULE</code>只能用一个，并且只能用一次。不可以两个都用和都不用</strong>。</p> 
+ <h2>十、外部脚本调用Django环境：django.setup()</h2> 
+ <p>如果你使用外部脚本， 加载一些Django模板，或者使用ORM来获取一些数据，除了配置settings模块之外，还需要一个步骤。</p> 
+ <p>也就是在设置<code>DJANGO_SETTINGS_MODULE</code>或调用<code>configure()</code>之后，还需要调用<code>django.setup()</code>，像这样：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">import</span> <span class="nn">django</span>
+<span class="kn">from</span> <span class="nn">django.conf</span> <span class="kn">import</span> <span class="n">settings</span>
+<span class="kn">from</span> <span class="nn">myapp</span> <span class="kn">import</span> <span class="n">myapp_defaults</span>
+
+<span class="n">settings</span><span class="o">.</span><span class="n">configure</span><span class="p">(</span><span class="n">default_settings</span><span class="o">=</span><span class="n">myapp_defaults</span><span class="p">,</span> <span class="n">DEBUG</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">django</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+
+<span class="c1"># 现在可以访问Django项目内部的模块了</span>
+<span class="kn">from</span> <span class="nn">myapp</span> <span class="kn">import</span> <span class="n">models</span>
+</pre>
+ </div> 
+ <p>请注意，只有真正独立的外部脚本，才需要调用django.setup()。前面有说到过，当处于服务器调用环境，或通过django-admin调用，Django将自动为你加载环境。</p> 
+ <p>django.setup()只能调用一次。尽量使用下面的方式，防止重复调用：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">'__main__'</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">django</span>
+    <span class="n">django</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+</pre>
+ </div> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/162"> <i class="fa fa-arrow-left"></i>&nbsp;第六章：Django 综合篇</a> 
+  <a class="float-right" href="/course/django/164"> 核心配置项&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 1</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/163">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.180.180.50/67179639jw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>在项目根路径下,manage.py中缺省: import os import sys if __name__ == "__main__": os.environ.setdefault("DJANGO_SETTINGS_MODULE", "core.settings") try: from django.core.management import execute_from_command_line except ImportError as exc: raise ImportError( "Couldn't import Django. Are you sure it's installed and " "available on your PYTHONPATH environment variable? Did you " "forget to activate a virtual environment?" ) from exc execute_from_command_line(sys.argv)</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 孤竹孙 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年5月6日 10:01</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/449">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

@@ -1,0 +1,607 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>不返回QuerySets的API</h1> 
+ <small>阅读:&nbsp;26912&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：9 </small> 
+ <hr> 
+ <p>以下的方法不会返回QuerySets，但是作用非常强大，尤其是粗体显示的方法，需要背下来。</p> 
+ <table> 
+  <thead> 
+   <tr> 
+    <th>方法名</th> 
+    <th>解释</th> 
+   </tr> 
+  </thead> 
+  <tbody> 
+   <tr> 
+    <td><strong>get()</strong></td> 
+    <td>获取单个对象</td> 
+   </tr> 
+   <tr> 
+    <td><strong>create()</strong></td> 
+    <td>创建对象，无需save()</td> 
+   </tr> 
+   <tr> 
+    <td><strong>get_or_create()</strong></td> 
+    <td>查询对象，如果没有找到就新建对象</td> 
+   </tr> 
+   <tr> 
+    <td><strong>update_or_create()</strong></td> 
+    <td>更新对象，如果没有找到就创建对象</td> 
+   </tr> 
+   <tr> 
+    <td><code>bulk_create()</code></td> 
+    <td>批量创建对象</td> 
+   </tr> 
+   <tr> 
+    <td><strong>count()</strong></td> 
+    <td>统计对象的个数</td> 
+   </tr> 
+   <tr> 
+    <td><code>in_bulk()</code></td> 
+    <td>根据主键值的列表，批量返回对象</td> 
+   </tr> 
+   <tr> 
+    <td><code>iterator()</code></td> 
+    <td>获取包含对象的迭代器</td> 
+   </tr> 
+   <tr> 
+    <td><strong>latest()</strong></td> 
+    <td>获取最近的对象</td> 
+   </tr> 
+   <tr> 
+    <td><strong>earliest()</strong></td> 
+    <td>获取最早的对象</td> 
+   </tr> 
+   <tr> 
+    <td><strong>first()</strong></td> 
+    <td>获取第一个对象</td> 
+   </tr> 
+   <tr> 
+    <td><strong>last()</strong></td> 
+    <td>获取最后一个对象</td> 
+   </tr> 
+   <tr> 
+    <td><strong>aggregate()</strong></td> 
+    <td>聚合操作</td> 
+   </tr> 
+   <tr> 
+    <td><strong>exists()</strong></td> 
+    <td>判断queryset中是否有对象</td> 
+   </tr> 
+   <tr> 
+    <td><strong>update()</strong></td> 
+    <td>批量更新对象</td> 
+   </tr> 
+   <tr> 
+    <td><strong>delete()</strong></td> 
+    <td>批量删除对象</td> 
+   </tr> 
+   <tr> 
+    <td>as_manager()</td> 
+    <td>获取管理器</td> 
+   </tr> 
+  </tbody> 
+ </table> 
+ <h2>1. get()</h2> 
+ <p>get(**kwargs)</p> 
+ <p>返回按照查询参数匹配到的单个对象，参数的格式应该符合Field lookups的要求。</p> 
+ <p>如果匹配到的对象个数不只一个的话，触发MultipleObjectsReturned异常</p> 
+ <p>如果根据给出的参数匹配不到对象的话，触发DoesNotExist异常。例如：</p> 
+ <div class="codehilite">
+  <pre><span></span>Entry.objects.get(id='foo') # raises Entry.DoesNotExist
+</pre>
+ </div> 
+ <p>DoesNotExist异常从<code>django.core.exceptions.ObjectDoesNotExist</code>继承，可以定位多个DoesNotExist异常。 例如：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.core.exceptions</span> <span class="kn">import</span> <span class="n">ObjectDoesNotExist</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">e</span> <span class="o">=</span> <span class="n">Entry</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="n">Blog</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="k">except</span> <span class="n">ObjectDoesNotExist</span><span class="p">:</span>
+    <span class="k">print</span><span class="p">(</span><span class="s2">"Either the entry or blog doesn't exist."</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>如果希望查询器只返回一行，则可以使用get()而不使用任何参数来返回该行的对象：</p> 
+ <div class="codehilite">
+  <pre><span></span>entry = Entry.objects.filter(...).exclude(...).get()
+</pre>
+ </div> 
+ <h2>2. create()</h2> 
+ <p>create(**kwargs)</p> 
+ <p>在一步操作中同时创建并且保存对象的便捷方法.</p> 
+ <div class="codehilite">
+  <pre><span></span>p = Person.objects.create(first_name="Bruce", last_name="Springsteen")
+</pre>
+ </div> 
+ <p>等于:</p> 
+ <div class="codehilite">
+  <pre><span></span>p = Person(first_name="Bruce", last_name="Springsteen")
+p.save(force_insert=True)
+</pre>
+ </div> 
+ <p>参数<code>force_insert</code>表示强制创建对象。如果model中有一个你手动设置的主键，并且这个值已经存在于数据库中, 调用create()将会失败并且触发IntegrityError因为主键必须是唯一的。如果你手动设置了主键，做好异常处理的准备。</p> 
+ <h2>3. get_or_create()</h2> 
+ <p>get_or_create(defaults=None, **kwargs)</p> 
+ <p><strong>通过kwargs来查询对象的便捷方法（如果模型中的所有字段都有默认值，可以为空），如果该对象不存在则创建一个新对象</strong>。</p> 
+ <p>该方法<strong>返回一个由(object, created)组成的元组</strong>，元组中的object 是一个查询到的或者是被创建的对象， created是一个表示是否创建了新的对象的布尔值。</p> 
+ <p>对于下面的代码：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="k">try</span><span class="o">:</span>
+    <span class="n">obj</span> <span class="o">=</span> <span class="n">Person</span><span class="o">.</span><span class="na">objects</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">first_name</span><span class="o">=</span><span class="s1">'John'</span><span class="o">,</span> <span class="n">last_name</span><span class="o">=</span><span class="s1">'Lennon'</span><span class="o">)</span>
+<span class="n">except</span> <span class="n">Person</span><span class="o">.</span><span class="na">DoesNotExist</span><span class="o">:</span>
+    <span class="n">obj</span> <span class="o">=</span> <span class="n">Person</span><span class="o">(</span><span class="n">first_name</span><span class="o">=</span><span class="s1">'John'</span><span class="o">,</span> <span class="n">last_name</span><span class="o">=</span><span class="s1">'Lennon'</span><span class="o">,</span> <span class="n">birthday</span><span class="o">=</span><span class="n">date</span><span class="o">(</span><span class="mi">1940</span><span class="o">,</span> <span class="mi">10</span><span class="o">,</span> <span class="mi">9</span><span class="o">))</span>
+    <span class="n">obj</span><span class="o">.</span><span class="na">save</span><span class="o">()</span>
+</pre>
+ </div> 
+ <p>如果模型的字段数量较大的话，这种模式就变的非常不易用了。 上面的示例可以用<code>get_or_create()</code>重写 :</p> 
+ <div class="codehilite">
+  <pre><span></span>obj, created = Person.objects.get_or_create(
+    first_name='John',
+    last_name='Lennon',
+    defaults={'birthday': date(1940, 10, 9)},
+)
+</pre>
+ </div> 
+ <p>任何传递给<code>get_or_create()</code>的关键字参数，除了一个可选的defaults，都将传递给get()调用。 如果查找到一个对象，返回一个包含匹配到的对象以及False 组成的元组。 如果查找到的对象超过一个以上，将引发MultipleObjectsReturned。如果查找不到对象，<code>get_or_create()</code>将会实例化并保存一个新的对象，返回一个由新的对象以及True组成的元组。新的对象将会按照以下的逻辑创建:</p> 
+ <div class="codehilite">
+  <pre><span></span>params = {k: v for k, v in kwargs.items() if '__' not in k}
+params.update({k: v() if callable(v) else v for k, v in defaults.items()})
+obj = self.model(**params)
+obj.save()
+</pre>
+ </div> 
+ <p>它表示从非'defaults' 且不包含双下划线的关键字参数开始。然后将defaults的内容添加进来，覆盖必要的键，并使用结果作为关键字参数传递给模型类。</p> 
+ <p>如果有一个名为<code>defaults__exact</code>的字段，并且想在<code>get_or_create()</code>时用它作为精确查询，只需要使用defaults，像这样：</p> 
+ <div class="codehilite">
+  <pre><span></span>Foo.objects.get_or_create(defaults__exact='bar', defaults={'defaults': 'baz'})
+</pre>
+ </div> 
+ <p>当你使用手动指定的主键时，<code>get_or_create()</code>方法与<code>create()</code>方法有相似的错误行为 。 如果需要创建一个对象而该对象的主键早已存在于数据库中，IntegrityError异常将会被触发。</p> 
+ <p>这个方法假设进行的是原子操作，并且正确地配置了数据库和正确的底层数据库行为。如果数据库级别没有对<code>get_or_create</code>中用到的kwargs强制要求唯一性（unique和unique_together），方法容易导致竞态条件，可能会有相同参数的多行同时插入。（简单理解，kwargs必须指定的是主键或者unique属性的字段才安全。）</p> 
+ <p>最后建议只在Django视图的POST请求中使用get_or_create()，因为这是一个具有修改性质的动作，不应该使用在GET请求中，那样不安全。</p> 
+ <p>可以通过ManyToManyField属性和反向关联使用<code>get_or_create()</code>。在这种情况下，应该限制查询在关联的上下文内部。 否则，可能导致完整性问题。</p> 
+ <p>例如下面的模型：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="k">class</span> <span class="nc">Chapter</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">title</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">255</span><span class="p">,</span> <span class="n">unique</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">Book</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">title</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">256</span><span class="p">)</span>
+    <span class="n">chapters</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span><span class="n">Chapter</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>可以通过Book的chapters字段使用<code>get_or_create()</code>，但是它只会获取该Book内部的上下文：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; book = Book.objects.create(title="Ulysses")
+&gt;&gt;&gt; book.chapters.get_or_create(title="Telemachus")
+(&lt;Chapter: Telemachus&gt;, True)
+&gt;&gt;&gt; book.chapters.get_or_create(title="Telemachus")
+(&lt;Chapter: Telemachus&gt;, False)
+&gt;&gt;&gt; Chapter.objects.create(title="Chapter 1")
+&lt;Chapter: Chapter 1&gt;
+&gt;&gt;&gt; book.chapters.get_or_create(title="Chapter 1")
+# Raises IntegrityError
+</pre>
+ </div> 
+ <p>发生这个错误是因为尝试通过Book “Ulysses”获取或者创建“Chapter 1”，但是它不能，因为它与这个book不关联，但因为title 字段是唯一的它仍然不能创建。</p> 
+ <p>在Django1.11在defaults中增加了对可调用值的支持。</p> 
+ <h2>4. update_or_create()</h2> 
+ <p>update_or_create(defaults=None, **kwargs)</p> 
+ <p>类似前面的<code>get_or_create()</code>。</p> 
+ <p><strong>通过给出的kwargs来更新对象的便捷方法， 如果没找到对象，则创建一个新的对象</strong>。defaults是一个由 (field, value)对组成的字典，用于更新对象。defaults中的值可以是可调用对象（也就是说函数等）。</p> 
+ <p>该方法返回一个由(object, created)组成的元组,元组中的object是一个创建的或者是被更新的对象， created是一个标示是否创建了新的对象的布尔值。</p> 
+ <p><code>update_or_create</code>方法尝试通过给出的kwargs 去从数据库中获取匹配的对象。 如果找到匹配的对象，它将会依据defaults 字典给出的值更新字段。</p> 
+ <p>像下面的代码：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="n">defaults</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'first_name'</span><span class="p">:</span> <span class="s1">'Bob'</span><span class="p">}</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">obj</span> <span class="o">=</span> <span class="n">Person</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">first_name</span><span class="o">=</span><span class="s1">'John'</span><span class="p">,</span> <span class="n">last_name</span><span class="o">=</span><span class="s1">'Lennon'</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">defaults</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="nb">setattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+    <span class="n">obj</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+<span class="k">except</span> <span class="n">Person</span><span class="o">.</span><span class="n">DoesNotExist</span><span class="p">:</span>
+    <span class="n">new_values</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'first_name'</span><span class="p">:</span> <span class="s1">'John'</span><span class="p">,</span> <span class="s1">'last_name'</span><span class="p">:</span> <span class="s1">'Lennon'</span><span class="p">}</span>
+    <span class="n">new_values</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">defaults</span><span class="p">)</span>
+    <span class="n">obj</span> <span class="o">=</span> <span class="n">Person</span><span class="p">(</span><span class="o">**</span><span class="n">new_values</span><span class="p">)</span>
+    <span class="n">obj</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+</pre>
+ </div> 
+ <p>如果模型的字段数量较大的话，这种模式就变的非常不易用了。 上面的示例可以用<code>update_or_create()</code> 重写:</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="n">obj</span><span class="p">,</span> <span class="n">created</span> <span class="o">=</span> <span class="n">Person</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">update_or_create</span><span class="p">(</span>
+    <span class="n">first_name</span><span class="o">=</span><span class="s1">'John'</span><span class="p">,</span> <span class="n">last_name</span><span class="o">=</span><span class="s1">'Lennon'</span><span class="p">,</span>
+    <span class="n">defaults</span><span class="o">=</span><span class="p">{</span><span class="s1">'first_name'</span><span class="p">:</span> <span class="s1">'Bob'</span><span class="p">},</span>
+<span class="p">)</span>
+</pre>
+ </div> 
+ <p>kwargs中的名称如何解析的详细描述可以参见<code>get_or_create()</code>。</p> 
+ <p>和<code>get_or_create()</code>一样，这个方法也容易导致竞态条件，如果数据库层级没有前置唯一性会让多行同时插入。</p> 
+ <p>在Django1.11在defaults中增加了对可调用值的支持。</p> 
+ <h2>5. bulk_create()</h2> 
+ <p>bulk_create(objs, batch_size=None)</p> 
+ <p>以高效的方式（通常只有1个查询，无论有多少对象）将提供的对象列表插入到数据库中：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; Entry.objects.bulk_create([
+...     Entry(headline='This is a test'),
+...     Entry(headline='This is only a test'),
+... ])
+</pre>
+ </div> 
+ <p>注意事项：</p> 
+ <ul> 
+  <li>不会调用模型的save()方法，并且不会发送<code>pre_save</code>和<code>post_save</code>信号。</li> 
+  <li>不适用于多表继承场景中的子模型。</li> 
+  <li>如果模型的主键是AutoField，则不会像save()那样检索并设置主键属性，除非数据库后端支持。</li> 
+  <li>不适用于多对多关系。</li> 
+ </ul> 
+ <p><code>batch_size</code>参数控制在单个查询中创建的对象数。</p> 
+ <h2>6. count()</h2> 
+ <p>count()</p> 
+ <p>返回在数据库中对应的QuerySet对象的个数。count()永远不会引发异常。</p> 
+ <p>例如：</p> 
+ <div class="codehilite">
+  <pre><span></span># 返回总个数.
+Entry.objects.count()
+# 返回包含有'Lennon'的对象的总数
+Entry.objects.filter(headline__contains='Lennon').count()
+</pre>
+ </div> 
+ <h2>7. in_bulk()</h2> 
+ <p>in_bulk(id_list=None)</p> 
+ <p>获取主键值的列表，并返回将每个主键值映射到具有给定ID的对象的实例的字典。 如果未提供列表，则会返回查询集中的所有对象。</p> 
+ <p>例如：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; Blog.objects.in_bulk([1])
+{1: &lt;Blog: Beatles Blog&gt;}
+&gt;&gt;&gt; Blog.objects.in_bulk([1, 2])
+{1: &lt;Blog: Beatles Blog&gt;, 2: &lt;Blog: Cheddar Talk&gt;}
+&gt;&gt;&gt; Blog.objects.in_bulk([])
+{}
+&gt;&gt;&gt; Blog.objects.in_bulk()
+{1: &lt;Blog: Beatles Blog&gt;, 2: &lt;Blog: Cheddar Talk&gt;, 3: &lt;Blog: Django Weblog&gt;}
+</pre>
+ </div> 
+ <p>如果向<code>in_bulk()</code>传递一个空列表，会得到一个空的字典。</p> 
+ <p>在旧版本中，<code>id_list</code>是必需的参数，现在是一个可选参数。</p> 
+ <h2>8. iterator()</h2> 
+ <p>iterator()</p> 
+ <p>提交数据库操作，获取QuerySet，并返回一个迭代器。</p> 
+ <p>QuerySet通常会在内部缓存其结果，以便在重复计算时不会导致额外的查询。而iterator()将直接读取结果，不在QuerySet级别执行任何缓存。对于返回大量只需要访问一次的对象的QuerySet，这可以带来更好的性能，显著减少内存使用。</p> 
+ <p>请注意，在已经提交了的iterator()上使用QuerySet会强制它再次提交数据库操作，进行重复查询。此外，使用iterator()会导致先前的<code>prefetch_related()</code>调用被忽略，因为这两个一起优化没有意义。</p> 
+ <h2>9. latest()</h2> 
+ <p>latest(field_name=None)</p> 
+ <p>使用日期字段field_name，按日期返回最新对象。</p> 
+ <p>下例根据Entry的'pub_date'字段返回最新发布的entry：</p> 
+ <div class="codehilite">
+  <pre><span></span>Entry.objects.latest('pub_date')
+</pre>
+ </div> 
+ <p>如果模型的Meta指定了<code>get_latest_by</code>，则可以将latest()参数留给earliest()或者<code>field_name</code>。 默认情况下，Django将使用<code>get_latest_by</code>中指定的字段。</p> 
+ <p>earliest()和latest()可能会返回空日期的实例,可能需要过滤掉空值：</p> 
+ <div class="codehilite">
+  <pre><span></span>Entry.objects.filter(pub_date__isnull=False).latest('pub_date')
+</pre>
+ </div> 
+ <h2>10. earliest()</h2> 
+ <p>earliest(field_name=None)</p> 
+ <p>类同latest()。</p> 
+ <h2>11. first()</h2> 
+ <p>first()</p> 
+ <p>返回结果集的第一个对象, 当没有找到时返回None。如果QuerySet没有设置排序,则将会自动按主键进行排序。例如：</p> 
+ <div class="codehilite">
+  <pre><span></span>p = Article.objects.order_by('title', 'pub_date').first()
+</pre>
+ </div> 
+ <p>first()是一个简便方法，下面的例子和上面的代码效果是一样：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="k">try</span><span class="p">:</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">Article</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s1">'title'</span><span class="p">,</span> <span class="s1">'pub_date'</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+<span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="bp">None</span>
+</pre>
+ </div> 
+ <h2>12. last()</h2> 
+ <p>last()</p> 
+ <p>工作方式类似first()，只是返回的是查询集中最后一个对象。</p> 
+ <h2>13. aggregate()</h2> 
+ <p>aggregate(<em>args, </em>*kwargs)</p> 
+ <p>返回汇总值的字典（平均值，总和等）,通过QuerySet进行计算。每个参数指定返回的字典中将要包含的值。</p> 
+ <p>使用关键字参数指定的聚合将使用关键字参数的名称作为Annotation 的名称。 匿名参数的名称将基于聚合函数的名称和模型字段生成。 复杂的聚合不可以使用匿名参数，必须指定一个关键字参数作为别名。</p> 
+ <p>例如，想知道Blog Entry 的数目：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">Count</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">q</span> <span class="o">=</span> <span class="n">Blog</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">Count</span><span class="p">(</span><span class="s1">'entry'</span><span class="p">))</span>
+<span class="p">{</span><span class="s1">'entry__count'</span><span class="p">:</span> <span class="mi">16</span><span class="p">}</span>
+</pre>
+ </div> 
+ <p>通过使用关键字参数来指定聚合函数，可以控制返回的聚合的值的名称：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; q = Blog.objects.aggregate(number_of_entries=Count('entry'))
+{'number_of_entries': 16}
+</pre>
+ </div> 
+ <h2>14. exists()</h2> 
+ <p>exists()</p> 
+ <p>如果QuerySet包含任何结果，则返回True，否则返回False。</p> 
+ <p>查找具有唯一性字段（例如primary_key）的模型是否在一个QuerySet中的最高效的方法是：</p> 
+ <div class="codehilite">
+  <pre><span></span>entry = Entry.objects.get(pk=123)
+if some_queryset.filter(pk=entry.pk).exists():
+    print("Entry contained in queryset")
+</pre>
+ </div> 
+ <p>它将比下面的方法快很多，这个方法要求对QuerySet求值并迭代整个QuerySet：</p> 
+ <div class="codehilite">
+  <pre><span></span>if entry in some_queryset:
+   print("Entry contained in QuerySet")
+</pre>
+ </div> 
+ <p>若要查找一个QuerySet是否包含任何元素：</p> 
+ <div class="codehilite">
+  <pre><span></span>if some_queryset.exists():
+    print("There is at least one object in some_queryset")
+</pre>
+ </div> 
+ <p>将快于：</p> 
+ <div class="codehilite">
+  <pre><span></span>if some_queryset:
+    print("There is at least one object in some_queryset")
+</pre>
+ </div> 
+ <h2>15. update()</h2> 
+ <p>update(**kwargs)</p> 
+ <p><strong>对指定的字段执行批量更新操作，并返回匹配的行数</strong>（如果某些行已具有新值，则可能不等于已更新的行数）。</p> 
+ <p>例如，要对2010年发布的所有博客条目启用评论，可以执行以下操作：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; Entry.objects.filter(pub_date__year=2010).update(comments_on=False)
+</pre>
+ </div> 
+ <p>可以同时更新多个字段 （没有多少字段的限制）。 例如同时更新comments_on和headline字段：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; Entry.objects.filter(pub_date__year=2010).update(comments_on=False, headline='This is old')
+</pre>
+ </div> 
+ <p>update()方法无需save操作。唯一限制是它只能更新模型主表中的列，而不是关联的模型，例如不能这样做：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; Entry.objects.update(blog__name='foo') # Won't work!
+</pre>
+ </div> 
+ <p>仍然可以根据相关字段进行过滤：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; Entry.objects.filter(blog__id=1).update(comments_on=True)
+</pre>
+ </div> 
+ <p>update()方法返回受影响的行数：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; Entry.objects.filter(id=64).update(comments_on=True)
+1
+&gt;&gt;&gt; Entry.objects.filter(slug='nonexistent-slug').update(comments_on=True)
+0
+&gt;&gt;&gt; Entry.objects.filter(pub_date__year=2010).update(comments_on=False)
+132
+</pre>
+ </div> 
+ <p>如果你只是更新一下对象，不需要为对象做别的事情，最有效的方法是调用update()，而不是将模型对象加载到内存中。 例如，不要这样做：</p> 
+ <div class="codehilite">
+  <pre><span></span>e = Entry.objects.get(id=10)
+e.comments_on = False
+e.save()
+</pre>
+ </div> 
+ <p>建议如下操作：</p> 
+ <div class="codehilite">
+  <pre><span></span>Entry.objects.filter(id=10).update(comments_on=False)
+</pre>
+ </div> 
+ <p>用update()还可以防止在加载对象和调用save()之间的短时间内数据库中某些内容可能发生更改的竞争条件。</p> 
+ <p>如果想更新一个具有自定义save()方法的模型的记录，请循环遍历它们并调用save()，如下所示：</p> 
+ <div class="codehilite">
+  <pre><span></span>for e in Entry.objects.filter(pub_date__year=2010):
+    e.comments_on = False
+    e.save()
+</pre>
+ </div> 
+ <h2>16. delete()</h2> 
+ <p>delete()</p> 
+ <p>批量删除QuerySet中的所有对象，并返回删除的对象个数和每个对象类型的删除次数的字典。</p> 
+ <p>delete()动作是立即执行的。 </p> 
+ <p>不能在QuerySet上调用delete()。</p> 
+ <p>例如，要删除特定博客中的所有条目：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; b = Blog.objects.get(pk=1)
+# Delete all the entries belonging to this Blog.
+&gt;&gt;&gt; Entry.objects.filter(blog=b).delete()
+(4, {'weblog.Entry': 2, 'weblog.Entry_authors': 2})
+</pre>
+ </div> 
+ <p>默认情况下，Django的ForeignKey使用SQL约束ON DELETE CASCADE，任何具有指向要删除的对象的外键的对象将与它们一起被删除。 像这样：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; blogs = Blog.objects.all()
+# This will delete all Blogs and all of their Entry objects.
+&gt;&gt;&gt; blogs.delete()
+(5, {'weblog.Blog': 1, 'weblog.Entry': 2, 'weblog.Entry_authors': 2})
+</pre>
+ </div> 
+ <p>这种级联的行为可以通过的ForeignKey的on_delete参数自定义。（什么时候要改变这种行为呢？比如日志数据，就不能和它关联的主体一并被删除！）</p> 
+ <p>delete()会为所有已删除的对象（包括级联删除）发出<code>pre_delete</code>和<code>post_delete</code>信号。</p> 
+ <h2>17. as_manager()</h2> 
+ <p>classmethod as_manager()</p> 
+ <p>一个类方法，返回Manager的实例与QuerySet的方法的副本。</p> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/130"> <i class="fa fa-arrow-left"></i>&nbsp;查询集API</a> 
+  <a class="float-right" href="/course/django/132"> 查询参数及聚合函数&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 9</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/131">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.0.0.996.996.50/006xIWURly8gehjmghiqfj30ro0roq53.jpg?KID=imgbed,tva&amp;Expires=1591289035&amp;ssig=NX%2BU5OBrH%2F" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>注意，get()方法返回的结果不支持update()，要用filter()。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 蔷薇-Nina </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年6月7日 11:43</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2103">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.0.996.996.50/684b4357jw8f6i1rp6013j20ro0romyl.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>其实常用的就那么多，多记一下就可以了，博主写的很赞</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 带着寂寞闯天涯 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年7月19日 20:27</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/616">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>对get_or_create()和update_or_create()方法中的default参数解释不到位！！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户5995128989 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年1月28日 15:52</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/167">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>朋友，你看着人家博主幸苦写的东西，不感谢也就罢了，有问题，委婉的提出来就好，需要这么不客气的评论人家吗？对原创和开源的知识分享要保有敬意，否则以后还有谁写博客，谁来分享？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 成长的路上都是荆棘 &nbsp;&nbsp;回复&nbsp;&nbsp; 用户5995128989 </span> 
+      <em>2018年1月28日 16:13</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/168">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.190.190.50/006xIWURly8fo6t5wwzrdj309i05c0vp.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>说明看得仔细才能发现问题，对博主写出更好的文章有益。这也是对博主的敬意所在。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 蔷薇-Nina &nbsp;&nbsp;回复&nbsp;&nbsp; 成长的路上都是荆棘 </span> 
+      <em>2018年2月6日 19:48</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/204">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.0.0.996.996.50/006xIWURly8fu5i5w2xi6j30ro0ro75p.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>把问题指出来有什么不对吗？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 蔷薇-Nina &nbsp;&nbsp;回复&nbsp;&nbsp; 成长的路上都是荆棘 </span> 
+      <em>2018年11月4日 22:51</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/819">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 12em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva3.sinaimg.cn/crop.115.2.313.313.50/64b09935tw1e9bv1s3iedj20bx08taar.jpg?KID=imgbed,tva&amp;Expires=1576940346&amp;ssig=nadI3d27xq" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>会说话吗？不会好好说吗？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 京华秋雨 &nbsp;&nbsp;回复&nbsp;&nbsp; 蔷薇-Nina </span> 
+      <em>2019年12月23日 21:37</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1779">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.0.996.996.50/684b4357jw8f6i1rp6013j20ro0romyl.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>get_or_create方法可以有一个“defaults”参数，用来设置指定字段的默认值，</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 带着寂寞闯天涯 &nbsp;&nbsp;回复&nbsp;&nbsp; 用户5995128989 </span> 
+      <em>2018年7月19日 20:30</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/617">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>last()解释的字打错了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 王蕾-wl </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年1月24日 15:05</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/154">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

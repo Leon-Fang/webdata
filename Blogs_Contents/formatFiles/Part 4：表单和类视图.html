@@ -1,0 +1,1203 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>Part 4：表单和类视图</h1> 
+ <small>阅读:&nbsp;81425&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：59 </small> 
+ <hr> 
+ <p>这一节我们将继续编写投票应用，并专注于简单的表单处理，以及精简我们的代码。</p> 
+ <h2>一、表单form</h2> 
+ <p>为了接收用户的投票选择，我们需要在前端页面显示一个投票界面。让我们重写先前的<code>polls/detail.html</code>文件，代码如下：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="p">&lt;</span><span class="nt">h1</span><span class="p">&gt;</span>{{ question.question_text }}<span class="p">&lt;/</span><span class="nt">h1</span><span class="p">&gt;</span>
+
+{% if error_message %}<span class="p">&lt;</span><span class="nt">p</span><span class="p">&gt;&lt;</span><span class="nt">strong</span><span class="p">&gt;</span>{{ error_message }}<span class="p">&lt;/</span><span class="nt">strong</span><span class="p">&gt;&lt;/</span><span class="nt">p</span><span class="p">&gt;</span>{% endif %}
+
+<span class="p">&lt;</span><span class="nt">form</span> <span class="na">action</span><span class="o">=</span><span class="s">"{% url 'polls:vote' question.id %}"</span> <span class="na">method</span><span class="o">=</span><span class="s">"post"</span><span class="p">&gt;</span>
+{% csrf_token %}
+{% for choice in question.choice_set.all %}
+    <span class="p">&lt;</span><span class="nt">input</span> <span class="na">type</span><span class="o">=</span><span class="s">"radio"</span> <span class="na">name</span><span class="o">=</span><span class="s">"choice"</span> <span class="na">id</span><span class="o">=</span><span class="s">"choice{{ forloop.counter }}"</span> <span class="na">value</span><span class="o">=</span><span class="s">"{{ choice.id }}"</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">label</span> <span class="na">for</span><span class="o">=</span><span class="s">"choice{{ forloop.counter }}"</span><span class="p">&gt;</span>{{ choice.choice_text }}<span class="p">&lt;/</span><span class="nt">label</span><span class="p">&gt;&lt;</span><span class="nt">br</span><span class="p">&gt;</span>
+{% endfor %}
+<span class="p">&lt;</span><span class="nt">input</span> <span class="na">type</span><span class="o">=</span><span class="s">"submit"</span> <span class="na">value</span><span class="o">=</span><span class="s">"Vote"</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">form</span><span class="p">&gt;</span>
+</pre>
+ </div> 
+ <p>简要说明：</p> 
+ <ul> 
+  <li>上面的模板显示一系列单选按钮，按钮的值是选项的ID，按钮的名字是字符串"choice"。这意味着，当你选择了其中某个按钮，并提交表单，一个包含数据<code>choice=#</code>的POST请求将被发送到指定的url，<code>#</code>是被选择的选项的ID。这就是HTML表单的基本概念。</li> 
+  <li>如果你有一定的前端开发基础，那么form标签的action属性和method属性你应该很清楚它们的含义，action表示你要发送的目的url，method表示提交数据的方式，一般分post和get。</li> 
+  <li>forloop.counter是DJango模板系统专门提供的一个变量，用来表示你当前循环的次数，一般用来给循环项目添加有序数标。</li> 
+  <li>由于我们发送了一个POST请求，就必须考虑一个跨站请求伪造的安全问题，简称CSRF（具体含义请百度）。Django为你提供了一个简单的方法来避免这个困扰，那就是在form表单内添加一条{% csrf_token %}标签，标签名不可更改，固定格式，位置任意，只要是在form表单内。这个方法对form表单的提交方式方便好使，但如果是用ajax的方式提交数据，那么就不能用这个方法了。</li> 
+ </ul> 
+ <p>现在，让我们创建一个处理提交过来的数据的视图。前面我们已经写了一个“占坑”的vote视图的url（polls/urls.py）：</p> 
+ <div class="codehilite">
+  <pre><span></span>path('&lt;int:question_id&gt;/vote/', views.vote, name='vote'),
+</pre>
+ </div> 
+ <p>以及“占坑”的vote视图函数（polls/views.py），我们把坑填起来：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.http</span> <span class="kn">import</span> <span class="n">HttpResponse</span><span class="p">,</span> <span class="n">HttpResponseRedirect</span>
+<span class="kn">from</span> <span class="nn">django.shortcuts</span> <span class="kn">import</span> <span class="n">get_object_or_404</span><span class="p">,</span> <span class="n">render</span>
+<span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">reverse</span>
+
+<span class="kn">from</span> <span class="nn">.models</span> <span class="kn">import</span> <span class="n">Choice</span><span class="p">,</span> <span class="n">Question</span>
+<span class="c1"># ...</span>
+<span class="k">def</span> <span class="nf">vote</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">question_id</span><span class="p">):</span>
+    <span class="n">question</span> <span class="o">=</span> <span class="n">get_object_or_404</span><span class="p">(</span><span class="n">Question</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">question_id</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">selected_choice</span> <span class="o">=</span> <span class="n">question</span><span class="o">.</span><span class="n">choice_set</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="p">[</span><span class="s1">'choice'</span><span class="p">])</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">KeyError</span><span class="p">,</span> <span class="n">Choice</span><span class="o">.</span><span class="n">DoesNotExist</span><span class="p">):</span>     
+        <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'polls/detail.html'</span><span class="p">,</span> <span class="p">{</span>
+            <span class="s1">'question'</span><span class="p">:</span> <span class="n">question</span><span class="p">,</span>
+            <span class="s1">'error_message'</span><span class="p">:</span> <span class="s2">"You didn't select a choice."</span><span class="p">,</span>
+        <span class="p">})</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">selected_choice</span><span class="o">.</span><span class="n">votes</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">selected_choice</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>       
+        <span class="k">return</span> <span class="n">HttpResponseRedirect</span><span class="p">(</span><span class="n">reverse</span><span class="p">(</span><span class="s1">'polls:results'</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">question</span><span class="o">.</span><span class="n">id</span><span class="p">,)))</span>
+</pre>
+ </div> 
+ <p>有些新的东西，我们要解释一下：</p> 
+ <ul> 
+  <li>request.POST是一个类似字典的对象，允许你通过键名访问提交的数据。本例中，<code>request.POST[’choice’]</code>返回被选择选项的ID，并且值的类型永远是string字符串，那怕它看起来像数字！同样的，你也可以用类似的手段获取GET请求发送过来的数据，一个道理。</li> 
+  <li><code>request.POST[’choice’]</code>有可能触发一个KeyError异常，如果你的POST数据里没有提供choice键值，在这种情况下，上面的代码会返回表单页面并给出错误提示。</li> 
+  <li>在选择计数器加一后，返回的是一个<code>HttpResponseRedirect</code>而不是先前我们常用的<code>HttpResponse</code>。HttpResponseRedirect需要一个参数：重定向的URL。这里有一个建议，当你成功处理POST数据后，应当保持一个良好的习惯，始终返回一个HttpResponseRedirect。这不仅仅是对Django而言，它是一个良好的WEB开发习惯。</li> 
+  <li>我们在上面HttpResponseRedirect的构造器中使用了一个<code>reverse()</code>函数。它能帮助我们避免在视图函数中硬编码URL。它首先需要一个我们在URLconf中指定的name，然后是传递的数据。例如<code>'/polls/3/results/'</code>，其中的3是某个<code>question.id</code>的值。重定向后将进入<code>polls:results</code>对应的视图，并将<code>question.id</code>传递给它。白话来讲，就是把活扔给另外一个路由对应的视图去干。</li> 
+ </ul> 
+ <p>当有人对某个问题投票后，vote()视图重定向到了问卷的结果显示页面。下面我们来写这个处理结果页面的视图(polls/views.py)：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.shortcuts</span> <span class="kn">import</span> <span class="n">get_object_or_404</span><span class="p">,</span> <span class="n">render</span>
+
+
+<span class="k">def</span> <span class="nf">results</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">question_id</span><span class="p">):</span>
+    <span class="n">question</span> <span class="o">=</span> <span class="n">get_object_or_404</span><span class="p">(</span><span class="n">Question</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">question_id</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'polls/results.html'</span><span class="p">,</span> <span class="p">{</span><span class="s1">'question'</span><span class="p">:</span> <span class="n">question</span><span class="p">})</span>
+</pre>
+ </div> 
+ <p>同样，还需要写个模板<code>polls/templates/polls/results.html</code>。（路由、视图、模板、模型！都是这个套路....）</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="p">&lt;</span><span class="nt">h1</span><span class="p">&gt;</span>{{ question.question_text }}<span class="p">&lt;/</span><span class="nt">h1</span><span class="p">&gt;</span>
+
+<span class="p">&lt;</span><span class="nt">ul</span><span class="p">&gt;</span>
+{% for choice in question.choice_set.all %}
+    <span class="p">&lt;</span><span class="nt">li</span><span class="p">&gt;</span>{{ choice.choice_text }} -- {{ choice.votes }} vote{{ choice.votes|pluralize }}<span class="p">&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+{% endfor %}
+<span class="p">&lt;/</span><span class="nt">ul</span><span class="p">&gt;</span>
+
+<span class="p">&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">"{% url 'polls:detail' question.id %}"</span><span class="p">&gt;</span>Vote again?<span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;</span>
+</pre>
+ </div> 
+ <p>现在你可以到浏览器中访问<code>/polls/1/</code>了，投票吧。你会看到一个结果页面，每投一次，它的内容就更新一次。如果你提交的时候没有选择项目，则会得到一个错误提示。</p> 
+ <p>如果你在前面漏掉了一部分操作没做，比如没有创建choice选项对象，那么可以按下面的操作，补充一下：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="n">F</span><span class="p">:</span>\<span class="n">Django_course</span>\<span class="n">mysite</span><span class="o">&gt;</span><span class="n">python</span> <span class="n">manage</span><span class="o">.</span><span class="n">py</span> <span class="n">shell</span>
+<span class="n">Python</span> <span class="mf">3.6</span><span class="o">.</span><span class="mi">1</span> <span class="p">(</span><span class="n">v3</span><span class="o">.</span><span class="mf">6.1</span><span class="p">:</span><span class="mi">69</span><span class="n">c0db5</span><span class="p">,</span> <span class="n">Mar</span> <span class="mi">21</span> <span class="mi">2017</span><span class="p">,</span> <span class="mi">18</span><span class="p">:</span><span class="mi">41</span><span class="p">:</span><span class="mi">36</span><span class="p">)</span> <span class="p">[</span><span class="n">MSC</span> <span class="n">v</span><span class="o">.</span><span class="mi">1900</span> <span class="mi">64</span> <span class="n">bit</span> <span class="p">(</span><span class="n">AMD64</span><span class="p">)]</span> <span class="n">on</span> <span class="n">win32</span>
+<span class="n">Type</span> <span class="s2">"help"</span><span class="p">,</span> <span class="s2">"copyright"</span><span class="p">,</span> <span class="s2">"credits"</span> <span class="ow">or</span> <span class="s2">"license"</span> <span class="k">for</span> <span class="n">more</span> <span class="n">information</span><span class="o">.</span>
+<span class="p">(</span><span class="n">InteractiveConsole</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">polls.models</span> <span class="kn">import</span> <span class="n">Question</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">q</span> <span class="o">=</span> <span class="n">Question</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">q</span><span class="o">.</span><span class="n">choice_set</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">choice_text</span><span class="o">=</span><span class="s1">'Not much'</span><span class="p">,</span> <span class="n">votes</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="o">&lt;</span><span class="n">Choice</span><span class="p">:</span> <span class="n">Choice</span> <span class="nb">object</span><span class="o">&gt;</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">q</span><span class="o">.</span><span class="n">choice_set</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">choice_text</span><span class="o">=</span><span class="s1">'The sky'</span><span class="p">,</span> <span class="n">votes</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="o">&lt;</span><span class="n">Choice</span><span class="p">:</span> <span class="n">Choice</span> <span class="nb">object</span><span class="o">&gt;</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">q</span><span class="o">.</span><span class="n">choice_set</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">choice_text</span><span class="o">=</span><span class="s1">'Just hacking again'</span><span class="p">,</span> <span class="n">votes</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="o">&lt;</span><span class="n">Choice</span><span class="p">:</span> <span class="n">Choice</span> <span class="nb">object</span><span class="o">&gt;</span>
+</pre>
+ </div> 
+ <h2>二、 使用通用视图：减少重复代码</h2> 
+ <p>上面的detail、index和results视图的代码非常相似，有点冗余，这是一个程序猿不能忍受的。他们都具有类似的业务逻辑，实现类似的功能：通过从URL传递过来的参数去数据库查询数据，加载一个模板，利用刚才的数据渲染模板，返回这个模板。由于这个过程是如此的常见，Django很善解人意的帮你想办法偷懒，于是它提供了一种快捷方式，名为“通用视图”。</p> 
+ <p>现在，让我们来试试看将原来的代码改为使用通用视图的方式，整个过程分三步走：</p> 
+ <ul> 
+  <li>修改URLconf设置</li> 
+  <li>删除一些旧的无用的视图</li> 
+  <li>采用基于类视图的新视图</li> 
+ </ul> 
+ <p><strong>PS：为什么本教程的代码来回改动这么频繁？</strong></p> 
+ <p>答：通常在写一个Django的app时，我们一开始就要决定使用通用视图还是不用，而不是等到代码写到一半了才重构你的代码成通用视图。但是本教程为了让你清晰的理解视图的内涵，“故意”走了一条比较曲折的路，因为我们的哲学是<code>在你使用计算器之前你得先知道基本的数学公式</code>。</p> 
+ <h3>1.<strong>改良URLconf</strong></h3> 
+ <p>打开<code>polls/urls.py</code>文件，将其修改成下面的样子：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">path</span>
+
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">views</span>
+
+<span class="n">app_name</span> <span class="o">=</span> <span class="s1">'polls'</span>
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">''</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">IndexView</span><span class="o">.</span><span class="n">as_view</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">'index'</span><span class="p">),</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'&lt;int:pk&gt;/'</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">DetailView</span><span class="o">.</span><span class="n">as_view</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">'detail'</span><span class="p">),</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'&lt;int:pk&gt;/results/'</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">ResultsView</span><span class="o">.</span><span class="n">as_view</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">'results'</span><span class="p">),</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'&lt;int:question_id&gt;/vote/'</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">vote</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">'vote'</span><span class="p">),</span>
+<span class="p">]</span>
+</pre>
+ </div> 
+ <p>请注意：在上面的的第2,3条目中将原来的<code>&lt;question_id&gt;</code>修改成了<code>&lt;pk&gt;</code>.</p> 
+ <h3>2.<strong>修改视图</strong></h3> 
+ <p>接下来，打开<code>polls/views.py</code>文件，删掉index、detail和results视图，替换成Django的通用视图，如下所示：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.http</span> <span class="kn">import</span> <span class="n">HttpResponseRedirect</span>
+<span class="kn">from</span> <span class="nn">django.shortcuts</span> <span class="kn">import</span> <span class="n">get_object_or_404</span><span class="p">,</span> <span class="n">render</span>
+<span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">reverse</span>
+<span class="kn">from</span> <span class="nn">django.views</span> <span class="kn">import</span> <span class="n">generic</span>
+
+<span class="kn">from</span> <span class="nn">.models</span> <span class="kn">import</span> <span class="n">Choice</span><span class="p">,</span> <span class="n">Question</span>
+
+
+<span class="k">class</span> <span class="nc">IndexView</span><span class="p">(</span><span class="n">generic</span><span class="o">.</span><span class="n">ListView</span><span class="p">):</span>
+    <span class="n">template_name</span> <span class="o">=</span> <span class="s1">'polls/index.html'</span>
+    <span class="n">context_object_name</span> <span class="o">=</span> <span class="s1">'latest_question_list'</span>
+
+    <span class="k">def</span> <span class="nf">get_queryset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">"""Return the last five published questions."""</span>
+        <span class="k">return</span> <span class="n">Question</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s1">'-pub_date'</span><span class="p">)[:</span><span class="mi">5</span><span class="p">]</span>
+
+
+<span class="k">class</span> <span class="nc">DetailView</span><span class="p">(</span><span class="n">generic</span><span class="o">.</span><span class="n">DetailView</span><span class="p">):</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">Question</span>
+    <span class="n">template_name</span> <span class="o">=</span> <span class="s1">'polls/detail.html'</span>
+
+
+<span class="k">class</span> <span class="nc">ResultsView</span><span class="p">(</span><span class="n">generic</span><span class="o">.</span><span class="n">DetailView</span><span class="p">):</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">Question</span>
+    <span class="n">template_name</span> <span class="o">=</span> <span class="s1">'polls/results.html'</span>
+
+
+<span class="k">def</span> <span class="nf">vote</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">question_id</span><span class="p">):</span>
+    <span class="o">...</span> <span class="c1"># 同前面的一样，不需要修改</span>
+</pre>
+ </div> 
+ <p>在这里，我们使用了两种通用视图<code>ListView</code>和<code>DetailView</code>（它们是作为父类被继承的）。这两者分别代表“显示一个对象的列表”和“显示特定类型对象的详细页面”的抽象概念。</p> 
+ <ul> 
+  <li> <p>每一种通用视图都需要知道它要作用在哪个模型上，这通过model属性提供。</p> </li> 
+  <li> <p><code>DetailView</code>需要从url捕获到的称为"pk"的主键值，因此我们在url文件中将2和3条目的<code>&lt;question_id&gt;</code>修改成了<code>&lt;pk&gt;</code>。</p> </li> 
+ </ul> 
+ <p>默认情况下，<code>DetailView</code>通用视图使用一个称作<code>&lt;app name&gt;/&lt;model name&gt;_detail.html</code>的模板。在本例中，实际使用的是<code>polls/detail.html</code>。<code>template_name</code>属性就是用来指定这个模板名的，用于代替自动生成的默认模板名。（一定要仔细观察上面的代码，对号入座，注意细节。）同样的，在resutls列表视图中，指定<code>template_name</code>为<code>'polls/results.html'</code>，这样就确保了虽然resulst视图和detail视图同样继承了DetailView类，使用了同样的model：Qeustion，但它们依然会显示不同的页面。（模板不同嘛！so easy！）</p> 
+ <p>类似的，ListView通用视图使用一个默认模板称为<code>&lt;app name&gt;/&lt;model name&gt;_list.html</code>。我们也使用<code>template_name</code>这个变量来告诉ListView使用我们已经存在的 <code>"polls/index.html"</code>模板，而不是使用它自己默认的那个。</p> 
+ <p>在教程的前面部分，我们给模板提供了一个包含<code>question</code>和<code>latest_question_list</code>的上下文变量。而对于DetailView，question变量会被自动提供，因为我们使用了Django的模型（Question），Django会智能的选择合适的上下文变量。然而，对于ListView，自动生成的上下文变量是<code>question_list</code>。为了覆盖它，我们提供了<code>context_object_name</code>属性，指定说我们希望使用<code>latest_question_list</code>而不是<code>question_list</code>。</p> 
+ <p>现在可以运行开发服务器，然后试试基于类视图的应用程序了。类视图是Django比较高级的一种用法，初学可能不太好理解，没关系，我们先有个印象。</p> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/89"> <i class="fa fa-arrow-left"></i>&nbsp;Part 3：视图和模板</a> 
+  <a class="float-right" href="/course/django/91"> Part 5：测试&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 59</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/90">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva1.sinaimg.cn/crop.16.37.192.192.50/c06b4f74jw1eg07632pkjj206o08wq41.jpg?KID=imgbed,tva&amp;Expires=1587919501&amp;ssig=6XqGtttxKg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>最后一步改成通用模版是报错Django __init__() takes 1 positional argument but 2 were given 解决办法： 修改urls.py时，调用函数as_view()，闭包调用，捕获参数。path('', views.IndexView.as_view(), name='index')</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 疯狂的自行车_90 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年4月26日 21:51</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2054">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva1.sinaimg.cn/crop.0.0.1080.1080.50/005QUMTTjw8f826x4yyjlj30u00u0td1.jpg?KID=imgbed,tva&amp;Expires=1583756401&amp;ssig=%2FIWP7gEMJF" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>request.POST[’choice’,None]应该是request.POST.get(’choice’,None)吧？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; Dream灬Qiu </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年3月9日 17:20</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1956">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1583472635&amp;ssig=ZxtcMRQSIL" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>是的</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; Dream灬Qiu </span> 
+      <em>2020年3月10日 22:06</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1957">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva2.sinaimg.cn/crop.0.0.720.720.50/005zAPmJjw8ein6zbwlk7j30k00k0dgj.jpg?KID=imgbed,tva&amp;Expires=1575624329&amp;ssig=riktag8Lm9" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>/ polls / 1 / vote /处的ValueError 以10为底的int（）的无效文字：'' &lt;input type="radio" name="choice" id="choice{{ forloop.counter }}" value="{{ choice.id }}"&gt; &lt;label for="choice{{ forloop.counter }}"&gt;{{ choice.choice_text }}&lt;/label&gt;&lt;br&gt; 里面的forloop报输入错误 是跟这个有关系么</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 沉默被错误解读 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年12月7日 14:22</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1748">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva2.sinaimg.cn/crop.0.0.720.720.50/005zAPmJjw8ein6zbwlk7j30k00k0dgj.jpg?KID=imgbed,tva&amp;Expires=1575624329&amp;ssig=riktag8Lm9" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>http://127.0.0.1:8000/polls/1/ 一直不懂这个polls后面的id是怎么来的 还有怎么进入后面的polls的urls的 求解求解 不胜感激</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 沉默被错误解读 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年12月7日 14:15</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1747">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif?KID=imgbed,tva&amp;Expires=1579112135&amp;ssig=7XugeCiRbO" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>这需要了解Http的请求方法，&lt;a&gt;标签标识一个超链接，请求的方法是GET，会将参数自动附在链接的后面，这就是id的由来。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 忘川的归客 &nbsp;&nbsp;回复&nbsp;&nbsp; 沉默被错误解读 </span> 
+      <em>2020年1月15日 23:28</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1849">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva2.sinaimg.cn/crop.0.0.180.180.50/939cc2b2jw1e8qgp5bmzyj2050050aa8.jpg?KID=imgbed,tva&amp;Expires=1574242706&amp;ssig=xGod4g8zFO" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>NoReverseMatch at /polls/2/ Reverse for 'polls.vote' not found. 'polls.vote' is not a valid view function or pattern name. 出现了这个问题，跟着刘老师说的做</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; hello地主家的傻儿子 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年11月20日 14:39</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1717">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1573045997&amp;ssig=x1BZU9hqr4" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>url写错了吧？再对照一下urls.py的代码</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; hello地主家的傻儿子 </span> 
+      <em>2019年11月20日 14:59</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1718">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva2.sinaimg.cn/crop.0.0.540.540.50/61354ca7jw8ejj6dx5hz3j20f00f0myc.jpg?KID=imgbed,tva&amp;Expires=1573733896&amp;ssig=zfs36rDhMt" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>按照步骤走，修改前 /polls/1/不会展示detail页面，用通用视图步骤就报下面的错误了： TypeErrorat /polls/1/ 'set' object is not reversible Request Method: GET Request URL: http://localhost:8000/polls/1/ Django Version: 2.2.6 Exception Type: TypeError Exception Value: 'set' object is not reversible Exception Location: D:\IDEA\Python\lib\site-packages\django\urls\resolvers.py in _populate, line 447 Python Executable: D:\IDEA\Python\python.exe Python Version: 3.7.4 Python Path: ['D:\\IDEA\\PycharmProjects\\mysite', 'D:\\IDEA\\PycharmProjects\\mysite', 'D:\\IDEA\\pycharm\\PyCharm 2019.1\\helpers\\pycharm_display', 'D:\\IDEA\\Python\\python37.zip', 'D:\\IDEA\\Python\\DLLs', 'D:\\IDEA\\Python\\lib', 'D:\\IDEA\\Python', 'D:\\IDEA\\Python\\lib\\site-packages', 'D:\\IDEA\\pycharm\\PyCharm 2019.1\\helpers\\pycharm_matplotlib_backend'] Server time: Thu, 14 Nov 2019 17:12:30 +0800 Error during template rendering In template D:\IDEA\PycharmProjects\mysite\polls\templates\polls\detail.html, error at line 12</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 我们一起年轻气盛 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年11月14日 17:20</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1714">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1573045997&amp;ssig=x1BZU9hqr4" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>再重新对照一下代码吧。这个实例是一环扣一环，过程中任何一个地方出错都会影响后面。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 我们一起年轻气盛 </span> 
+      <em>2019年11月15日 08:18</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1715">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax2.sinaimg.cn/crop.0.0.768.768.50/a8a2c739ly8frkgysjiopj20lc0lcdik.jpg?KID=imgbed,tva&amp;Expires=1572893233&amp;ssig=eXIYJBvDsc" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我的HTML在浏览器打开，只有 h1标题和vote提交标签，没有选择choice的</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 飞塔大王 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年11月4日 23:51</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1693">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1573045997&amp;ssig=x1BZU9hqr4" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>看看是不是没有创建choice选项，导致for循环的是一个空的列表</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 飞塔大王 </span> 
+      <em>2019年11月6日 18:17</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1694">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax2.sinaimg.cn/crop.0.0.768.768.50/a8a2c739ly8frkgysjiopj20lc0lcdik.jpg?KID=imgbed,tva&amp;Expires=1572893233&amp;ssig=eXIYJBvDsc" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>找到一个线索了，但还没解决问题，老师帮忙看下~我删掉migrations中的0001_inital.py后，再次运行python manage.py makemigrations发现，只提示创建Question和Choice两张表，但没有提示Add question To choiceFeild，但后来我检查代码还是卡主了，我拷贝代码过来也还没有Add question to choiceFeild。 我连接的是mysql，这应该没影响的</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 飞塔大王 &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2019年11月7日 23:27</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1703">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax2.sinaimg.cn/crop.0.0.768.768.50/a8a2c739ly8frkgysjiopj20lc0lcdik.jpg?KID=imgbed,tva&amp;Expires=1572893233&amp;ssig=eXIYJBvDsc" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>上面是 Add field question to choice</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 飞塔大王 &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2019年11月7日 23:29</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1704">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 12em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1573045997&amp;ssig=x1BZU9hqr4" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>你不光要删除0001_inital.py，还要删除mysql数据库中的migrations表</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 飞塔大王 </span> 
+      <em>2019年11月8日 08:18</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1705">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax2.sinaimg.cn/crop.0.0.768.768.50/a8a2c739ly8frkgysjiopj20lc0lcdik.jpg?KID=imgbed,tva&amp;Expires=1572893233&amp;ssig=eXIYJBvDsc" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>刘老师您好，我的html模板中，以下这段代码貌似没有执行，不知道 哪里出错了，复制过去的也不行。 {% for choice in question.choice_set.all %} &lt;input type="radio" name="choice" id="choice{{ forloop.counter }}" value="{{ choice.id }}"&gt; &lt;label for="choice{{ forloop.counter }}"&gt;{{ choice.choice_text }}&lt;/label&gt;&lt;br&gt; {% endfor %}</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 飞塔大王 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年11月4日 23:48</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1692">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif?KID=imgbed,tva&amp;Expires=1572590924&amp;ssig=cJ4ocCjqxp" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>改为通用视图之后，需要把polls文件夹中的index.html、detail.html、results.html文件删除么？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户2935394288 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年11月1日 11:50</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1688">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1573045997&amp;ssig=x1BZU9hqr4" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>通用视图是视图层面也就是python代码的复用，依然使用原来的html模板，所以这些文件不删除</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 用户2935394288 </span> 
+      <em>2019年11月6日 18:26</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1696">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva4.sinaimg.cn/crop.0.0.720.720.50/005PJEjHjw8elr1797d4mj30k00k0gn5.jpg?KID=imgbed,tva&amp;Expires=1571320375&amp;ssig=oVWzzDnXoE" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>打开/polls/1/ 后，没有看到投票结果，不知道在哪一步操作错了。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 秋雨淅淅l </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年10月17日 18:53</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1661">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif?KID=imgbed,tva&amp;Expires=1568195877&amp;ssig=YWP%2BGIU9MM" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>def vote(request, question_id): ... # 同前面的一样，不需要修改 这里要把question_id 改成pk吧。老师的教程真棒</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 呆额_35377 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年9月11日 14:58</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1624">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva3.sinaimg.cn/crop.0.0.180.180.50/6fb33adejw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>selected_choice = question.choice_set.get(pk=request.POST['choice']) 这一行报错了 {TypeError}__call__() got an unexpected keyword argument 'pk' 不知道为什么</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 期待0_黎明 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年5月25日 10:28</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1354">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.512.512.50/005xq9n6ly8fvpagmfqtzj30e80e8gmx.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>每一种通用视图都需要知道它要作用在哪个模型上，这通过model属性提供。 老师，在ListView中为什么不用指定model？ get_queryset是代替model的作用吗？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 阿冉要好好学英语 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年5月21日 10:29</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1340">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>照着教程写的，报错了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 无心_5596 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年4月22日 10:23</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1275">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>index页面访问报错啊 django.urls.exceptions.NoReverseMatch: Reverse for 'index' with arguments '(2,)' not found. 1 pattern(s) tried: ['polls\\/$']</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 无心_5596 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年4月22日 10:22</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1274">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/default/images/default_avatar_female_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>from selenium import webdriver import os from threading import Thread from time import sleep def cmd(a,b): os.system('python manage.py runserver') def test(a,b): driver = webdriver.Chrome(r'D:\chromedriver_win32\chromedriver.exe') driver.get('http://127.0.0.1:8000/polls/') thread1=Thread( target=cmd, args=(0,0) ) sleep(0.5) thread2=Thread( target=test, args=(0,0) ) thread1.start() thread2.start() 给大家分享自己写的一个web自动化测试的代码，代码肯定有缺陷，大神不喜勿喷</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户7050434977 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年4月9日 16:45</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1234">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/default/images/default_avatar_female_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>其中的webdriver软件需要自己安装的，比如我的浏览器是chrome，就下载一个chromedirver，然后用两个线程执行就可以了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 用户7050434977 &nbsp;&nbsp;回复&nbsp;&nbsp; 用户7050434977 </span> 
+      <em>2019年4月9日 16:47</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1235">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.1080.1080.50/005Nrl91ly8fka03a220bj30u00u0wfy.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>views.py return render(request, 'polls/results.html', {'question': question})返回页面多了个s hhhh</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 墨雨苦竹 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年3月9日 15:38</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1124">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.1080.1080.50/005Nrl91ly8fka03a220bj30u00u0wfy.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>哦~自己的是results.html页面哈哈</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 墨雨苦竹 &nbsp;&nbsp;回复&nbsp;&nbsp; 墨雨苦竹 </span> 
+      <em>2019年3月9日 15:39</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1125">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.1080.1080.50/62e38188ly8fyyhk2n54qj20u00u0q5i.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>为何一直显示No polls are avaible</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 太古树 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年1月31日 23:01</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1054">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.180.180.50/745443ddjw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>同样一直显示No polls are avaible 但是如果把detail.html中的latest_question_list 改成 question_list （我理解为django自动创建的对象） 首页就可以显示正常显示 怀疑是 context_objcet_name 没有起作用，目前找不到原因。 麻烦找到问题同学所在的回复</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 我的提莫很厉害 &nbsp;&nbsp;回复&nbsp;&nbsp; 太古树 </span> 
+      <em>2019年6月19日 16:18</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1411">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.0.0.996.996.50/006ACthnly8fpspenramdj30ro0ro0ud.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>网页报错：Exception Value：no such column: polls_choice.votes 在Python运行 q.Choice_set.all()和q.choice_set.create(choice_text='Not much', votes=0)总是报错，调试半天总是调试不出来，请给我看一下</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 大圣Barne </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年1月18日 14:25</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1021">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.0.0.996.996.50/8ec06101ly8fh8mk0l9zfj20ro0rogo9.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>一不小心创建多了且重复了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 曲健刚 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年12月3日 21:38</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/912">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>如题</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 曲健刚 </span> 
+      <em>2018年12月4日 08:34</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/913">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.178.0.293.293.50/006AaVVsly8fw7tz0rufaj30ho085qbx.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>按照教程加上默认值None之后request.POST['choice',None]，无论选择什么choice都会提示You didn't select a choice.。是只有我这样吗？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 为了给笛子点赞才找回密码 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年11月7日 07:50</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/830">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.180.180.50/7d65f85ajw8egw9kt2w59j2050050t8w.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>各位好！投票后在结果页未累计投票数，请问一下这个是什么问题？我对了一下，和博主的代码一样的。如果有遇到过这问题并解决的可以帮忙回答一下，谢谢了。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 花开一处男 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年10月15日 16:57</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/773">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva4.sinaimg.cn/crop.90.0.709.709.50/006c7h2Vjw8f4ss9p8ralj30qo0qoq7k.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>就本人所遇到的该问题，之前发现在下行代码中votes写成vote，所以未显示投票数，修改后显示了。你可以试下把博主的代码直接贴上去运行一下。 &lt;li&gt;{{ choice.choice_text }} -- {{ choice.votes }} vote {{ choice.vote| pluralize }}&lt;/li&gt;</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 夜千晚 &nbsp;&nbsp;回复&nbsp;&nbsp; 花开一处男 </span> 
+      <em>2018年11月3日 01:54</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/814">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>刘老师，你好，关于类视图实例很是不理解，有什么学习方法或者参考的思路吗？谢谢</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 唐僧的棒棒糖 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年7月21日 10:24</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/630">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>对类这里没有啥基础</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 唐僧的棒棒糖 &nbsp;&nbsp;回复&nbsp;&nbsp; 唐僧的棒棒糖 </span> 
+      <em>2018年7月21日 10:27</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/631">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva3.sinaimg.cn/crop.0.0.640.640.50/4ce6165ejw8ekl59ij7zsj20hs0hsgm6.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>http://127.0.0.1:8000/polls/1/vote/ 以上界面访问报错。 提示错误点在detail.html中这句： &lt;form action="{% url 'polls:vote' question.id %}" method="post"&gt; 报错内容是：Reverse for 'vote' with arguments '('',)' not found. 1 pattern(s) tried: ['polls/(?P&lt;question_id&gt;[0-9]+)/vote/$'] 比对了好久没有找到原因，请博主指点一下。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 默读de伤悲 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年7月2日 21:03</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/553">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.0.0.996.996.50/005POk8uly8fqxrpve6fej30ro0roq41.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>需要在views修改对应的方法 class DetailView(generic.DetailView): template_name='polls/detail.html' model=Questions context_object_name='question' 最后一句必须与html中的一致起来才行</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 那边的那个人你是谁 &nbsp;&nbsp;回复&nbsp;&nbsp; 默读de伤悲 </span> 
+      <em>2018年12月25日 09:09</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/978">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.1080.1080.50/62e38188ly8fyyhk2n54qj20u00u0q5i.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>generic报错</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 太古树 &nbsp;&nbsp;回复&nbsp;&nbsp; 那边的那个人你是谁 </span> 
+      <em>2019年1月29日 22:50</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1051">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.1080.1080.50/62e38188ly8fyyhk2n54qj20u00u0q5i.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>这个问题解决了吗？我也遇到了，不知道怎么解决。用的是py 3.7，django2</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 太古树 &nbsp;&nbsp;回复&nbsp;&nbsp; 默读de伤悲 </span> 
+      <em>2019年1月29日 22:58</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1052">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.1080.1080.50/62e38188ly8fyyhk2n54qj20u00u0q5i.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>原来打错个符号。。。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 太古树 &nbsp;&nbsp;回复&nbsp;&nbsp; 太古树 </span> 
+      <em>2019年2月1日 21:33</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1056">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.1006.1006.50/005PGwNIly8foh8221e8ej30ry0rygnh.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>那怕它看起来像数字 =&gt; 哪怕</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 袅残烟喵 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年4月17日 14:10</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/388">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>polls/views.py from django.shortcuts import get_object_or_404, render from django.http import HttpResponseRedirect from django.urls import reverse from django.views import generic from .models import Choice, Question def vote(request,question_id): # return HttpResponse("You are voting for question %s."% question_id) question=get_object_or_404(Question,pk=question_id) try: selected_choice=question.choice_set.get(pk=request.POST['choice']) except (KeyError,Choice.DoesNotExist): return render(request,"polls/detail.html",{ 'question':question, 'error_message':"You don't select a choice.", }) else: selected_choice.votes += 1 selected_choice.save() return HttpResponseRedirect(reverse('polls:results',args=(question.id,))) class IndexView(generic.ListView): template_name = 'polls/index.html' context_object_name = 'latest_question_list' def get_queryset(self): return Question.objects.order_by('-pub_date')[:5] class DetailView(generic.DetailView): model=Question template_name = 'polls/detail.html' class ResultView(generic.DetailView): model = Question template_name = 'polls/results.html' 报错： Traceback (most recent call last): File "D:/Python/study/mysite/polls/views.py", line 5, in &lt;module&gt; from .models import Choice, Question ModuleNotFoundError: No module named '__main__.models'; '__main__' is not a package</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 吃瓜群众一份子 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年3月7日 23:35</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/253">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>这个是我自己打开方式不对，不好意思.....</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 吃瓜群众一份子 &nbsp;&nbsp;回复&nbsp;&nbsp; 吃瓜群众一份子 </span> 
+      <em>2018年3月7日 23:44</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/254">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva3.sinaimg.cn/crop.0.0.180.180.50/c2263662jw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>class IndexView(generic.ListView): template_name = 'polls/index.html' context_object_name = 'latest_question_list' def get_queryset(self): """返回最近发布的5个问卷.""" return Question.objects.order_by('-pub_date')[:5] 这里的return，我这边报错，说out of function，怎么办啊，哇呜</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 俺是BB </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年2月2日 16:12</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/184">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva3.sinaimg.cn/crop.0.0.80.80.50/0065sTQcjw8eqpbxtxeq1j3028028q2p.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>get_object_or_404(klass,, pk=question_id) klass may be a Model, Manager, or QuerySet object. All other passed arguments and keyword arguments are used in the get() query. pk是id的意思,当然也可写成id = question_id,或者写成question_text="你想查询的question_text"</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; ywhyme </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年1月25日 11:55</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/156">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva3.sinaimg.cn/crop.0.0.80.80.50/0065sTQcjw8eqpbxtxeq1j3028028q2p.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>get() 为queryset下的get方法</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> ywhyme &nbsp;&nbsp;回复&nbsp;&nbsp; ywhyme </span> 
+      <em>2018年1月25日 12:06</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/157">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.11.0.1103.1103.50/bff4b132ly8fk9nlj1x56j20v90ungne.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>谢谢刘老师</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 安思危_Amur </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年1月3日 22:59</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/107">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.426.66.1066.1066.50/005EMUrrly8flohkwuo2uj31hc0xce81.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>vote{{ choice.votes|pluralize }} 啥意思</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; wenlei890929 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2017年12月13日 17:54</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/87">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我们知道英文中的名词分复数和单数形式，比如apple和apples。 pluralize是Django内置的一个过滤器，当choice.votes这个变量的值大于1时，也就是复数时，就在字符串vote后面加个s。如果值是1，也就是单数形式，就不加s。 Django很细对吧？这么小的细节都考虑到了！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; wenlei890929 </span> 
+      <em>2017年12月13日 20:20</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/88">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.426.66.1066.1066.50/005EMUrrly8flohkwuo2uj31hc0xce81.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>考虑很详细，讲解很详细</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> wenlei890929 &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2017年12月14日 14:01</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/89">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.13.0.723.723.50/005GkKe9ly8fkxegjen9ij30ku0k3jtr.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我在点击vote的时候出现 _reverse_with_prefix() argument after * must be an iterable, not int 错误</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; PhingRczhx </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2017年11月23日 19:34</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/56">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>确保是完全按照教程进行的。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; PhingRczhx </span> 
+      <em>2017年11月23日 19:45</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/58">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.13.0.723.723.50/005GkKe9ly8fkxegjen9ij30ku0k3jtr.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>在detail.html中，form表单的action的url是不是写错了，改成"{% url 'polls:results' question.id %} 不过不影响 细心的人应该都会看出来。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; PhingRczhx </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2017年11月23日 18:12</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/54">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.13.0.723.723.50/005GkKe9ly8fkxegjen9ij30ku0k3jtr.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>不好意我理解错了，看错了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> PhingRczhx &nbsp;&nbsp;回复&nbsp;&nbsp; PhingRczhx </span> 
+      <em>2017年11月23日 19:25</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/55">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>你再仔细看一下。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; PhingRczhx </span> 
+      <em>2017年11月23日 19:41</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/57">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.0.180.180.50/c2dc2d09jw1fe1nwdyb2uj2050050wea.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>深入浅出，浅显易懂</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; svcasvawe </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2017年11月17日 16:05</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/41">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

@@ -1,0 +1,461 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>使用MySQL数据库</h1> 
+ <small>阅读:&nbsp;52820&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：17 </small> 
+ <hr> 
+ <p>在实际生产环境，Django是不可能使用SQLite这种轻量级的基于文件的数据库作为生产数据库。一般较多的会选择MySQL。</p> 
+ <p>下面介绍一下如何在Django中使用MySQL数据库。</p> 
+ <h2>一、安装MySQL</h2> 
+ <p><img alt="29.png-118.5kB" src="http://static.zybuluo.com/feixuelove1009/nbc2jwhltc1vxvloelf713i9/29.png"></p> 
+ <p>不建议在Windows中部署MySQL，建议迁移到Linux上来。</p> 
+ <p>我这里使用的是ubuntu16.04。</p> 
+ <p>安装命令：</p> 
+ <div class="codehilite">
+  <pre><span></span>sudo apt-get update
+sudo apt-get install mysql-server mysql-client
+</pre>
+ </div> 
+ <p><img alt="30.png-42kB" src="http://static.zybuluo.com/feixuelove1009/g8wybha3kuqkax9rwf19aled/30.png"></p> 
+ <p>中途，请设置root用户的密码。</p> 
+ <p>安装完毕后，使用命令行工具，输入root的密码，进入mysql：</p> 
+ <div class="codehilite">
+  <pre><span></span>mysql -u root -p
+</pre>
+ </div> 
+ <p>提示如下：</p> 
+ <div class="codehilite">
+  <pre><span></span>[feixue@feixue-VirtualBox: ~]$ mysql -u root -p
+Enter password: 
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 4
+Server version: 5.7.20-0ubuntu0.16.04.1 (Ubuntu)
+
+Copyright (c) 2000, 2017, Oracle and/or its affiliates. All rights reserved.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql&gt; 
+</pre>
+ </div> 
+ <p>可以使用命令，先看看当前数据库系统内有哪些已经默认创建好了的数据库：</p> 
+ <div class="codehilite">
+  <pre><span></span>mysql&gt; SHOW DATABASES;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| mysql              |
+| performance_schema |
+| sys                |
++--------------------+
+4 rows in set (0.04 sec)
+</pre>
+ </div> 
+ <p>假设我们的Django工程名字为'mysite'，那么我们就创建一个mysite数据库，当然，名字其实随意，但是一样的更好记忆和区分，不是么？</p> 
+ <div class="codehilite">
+  <pre><span></span>CREATE DATABASE mysite CHARACTER SET utf8;
+</pre>
+ </div> 
+ <h3>强调：一定要将字符编码设置为utf8，很多错误就是没正确设置编码导致的！</h3> 
+ <p>创建好mystie数据库后，可以用上面的命令，检查一下，没有问题，就退出mysql。</p> 
+ <div class="codehilite">
+  <pre><span></span>mysql&gt; CREATE DATABASE mysite CHARACTER SET utf8;
+Query OK, 1 row affected (0.00 sec)
+
+mysql&gt; SHOW DATABASES;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| mysite             |
+| mysql              |
+| performance_schema |
+| sys                |
++--------------------+
+5 rows in set (0.00 sec)
+
+mysql&gt; exit;
+Bye
+</pre>
+ </div> 
+ <h2>二、配置MySQL服务</h2> 
+ <p>由于我的环境是局域网，Django项目所在主机为192.168.1.100，而mysql所在linux为虚拟机，IP为192.168.1.121，为了能够从项目主机访问数据库主机，需要对MySQL服务进行配置。</p> 
+ <p>打开配置文件：</p> 
+ <div class="codehilite">
+  <pre><span></span>sudo vim /etc/mysql/mysql.conf.d/mysqld.cnf
+</pre>
+ </div> 
+ <p>将下面一行注释掉：</p> 
+ <div class="codehilite">
+  <pre><span></span># band-address = localhost
+</pre>
+ </div> 
+ <div class="codehilite">
+  <pre><span></span># .....
+
+[mysqld]
+#
+# * Basic Settings
+#
+user            = mysql
+pid-file        = /var/run/mysqld/mysqld.pid
+socket          = /var/run/mysqld/mysqld.sock
+port            = 3306
+basedir         = /usr
+datadir         = /var/lib/mysql
+tmpdir          = /tmp
+lc-messages-dir = /usr/share/mysql
+skip-external-locking
+#bind-address= localhost
+skip-name-resolve
+character-set-server=utf8
+
+# .....
+</pre>
+ </div> 
+ <p>如果不这么做，将会出现<code>error：1045 deny access</code>，拒绝访问错误。</p> 
+ <p>使用下面的命令，重新启动mysql服务：</p> 
+ <div class="codehilite">
+  <pre><span></span>sudo service mysql restart
+</pre>
+ </div> 
+ <h2>三、安装Python访问MySQL的模块</h2> 
+ <p>Django官方已经不建议使用pymysql库了，而是改用mysqlclient，直接pip安装即可。</p> 
+ <div class="codehilite">
+  <pre><span></span>pip install mysqlclient
+</pre>
+ </div> 
+ <h2>四、配置Django的settings.py</h2> 
+ <p>在Django的settings.py文件中设置如下：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="n">DATABASES</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">'default'</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">'ENGINE'</span><span class="p">:</span> <span class="s1">'django.db.backends.mysql'</span><span class="p">,</span>   <span class="c1"># 数据库引擎</span>
+        <span class="s1">'NAME'</span><span class="p">:</span> <span class="s1">'mysite'</span><span class="p">,</span>  <span class="c1"># 数据库名，先前创建的</span>
+        <span class="s1">'USER'</span><span class="p">:</span> <span class="s1">'root'</span><span class="p">,</span>     <span class="c1"># 用户名，可以自己创建用户</span>
+        <span class="s1">'PASSWORD'</span><span class="p">:</span> <span class="s1">'****'</span><span class="p">,</span>  <span class="c1"># 密码</span>
+        <span class="s1">'HOST'</span><span class="p">:</span> <span class="s1">'192.168.1.121'</span><span class="p">,</span>  <span class="c1"># mysql服务所在的主机ip</span>
+        <span class="s1">'PORT'</span><span class="p">:</span> <span class="s1">'3306'</span><span class="p">,</span>         <span class="c1"># mysql服务端口</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre>
+ </div> 
+ <p>至此，就可以像使用SQLite一样使用MySQL了！</p> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/164"> <i class="fa fa-arrow-left"></i>&nbsp;核心配置项</a> 
+  <a class="float-right" href="/course/django/166"> django-admin和manage.py&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 17</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/165">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.0.0.996.996.50/006OMwITly8g50z8imtibj30ro0ro760.jpg?KID=imgbed,tva&amp;Expires=1583499567&amp;ssig=F9y%2FFFV0xv" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>你好，我想请问一下，如果我想把威胁你小程序前端的内容存到自己服务器，django setting中的host改怎么写？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; MMatx </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年3月6日 18:00</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1948">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax4.sinaimg.cn/crop.0.0.996.996.50/0063ewBCly8gags7uwy4aj30ro0roq51.jpg?KID=imgbed,tva&amp;Expires=1581330084&amp;ssig=7hRySiGqwR" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>你好，在ubantu操作系统下django使用mysql配置跟你上面的一样，但是执行python manage.py makemigrations 时会报错：段错误 (核心已转储) 请问这样该如何解决？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 高智商逗逗逗 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年2月10日 15:24</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1882">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1580535067&amp;ssig=MT2I5MRwQN" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>从未遇到过类似问题。网络搜索一下吧。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 高智商逗逗逗 </span> 
+      <em>2020年2月11日 15:49</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1887">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva2.sinaimg.cn/crop.0.0.100.100.50/006ikAm7jw8ey8puy5aveg302s02swee.gif?KID=imgbed,tva&amp;Expires=1580477453&amp;ssig=A8xKQX7vR9" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>如果使用anaconda创建虚拟环境并安装django后，在虚拟环境中使用conda list命令，如果已经安装了mysqlclient的千万不要安装并引用pymysql这个包。不使用pymysql这个包的话django会默认使用更新一点的mysqlclient进行连接，如果写了 import pymsql 和pymysql.install_as_MySQLdb()这两句后，django会使用pymysql进行连接数据库，而pymysql的mysqlclient版本就是0.9.3。也就是各位报错的，“django.core.exceptions.ImproperlyConfigured: mysqlclient 1.3.13 or newer is required; you have 0.9.3.”这句话的来源。希望博主可以稍微修改一下。 今天我也在部署django到lnmp环境中，提几个容易踩的坑，警示自己，也为后来人铺一下道路： 1.使用远程数据库提示Internet error，查看远程数据库的对应端口是否开放(比如MySQL就是3306，需要看一下防火墙有没有放行3306) 2.能访问3306端口但远程无法使用数据库，查看用户是否具有任意主机访问数据库的权限 3.提示django.core.exceptions.ImproperlyConfigured: mysqlclient 1.3.13 or newer is required; you have 0.9.3. 在没有其他使用的情况下将代码中的pymysql全部删掉。不需要安装pymysql。如果不是像我使用conda创建的虚拟环境的，可以使用pip安装最新mysqlclient即可解决。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 不玩游戏的网瘾少年 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年1月31日 18:43</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1857">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1580535067&amp;ssig=MT2I5MRwQN" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>很好的建议和经验，已经修改，谢谢。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 不玩游戏的网瘾少年 </span> 
+      <em>2020年2月1日 10:33</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1859">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif?KID=imgbed,tva&amp;Expires=1585830853&amp;ssig=2LiOlR%2FUNf" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我也踩过坑 点个赞</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 用户5820030298 &nbsp;&nbsp;回复&nbsp;&nbsp; 不玩游戏的网瘾少年 </span> 
+      <em>2020年4月2日 17:34</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1999">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif?KID=imgbed,tva&amp;Expires=1576255075&amp;ssig=2nVCNNhew%2F" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>你好，运行后显示'DatabaseWrapper' object has no attribute 'corsor' 是什么原因啊</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 淡淡19876 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年12月13日 21:38</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1763">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif?KID=imgbed,tva&amp;Expires=1569493619&amp;ssig=mAovXu%2Bcsu" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>你好，前两个问题已经按照注释和修改encode解决了，但只要makemigrations就会报错ValueError: source code string cannot contain null bytes，文件放到word里也没发现有多的字符，而只要在settings里改成用sqlite就不会报这个错，请问这个要怎么解决啊，网上搜了一天也没发现该怎么解决，求帮助，谢谢!</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 阳光帅气的翔子 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年9月26日 15:30</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1643">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.0.0.1000.1000.50/0062L9Z4ly8feizcahaayj30rs0rsq5m.jpg?KID=imgbed,tva&amp;Expires=1572331715&amp;ssig=mIR8pkFHxs" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>您好！我也遇到了这个问题，不知道您当时是怎样解决的？谢谢</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 繁华落尽_71100 &nbsp;&nbsp;回复&nbsp;&nbsp; 阳光帅气的翔子 </span> 
+      <em>2019年10月29日 11:49</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1680">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.512.512.50/005xq9n6ly8fvpagmfqtzj30e80e8gmx.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>按照文中配置，报错django.core.exceptions.ImproperlyConfigured: mysqlclient 1.3.13 or newer is required; you have 0.9.3. 有木有爬过这个坑的</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 阿冉要好好学英语 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年5月21日 18:23</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1342">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.512.512.50/005xq9n6ly8fvpagmfqtzj30e80e8gmx.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>已解决： 1、raise ImproperlyConfigured('mysqlclient 1.3.13 or newer is required; you have %s.' % Database.__version__) 　　　django.core.exceptions.ImproperlyConfigured: mysqlclient 1.3.13 or newer is required; you have 0.9.3. 　　解决办法：C:\Python37\Lib\site-packages\django\db\backends\mysql（python安装目录）打开base.py，注释掉以下内容： 　　　　　　　if version &lt; (1, 3, 13): 　　　　　　　　　　raise ImproperlyConfigured('mysqlclient 1.3.13 or newer is required; you have %s.' % Database.__version__) 　　 2、File "C:\Python37\lib\site-packages\django\db\backends\mysql\operations.py", line 146, in last_executed_query 　　 query = query.decode(errors='replace') 　　AttributeError: 'str' object has no attribute 'decode' 　　解决办法：打开此文件把146行的decode修改为encode</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 阿冉要好好学英语 &nbsp;&nbsp;回复&nbsp;&nbsp; 阿冉要好好学英语 </span> 
+      <em>2019年5月21日 18:44</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1343">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax2.sinaimg.cn/crop.0.0.880.880.50/005NtmT0ly8g3n6j8j1raj30og0og3zm.jpg?KID=imgbed,tva&amp;Expires=1571390399&amp;ssig=oZsSHnOpKm" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>只有这一种解决办法吗？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> IIRROONN_Stark &nbsp;&nbsp;回复&nbsp;&nbsp; 阿冉要好好学英语 </span> 
+      <em>2019年10月18日 14:20</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1669">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 12em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva2.sinaimg.cn/crop.0.0.100.100.50/006ikAm7jw8ey8puy5aveg302s02swee.gif?KID=imgbed,tva&amp;Expires=1580464516&amp;ssig=VaSDVeK6Yu" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>应该不是。不需要引入pymysql这个包，这个包默认是0.9.3（眼熟不）。其实只要装了mysqlclient之后，默认版本是1.4以上的。（博主强调不能省略的两句话全去掉就好了）</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 不玩游戏的网瘾少年 &nbsp;&nbsp;回复&nbsp;&nbsp; IIRROONN_Stark </span> 
+      <em>2020年1月31日 14:57</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1856">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif?KID=imgbed,tva&amp;Expires=1577363107&amp;ssig=X8KYMw5ojN" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>https://blog.csdn.net/zztingfeng/article/details/80155624 把相关检查代码注释就OK了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 用户7298883433 &nbsp;&nbsp;回复&nbsp;&nbsp; 阿冉要好好学英语 </span> 
+      <em>2019年12月26日 17:25</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1804">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva3.sinaimg.cn/crop.0.0.100.100.50/005Z1Pwejw8epdxrgjqb1j302s02sjr9.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>出现出现 2003-Can’t connect to MySQL on ’192.168.1.2’(10061)； 我是使用了虚拟环境，现在虚拟内存对应的python下载了pymysql库，但是却显示不行</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户5482457026 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年10月15日 22:58</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/774">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.18.41.458.458.50/730a6c45jw8ez6kaa7fklj20dw0dwaaw.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>/usr/bin/python3.5 /home/qly/PycharmProjects/remb/manage.py runserver 127.0.0.1:8000 Unhandled exception in thread started by &lt;function check_errors.&lt;locals&gt;.wrapper at 0x7f188468ad90&gt; Traceback (most recent call last): File "/home/qly/.local/lib/python3.5/site-packages/django/db/utils.py", line 110, in load_backend return import_module('%s.base' % backend_name) File "/usr/lib/python3.5/importlib/__init__.py", line 126, in import_module return _bootstrap._gcd_import(name[level:], package, level) File "&lt;frozen importlib._bootstrap&gt;", line 986, in _gcd_import File "&lt;frozen importlib._bootstrap&gt;", line 969, in _find_and_load File "&lt;frozen importlib._bootstrap&gt;", line 944, in _find_and_load_unlocked File "&lt;frozen importlib._bootstrap&gt;", line 222, in _call_with_frames_removed File "&lt;frozen importlib._bootstrap&gt;", line 986, in _gcd_import File "&lt;frozen importlib._bootstrap&gt;", line 969, in _find_and_load File "&lt;frozen importlib._bootstrap&gt;", line 956, in _find_and_load_unlocked ImportError: No module named 'django.db.backends.mysql' The above exception was the direct cause of the following exception:</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 蕴重Liu </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年7月8日 00:03</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/558">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.180.180.50/67179639jw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>踩过坑的,点个赞~!</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 孤竹孙 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年5月6日 11:15</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/453">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

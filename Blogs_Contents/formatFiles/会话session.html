@@ -1,0 +1,356 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>会话session</h1> 
+ <small>阅读:&nbsp;26938&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：3 </small> 
+ <hr> 
+ <p>因为因特网HTTP协议的特性，每一次来自于用户浏览器的请求（request）都是无状态的、独立的。通俗地说，就是无法保存用户状态，后台服务器根本就不知道当前请求和以前及以后请求是否来自同一用户。对于静态网站，这可能不是个问题，而对于动态网站，尤其是京东、天猫、银行等购物或金融网站，无法识别用户并保持用户状态是致命的，根本就无法提供服务。你可以尝试将浏览器的cookie功能关闭，你会发现将无法在京东登录和购物。</p> 
+ <p>为了保持连接状态，网站会通过用户的浏览器在用户机器内被限定的硬盘位置中写入一些数据，也就是所谓的Cookie。通过Cookie可以保存一些诸如用户名、浏览记录、表单记录、登录和注销等各种数据。但是这种方式非常不安全，因为Cookie保存在用户的机器上，如果Cookie被伪造、篡改或删除，就会造成极大的安全威胁，因此，现代网站设计通常将Cookie用来保存一些不重要的内容，实际的用户数据和状态还是以Session会话的方式保存在服务器端。</p> 
+ <p>Session就是在服务器端的‘Cookie’，将用户数据保存在服务器端，远比保存在用户端要安全、方便和快捷得多。</p> 
+ <p>Session依赖Cookie！但与Cookie不同的地方在于Session将所有的数据都放在服务器端，用户浏览器的Cookie中只会保存一个非明文的识别信息，比如哈希值。</p> 
+ <p>Session是大多数网站都需要具备的功能。Django为我们提供了一个通用的Session框架，并且可以使用多种session数据的保存方式：</p> 
+ <ul> 
+  <li>保存在数据库内</li> 
+  <li>保存到缓存</li> 
+  <li>保存到文件内</li> 
+  <li>保存到cookie内</li> 
+ </ul> 
+ <p>通常情况，没有特别需求的话，请使用保存在数据库内的方式，尽量不要保存到Cookie内。</p> 
+ <p>Django的session框架支持匿名会话，封装了cookies的发送和接收过程。cookie包含一个会话ID而不是数据本身（除非你使用的是基于后端的cookie）。</p> 
+ <p>Django的会话框架完全地、唯一地基于Cookie。它不像PHP一样，把会话的ID放在URL中。那样不仅使得URL变得丑陋，还使得你的网站易于受到通过"Referer"头部进行窃取会话ID的攻击。</p> 
+ <h2>一、启用会话</h2> 
+ <p>Django通过一个内置中间件来实现会话功能。要启用会话就要先启用该中间件。编辑settings.py中的MIDDLEWARE设置，确保存在<code>django.contrib.sessions.middleware.SessionMiddleware</code>这一行。默认情况在新建的项目中它是存在的。</p> 
+ <p>如果你不想使用会话功能，那么在settings文件中，将SessionMiddleware从MIDDLEWARE中删除，将<code>django.contrib.sessions</code>从<code>INSTALLED_APPS</code>中删除就OK了。</p> 
+ <h2>二、配置会话引擎</h2> 
+ <p>默认情况下，Django将会话数据保存在数据库内（通过使用<code>django.contrib.sessions.models.Session</code>模型）。当然，你也可以将数据保存在文件系统或缓存内。</p> 
+ <h3>1. 基于数据库的会话</h3> 
+ <p>确保在<code>INSTALLED_APPS</code>设置中django.contrib.sessions的存在，然后运行<code>manage.py migrate</code>命令在数据库内创建sessions表。</p> 
+ <h3>2. 基于缓存的会话</h3> 
+ <p>从性能角度考虑，基于缓存的会话会更好一些。但是首先，你得先配置好你的缓存。</p> 
+ <p>如果你定义有多个缓存，Django将使用默认的那个。如果你想用其它的，请将<code>SESSION_CACHE_ALIAS</code>参数设置为那个缓存的名字。</p> 
+ <p>配置好缓存后，你可以选择两种保存数据的方法：</p> 
+ <ul> 
+  <li>一是将<code>SESSION_ENGINE</code>设置为"django.contrib.sessions.backends.cache"，简单的对会话进行保存。但是这种方法不是很可靠，因为当缓存数据存满时将清除部分数据，或者遇到缓存服务器重启时数据将丢失。</li> 
+  <li>为了数据安全保障，可以将<code>SESSION_ENGINE</code>设置为"django.contrib.sessions.backends.cached_db"。这种方式在每次缓存的时候会同时将数据在数据库内写一份。当缓存不可用时，会话会从数据库内读取数据。</li> 
+ </ul> 
+ <p>两种方法都很迅速，但是第一种简单的缓存更快一些，因为它忽略了数据的持久性。如果你使用缓存+数据库的方式，还需要对数据库进行配置。</p> 
+ <h3>3. 基于文件的会话</h3> 
+ <p>将<code>SESSION_ENGINE</code>设置为"django.contrib.sessions.backends.file"。同时，你必须正确配置<code>SESSION_FILE_PATH</code>（默认使用tempfile.gettempdir()方法的返回值，就像/tmp目录），确保你的文件存储目录，以及Web服务器对该目录具有读写权限。</p> 
+ <h3>4. 基于cookie的会话</h3> 
+ <p>将<code>SESSION_ENGINE</code>设置为"django.contrib.sessions.backends.signed_cookies"。Django将使用加密签名工具和安全秘钥设置保存会话的cookie。</p> 
+ <p>注意：建议将<code>SESSION_COOKIE_HTTPONLY</code>设置为True，阻止javascript对会话数据的访问，提高安全性。</p> 
+ <h2>三、在视图中使用会话</h2> 
+ <p>当会话中间件启用后，传递给视图request参数的HttpRequest对象将包含一个session属性，这个属性的值是一个类似字典的对象。</p> 
+ <p>你可以在视图的任何地方读写request.session属性，或者多次编辑使用它。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="k">class</span> <span class="nc">backends</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">SessionBase</span>
+        <span class="c1"># 这是所有会话对象的基类，包含标准的字典方法:</span>
+        <span class="fm">__getitem__</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="n">Example</span><span class="p">:</span> <span class="n">fav_color</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="p">[</span><span class="s1">'fav_color'</span><span class="p">]</span>
+        <span class="fm">__setitem__</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+            <span class="n">Example</span><span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="p">[</span><span class="s1">'fav_color'</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'blue'</span>
+        <span class="fm">__delitem__</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="n">Example</span><span class="p">:</span> <span class="k">del</span> <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="p">[</span><span class="s1">'fav_color'</span><span class="p">]</span>  <span class="c1"># 如果不存在会抛出异常</span>
+        <span class="fm">__contains__</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="n">Example</span><span class="p">:</span> <span class="s1">'fav_color'</span> <span class="ow">in</span> <span class="n">request</span><span class="o">.</span><span class="n">session</span>
+        <span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
+            <span class="n">Example</span><span class="p">:</span> <span class="n">fav_color</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'fav_color'</span><span class="p">,</span> <span class="s1">'red'</span><span class="p">)</span>
+        <span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">__not_given</span><span class="p">)</span>
+            <span class="n">Example</span><span class="p">:</span> <span class="n">fav_color</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">'fav_color'</span><span class="p">,</span> <span class="s1">'blue'</span><span class="p">)</span>
+</pre>
+ </div> 
+ <div class="codehilite">
+  <pre><span></span>        # 类似字典数据类型的内置方法
+        keys()
+        items()
+        setdefault()
+        clear()
+
+
+        # 它还有下面的方法：
+        flush()
+            # 删除当前的会话数据和会话cookie。经常用在用户退出后，删除会话。
+
+        set_test_cookie()
+            # 设置一个测试cookie，用于探测用户浏览器是否支持cookies。由于cookie的工作机制，你只有在下次用户请求的时候才可以测试。
+        test_cookie_worked()
+            # 返回True或者False，取决于用户的浏览器是否接受测试cookie。你必须在之前先调用set_test_cookie()方法。
+        delete_test_cookie()
+            # 删除测试cookie。
+        set_expiry(value)
+            # 设置cookie的有效期。可以传递不同类型的参数值：
+        • 如果值是一个整数，session将在对应的秒数后失效。例如request.session.set_expiry(300) 将在300秒后失效.
+        • 如果值是一个datetime或者timedelta对象, 会话将在指定的日期失效
+        • 如果为0，在用户关闭浏览器后失效
+        • 如果为None，则将使用全局会话失效策略
+        失效时间从上一次会话被修改的时刻开始计时。
+
+        get_expiry_age()
+            # 返回多少秒后失效的秒数。对于没有自定义失效时间的会话，这等同于SESSION_COOKIE_AGE.
+            # 这个方法接受2个可选的关键字参数
+        • modification:会话的最后修改时间（datetime对象）。默认是当前时间。
+        •expiry: 会话失效信息，可以是datetime对象，也可以是int或None
+
+        get_expiry_date()
+            # 和上面的方法类似，只是返回的是日期
+
+        get_expire_at_browser_close()
+            # 返回True或False，根据用户会话是否是浏览器关闭后就结束。
+
+        clear_expired()
+            # 删除已经失效的会话数据。
+        cycle_key()
+            # 创建一个新的会话秘钥用于保持当前的会话数据。django.contrib.auth.login() 会调用这个方法。
+</pre>
+ </div> 
+ <h3>1. 序列化会话</h3> 
+ <p>Django默认使用JSON序列化会话数据。你可以在<code>SESSION_SERIALIZER</code>设置中自定义序列化格式，甚至写入警告说明。但是强烈建议你还是使用JSON，尤其是以cookie的方式进行会话时。</p> 
+ <p>举个例子，一个使用pickle序列化会话数据的攻击场景。如果你使用的是已签名的Cookie会话并且<code>SECRET_KEY</code>被攻击者知道了（通过其它手段），攻击者就可以在会话中插入一个字符串，在pickle反序列化时，可以在服务器上执行危险的代码。在因特网上这个攻击技术很简单并很容易使用。尽管Cookie会话会对数据进行签名以防止篡改，但是<code>SECRET_KEY</code>的泄漏却使得一切前功尽弃。</p> 
+ <p><strong>内置的序列化方法</strong></p> 
+ <p>1.class serializers.JSONSerializer</p> 
+ <p>对django.core.signing中JSON序列化方法的一个包装。只可以序列化基本的数据类型。另外，JSON只支持以字符串作为键值，使用其它的类型会导致异常。</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; # initial assignment
+&gt;&gt;&gt; request.session[0] = 'bar'
+&gt;&gt;&gt; # subsequent requests following serialization &amp; deserialization
+&gt;&gt;&gt; # of session data
+&gt;&gt;&gt; request.session[0] # KeyError
+&gt;&gt;&gt; request.session['0']
+'bar'
+</pre>
+ </div> 
+ <p>同样，无法被JSON编码的，例如非UTF8格式的字节’\xd9’一样是无法被保存的，它会导致UnicodeDecodeError异常。</p> 
+ <p>2.class serializers.PickleSerializer</p> 
+ <p>支持任意类型的Python对象，但是就像前面说的，可能导致远端执行代码的漏洞，如果攻击者知道了<code>SECRET_KEY</code>。</p> 
+ <p><strong>自定义序列化方法</strong></p> 
+ <p>自定义的序列化类必须分别实现<code>dumps(self, obj)</code>和<code>loads(self, data)</code>方法，用来实现序列化和反序列化会话数据字典。</p> 
+ <h3>2. 会话使用中的一些建议</h3> 
+ <ul> 
+  <li>使用普通的Python字符串作为request.session字典的键值。这不是一条硬性规则而是为方便起见。</li> 
+  <li>以一个下划线开始的会话字典的键被Django保留作为内部使用。</li> 
+  <li>不要用新对象覆盖request.session，不要直接访问或设置它的属性。像一个Python字典一样的使用它。</li> 
+ </ul> 
+ <h3>3. 会话使用范例</h3> 
+ <p>下面这个简单的视图在用户发表评论后，在session中设置一个<code>has_commented</code>变量为True。它不允许用户重复发表评论。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="k">def</span> <span class="nf">post_comment</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">new_comment</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'has_commented'</span><span class="p">,</span> <span class="bp">False</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="s2">"You've already commented."</span><span class="p">)</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">comments</span><span class="o">.</span><span class="n">Comment</span><span class="p">(</span><span class="n">comment</span><span class="o">=</span><span class="n">new_comment</span><span class="p">)</span>
+    <span class="n">c</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+    <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="p">[</span><span class="s1">'has_commented'</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
+    <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="s1">'Thanks for your comment!'</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>下面是一个简单的用户登录视图：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="k">def</span> <span class="nf">login</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">Member</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">username</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="p">[</span><span class="s1">'username'</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">password</span> <span class="o">==</span> <span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="p">[</span><span class="s1">'password'</span><span class="p">]:</span>
+        <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="p">[</span><span class="s1">'member_id'</span><span class="p">]</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">id</span>
+        <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="s2">"You're logged in."</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="s2">"Your username and password didn't match."</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>下面则是一个退出登录的视图，与上面的相关：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="k">def</span> <span class="nf">logout</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">del</span> <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="p">[</span><span class="s1">'member_id'</span><span class="p">]</span>
+    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="s2">"You're logged out."</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>Django内置的<code>django.contrib.auth.logout()</code>函数实际上所做的内容比上面的例子要更严谨，以防止意外的数据泄露，它会调用request.session的flush()方法。我们使用这个例子只是演示如何利用会话对象来工作，而不是一个完整的logout()实现。</p> 
+ <h2>四、测试cookie</h2> 
+ <p>为了方便，Django 提供一个简单的方法来测试用户的浏览器是否接受Cookie。只需在一个视图中调用<code>request.session</code>的<code>set_test_cookie()</code>方法，并在随后的视图中调用<code>test_cookie_worked()</code>获取测试结果（True或False)。注意，不能在同一个视图中调用这两个方法。</p> 
+ <p>造成这种分割调用的原因是cookie的工作机制。当你设置一个cookie时，你无法立刻得到结果，直到浏览器发送下一个请求时才能获得结果。</p> 
+ <p>在测试后，记得使用<code>delete_test_cookie()</code>方法清除测试数据。</p> 
+ <p>下面是一个典型的范例：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.http</span> <span class="kn">import</span> <span class="n">HttpResponse</span>
+<span class="kn">from</span> <span class="nn">django.shortcuts</span> <span class="kn">import</span> <span class="n">render</span>
+
+<span class="k">def</span> <span class="nf">login</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s1">'POST'</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">test_cookie_worked</span><span class="p">():</span>
+            <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">delete_test_cookie</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="s2">"You're logged in."</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="s2">"Please enable cookies and try again."</span><span class="p">)</span>
+    <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">set_test_cookie</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'foo/login_form.html'</span><span class="p">)</span>
+</pre>
+ </div> 
+ <h2>五、在视图外使用session</h2> 
+ <p>在下面的例子中，我们直接从django.contrib.sessions.backends.db中导入了SessionStore对象。在你的实际代码中，应该采用下面的导入方法，根据<code>SESSION_ENGINE</code>的设置进行导入，如下所示：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">importlib</span> <span class="kn">import</span> <span class="n">import_module</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">django.conf</span> <span class="kn">import</span> <span class="n">settings</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">SessionStore</span> <span class="o">=</span> <span class="n">import_module</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">SESSION_ENGINE</span><span class="p">)</span><span class="o">.</span><span class="n">SessionStore</span>
+</pre>
+ </div> 
+ <p>在视图外可以通过下面的API操作会话数据：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">django.contrib.sessions.backends.db</span> <span class="kn">import</span> <span class="n">SessionStore</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">s</span> <span class="o">=</span> <span class="n">SessionStore</span><span class="p">()</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="c1"># stored as seconds since epoch since datetimes are not serializable in JSON.</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">s</span><span class="p">[</span><span class="s1">'last_login'</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1376587691</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">s</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">s</span><span class="o">.</span><span class="n">session_key</span>
+<span class="s1">'2b1189a188b44ad18c35e113ac6ceead'</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">s</span> <span class="o">=</span> <span class="n">SessionStore</span><span class="p">(</span><span class="n">session_key</span><span class="o">=</span><span class="s1">'2b1189a188b44ad18c35e113ac6ceead'</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">s</span><span class="p">[</span><span class="s1">'last_login'</span><span class="p">]</span>
+<span class="mi">1376587691</span>
+</pre>
+ </div> 
+ <p><code>SessionStore.create()</code>用于创建一个新的会话。<code>save()</code>方法用于保存一个已经存在的会话。create方法会调用save方法并循环直到生成一个未使用的<code>session_key</code>。直接调用save方法也可以创建一个新的会话，但在生成<code>session_key</code>的时候有可能和已经存在的发生冲突。</p> 
+ <p>如果你使用的是django.contrib.sessions.backends.db模式，那么每一个会话其实就是一个普通的Django模型，你可以使用普通的Django数据库API访问它。会话模型的定义在<code>django/contrib/sessions/models.py</code>文件里。例如：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">django.contrib.sessions.models</span> <span class="kn">import</span> <span class="n">Session</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">s</span> <span class="o">=</span> <span class="n">Session</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="s1">'2b1189a188b44ad18c35e113ac6ceead'</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">s</span><span class="o">.</span><span class="n">expire_date</span>
+<span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2005</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">35</span><span class="p">,</span> <span class="mi">12</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>注意，需要调用<code>get_decoded()</code>方法才能获得会话字典，因为字典是采用编码格式保存的。如下：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; s.session_data
+'KGRwMQpTJ19hdXRoX3VzZXJfaWQnCnAyCkkxCnMuMTExY2ZjODI2Yj...'
+&gt;&gt;&gt; s.get_decoded()
+{'user_id': 42}
+</pre>
+ </div> 
+ <h2>六、会话的保存机制</h2> 
+ <p>默认情况下，只有当会话字典的某个值被重新设置或删除的时候，Django才会将会话内容保存到会话数据库内。</p> 
+ <div class="codehilite">
+  <pre><span></span># 会话被修改
+request.session['foo'] = 'bar'
+# 会话被删除
+del request.session['foo']
+# 会话被修改
+request.session['foo'] = {}
+# 会话没有被修改，只是修改了request.session['foo']
+request.session['foo']['bar'] = 'baz'
+</pre>
+ </div> 
+ <p>要理解上面最后一种情况有点费劲。我们可以通过设置会话对象的modified属性值，显式地告诉会话对象它已经被修改过：<code>request.session.modified = True</code>。</p> 
+ <p>要改变上面的默认行为，将<code>SESSION_SAVE_EVERY_REQUEST</code>设置为True，那么每一次单独的请求过来，Django都会保存会话到数据库。</p> 
+ <p>注意，会话的Cookie只有在一个会话被创建或修改后才会再次发送。如果<code>SESSION_SAVE_EVERY_REQUEST</code>为True，每次请求都会发送cookie。</p> 
+ <p>类似地，会话Cookie的失效部分在每次发送会话Cookie时都会更新。</p> 
+ <p>如果响应的状态码为500，则会话不会被保存。</p> 
+ <h2>七、会话生存期</h2> 
+ <p>默认情况下，<code>SESSION_EXPIRE_AT_BROWSER_CLOSE</code>设置为False，也就是说cookie保存在用户的浏览器内，直到失效日期，这样用户就不必每次打开浏览器后都要再登录一次。</p> 
+ <p>相反的，如果将<code>SESSION_EXPIRE_AT_BROWSER_CLOSE</code>设置为True，则意味着浏览器一关闭，cookie就失效，每次重新打开浏览器，你就得重新登录。</p> 
+ <p>这个设置是一个全局的默认值，可以通过显式地调<code>request.session</code>的<code>set_expiry()</code>方法来覆盖，前面我们已经描述过了。</p> 
+ <p>注意：有些浏览器（比如Chrome）具有在关闭后重新打开浏览器，会话依然保持的功能。这会与Django的<code>SESSION_EXPIRE_AT_BROWSER_CLOSE</code>设置发生冲突。请一定要小心。</p> 
+ <h2>八、清除已保存的会话</h2> 
+ <p>随着用户的访问，会话数据会越来越庞大。如果你使用的是数据库保存模式，那么<code>django_session</code>表的内容会逐渐增长。如果你使用的是文件模式，那么你的临时目录内的文件数量会不断增加。</p> 
+ <p>造成这个问题的原因是，如果用户手动退出登录，Django将会自动删除会话数据，但是如果用户不退出登录，那么对应的会话数据不会被删除。</p> 
+ <p>Django没有提供自动清除失效会话的机制。因此，你必须自己完成这项工作。但是Django提供了一个命令<code>clearsessions</code>用于清除会话数据，建议你基于这个命令设置一个周期性的自动清除机制，比如crontab或者Windows的调度任务。</p> 
+ <p>不同的是，使用缓存模式的会话不需要你清理数据，因为缓存系统自己有清理过期数据的机制。使用cookie模式的会话也不需要，因为数据都存在用户的浏览器内，不用你帮忙。</p> 
+ <h2>九、会话的相关设置</h2> 
+ <p>下面是Django的session相关设置，用于帮助你控制会话的行为，大多数在前面都介绍过了：</p> 
+ <ul> 
+  <li>SESSION_CACHE_ALIAS</li> 
+  <li>SESSION_COOKIE_AGE</li> 
+  <li>SESSION_COOKIE_DOMAIN</li> 
+  <li>SESSION_COOKIE_HTTPONLY </li> 
+  <li>SESSION_COOKIE_NAME </li> 
+  <li>SESSION_COOKIE_PATH</li> 
+  <li>SESSION_COOKIE_SECURE </li> 
+  <li>SESSION_ENGINE </li> 
+  <li>SESSION_EXPIRE_AT_BROWSER_CLOSE </li> 
+  <li>SESSION_FILE_PATH </li> 
+  <li>SESSION_SAVE_EVERY_REQUEST </li> 
+  <li>SESSION_SERIALIZER</li> 
+ </ul> 
+ <h2>十、SessionStore对象</h2> 
+ <p>在会话内部，Django使用一个与会话引擎对应的会话保存对象。这个会话保存对象命名为SessionStore，位于<code>SESSION_ENGINE</code>设置指定的模块内。</p> 
+ <p>所有Django支持的SessionStore类都继承SessionBase类，并实现了下面的数据操作方法：</p> 
+ <ul> 
+  <li>exists()</li> 
+  <li>create()</li> 
+  <li>save()</li> 
+  <li>delete()</li> 
+  <li>load()</li> 
+  <li>clear_expored()</li> 
+ </ul> 
+ <p>为了创建一个自定义会话引擎或修改一个现成的引擎，你需要创建一个新的类，它继承SessionBase类或任何其他已经存在的SessionStore类。</p> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/167"> <i class="fa fa-arrow-left"></i>&nbsp;自定义django-admin命令</a> 
+  <a class="float-right" href="/course/django/169"> 网站地图sitemap&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 3</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/168">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.0.0.996.996.50/005Ag4daly8fun9ya55vmj30ro0rowgu.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>您好，在会话使用范例里面，验证用户密码的话用户输入的是明文密码，而数据库中的是加密过的密码，怎么能判断相等呢？这里我有点疑惑。 原文代码：if m.password == request.POST['password']:</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 天伦ltl </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年5月10日 21:01</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1324">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.996.996.50/a2366742ly8g29lk0pge2j20ro0rot9k.jpg?Expires=1563889642&amp;ssig=qD%2Buiuuzph&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>好像Django不能这样判断用户。只能基于user password创建一个user对象，再判断user是否存在，进一步用is_authentic（）之类的函数认证。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 木村拓七199 &nbsp;&nbsp;回复&nbsp;&nbsp; 天伦ltl </span> 
+      <em>2019年7月23日 20:50</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1512">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.180.180.50/67179639jw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>刘大大的示例,反复玩味,趣味良多~!</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 孤竹孙 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年5月6日 12:11</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/454">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

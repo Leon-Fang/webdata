@@ -1,0 +1,121 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>表单的Widgets</h1> 
+ <small>阅读:&nbsp;20508&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：1 </small> 
+ <hr> 
+ <p>不要将Widget与表单的fields字段混淆。表单字段负责验证输入并直接在模板中使用。而Widget负责渲染网页上HTML表单的输入元素和提取提交的原始数据。widget是字段的一个内在属性，用于定义字段在浏览器的页面里以何种HTML元素展现。</p> 
+ <h2>一、指定使用的widget</h2> 
+ <p>每个字段都有一个默认的widget类型。如果你想要使用一个不同的Widget，可以在定义字段时使用widget参数。 像这样：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django</span> <span class="kn">import</span> <span class="n">forms</span>
+
+<span class="k">class</span> <span class="nc">CommentForm</span><span class="p">(</span><span class="n">forms</span><span class="o">.</span><span class="n">Form</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">CharField</span><span class="p">()</span>
+    <span class="n">url</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">URLField</span><span class="p">()</span>
+    <span class="n">comment</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">widget</span><span class="o">=</span><span class="n">forms</span><span class="o">.</span><span class="n">Textarea</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>这将使用一个Textarea Widget来展现表单的评论字段，而不是默认的TextInput Widget。</p> 
+ <h2>二、设置widget的参数</h2> 
+ <p>许多widget具有可选的额外参数，下面的示例中，设置了<code>SelectDateWidget</code>的years 属性，注意参数的传递方法：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django</span> <span class="kn">import</span> <span class="n">forms</span>
+
+<span class="n">BIRTH_YEAR_CHOICES</span> <span class="o">=</span> <span class="p">(</span><span class="s1">'1980'</span><span class="p">,</span> <span class="s1">'1981'</span><span class="p">,</span> <span class="s1">'1982'</span><span class="p">)</span>
+<span class="n">FAVORITE_COLORS_CHOICES</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="p">(</span><span class="s1">'blue'</span><span class="p">,</span> <span class="s1">'Blue'</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">'green'</span><span class="p">,</span> <span class="s1">'Green'</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">'black'</span><span class="p">,</span> <span class="s1">'Black'</span><span class="p">),</span>
+<span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">SimpleForm</span><span class="p">(</span><span class="n">forms</span><span class="o">.</span><span class="n">Form</span><span class="p">):</span>
+    <span class="n">birth_year</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">DateField</span><span class="p">(</span><span class="n">widget</span><span class="o">=</span><span class="n">forms</span><span class="o">.</span><span class="n">SelectDateWidget</span><span class="p">(</span><span class="n">years</span><span class="o">=</span><span class="n">BIRTH_YEAR_CHOICES</span><span class="p">))</span>
+    <span class="n">favorite_colors</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">MultipleChoiceField</span><span class="p">(</span>
+        <span class="n">required</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+        <span class="n">widget</span><span class="o">=</span><span class="n">forms</span><span class="o">.</span><span class="n">CheckboxSelectMultiple</span><span class="p">,</span>
+        <span class="n">choices</span><span class="o">=</span><span class="n">FAVORITE_COLORS_CHOICES</span><span class="p">,</span>
+    <span class="p">)</span>
+</pre>
+ </div> 
+ <h2>三、为widget添加CSS样式</h2> 
+ <p>默认情况下，当Django渲染Widget为实际的HTML代码时，不会帮你添加任何的CSS样式，也就是说网页上所有的TextInput元素的外观是一样的。</p> 
+ <p>看下面的表单：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django</span> <span class="kn">import</span> <span class="n">forms</span>
+
+<span class="k">class</span> <span class="nc">CommentForm</span><span class="p">(</span><span class="n">forms</span><span class="o">.</span><span class="n">Form</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">CharField</span><span class="p">()</span>
+    <span class="n">url</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">URLField</span><span class="p">()</span>
+    <span class="n">comment</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">CharField</span><span class="p">()</span>
+</pre>
+ </div> 
+ <p>这个表单包含三个默认的TextInput Widget，以默认的方式渲染，没有CSS类、没有额外的属性。每个Widget的输入框将渲染得一模一样，丑陋又单调：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; f = CommentForm(auto_id=False)
+&gt;&gt;&gt; f.as_table()
+<span class="nt">&lt;tr&gt;&lt;th&gt;</span>Name:<span class="nt">&lt;/th&gt;&lt;td&gt;&lt;input</span> <span class="na">type=</span><span class="s">"text"</span> <span class="na">name=</span><span class="s">"name"</span> <span class="err">required</span> <span class="nt">/&gt;&lt;/td&gt;&lt;/tr&gt;</span>
+<span class="nt">&lt;tr&gt;&lt;th&gt;</span>Url:<span class="nt">&lt;/th&gt;&lt;td&gt;&lt;input</span> <span class="na">type=</span><span class="s">"url"</span> <span class="na">name=</span><span class="s">"url"</span> <span class="err">required</span> <span class="nt">/&gt;&lt;/td&gt;&lt;/tr&gt;</span>
+<span class="nt">&lt;tr&gt;&lt;th&gt;</span>Comment:<span class="nt">&lt;/th&gt;&lt;td&gt;&lt;input</span> <span class="na">type=</span><span class="s">"text"</span> <span class="na">name=</span><span class="s">"comment"</span> <span class="err">required</span> <span class="nt">/&gt;&lt;/td&gt;&lt;/tr&gt;</span>
+</pre>
+ </div> 
+ <p>在真正的网页中，你肯定不想让每个Widget看上去都一样。可能想要给comment一个更大的输入框，可能想让‘name’ Widget具有一些特殊的CSS类。</p> 
+ <p>可以在创建Widget时使用<code>Widget.attrs</code>参数来实现这一目的：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="k">class</span> <span class="nc">CommentForm</span><span class="p">(</span><span class="n">forms</span><span class="o">.</span><span class="n">Form</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">widget</span><span class="o">=</span><span class="n">forms</span><span class="o">.</span><span class="n">TextInput</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s1">'class'</span><span class="p">:</span> <span class="s1">'special'</span><span class="p">}))</span>
+    <span class="n">url</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">URLField</span><span class="p">()</span>
+    <span class="n">comment</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">widget</span><span class="o">=</span><span class="n">forms</span><span class="o">.</span><span class="n">TextInput</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s1">'size'</span><span class="p">:</span> <span class="s1">'40'</span><span class="p">}))</span>
+</pre>
+ </div> 
+ <p><strong>注意参数的传递方式！</strong></p> 
+ <p>这次渲染后的结果就不一样了：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; f = CommentForm(auto_id=False)
+&gt;&gt;&gt; f.as_table()
+<span class="nt">&lt;tr&gt;&lt;th&gt;</span>Name:<span class="nt">&lt;/th&gt;&lt;td&gt;&lt;input</span> <span class="na">type=</span><span class="s">"text"</span> <span class="na">name=</span><span class="s">"name"</span> <span class="na">class=</span><span class="s">"special"</span> <span class="err">required</span> <span class="nt">/&gt;&lt;/td&gt;&lt;/tr&gt;</span>
+<span class="nt">&lt;tr&gt;&lt;th&gt;</span>Url:<span class="nt">&lt;/th&gt;&lt;td&gt;&lt;input</span> <span class="na">type=</span><span class="s">"url"</span> <span class="na">name=</span><span class="s">"url"</span> <span class="err">required</span> <span class="nt">/&gt;&lt;/td&gt;&lt;/tr&gt;</span>
+<span class="nt">&lt;tr&gt;&lt;th&gt;</span>Comment:<span class="nt">&lt;/th&gt;&lt;td&gt;&lt;input</span> <span class="na">type=</span><span class="s">"text"</span> <span class="na">name=</span><span class="s">"comment"</span> <span class="na">size=</span><span class="s">"40"</span> <span class="err">required</span> <span class="nt">/&gt;&lt;/td&gt;&lt;/tr&gt;</span>
+</pre>
+ </div> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/154"> <i class="fa fa-arrow-left"></i>&nbsp;Django表单字段汇总</a> 
+  <a class="float-right" href="/course/django/156"> 模型表单ModelForm&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 1</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/155">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.7.0.200.200.50/0080ymKLly8g8xayg2ggfj305y05k746.jpg?KID=imgbed,tva&amp;Expires=1575258369&amp;ssig=2VAOZJJMpQ" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>你可ending不想让每个Widget看上去都一样。 应该是：你肯定不想让每个Widget看上去都一样。 博主改一下</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; dyphon </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年12月10日 09:16</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1755">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

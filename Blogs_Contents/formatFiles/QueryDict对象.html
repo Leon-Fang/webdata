@@ -1,0 +1,208 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>QueryDict对象</h1> 
+ <small>阅读:&nbsp;27637&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：4 </small> 
+ <hr> 
+ <p>类的原型：class QueryDict[source]</p> 
+ <p>在HttpRequest对象中，GET和POST属性都是一个<code>django.http.QueryDict</code>的实例。也就是说你可以按本文下面提供的方法操作request.POST和request.GET。</p> 
+ <p>request.POST或request.GET的QueryDict都是不可变，只读的。如果要修改它，需要使用QueryDict.copy()方法，获取它的一个拷贝，然后在这个拷贝上进行修改操作。</p> 
+ <h2>一、方法</h2> 
+ <p>QueryDict 实现了Python字典数据类型的所有标准方法，因为它是字典的子类。</p> 
+ <p>不同之处在于下面：</p> 
+ <h3>1. QueryDict.<strong>init</strong>(query_string=None, mutable=False, encoding=None)[source]</h3> 
+ <p>QueryDict实例化方法。<strong>注意：QueryDict的键值是可以重复的！</strong></p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; QueryDict('a=1&amp;a=2&amp;c=3')
+&lt;QueryDict: {'a': ['1', '2'], 'c': ['3']}&gt;
+</pre>
+ </div> 
+ <p>如果需要实例化可以修改的对象，添加参数mutable=True。</p> 
+ <h3>2. classmethod QueryDict.fromkeys(iterable, value='', mutable=False, encoding=None)[source]</h3> 
+ <p>Django1.11中的新功能。</p> 
+ <p>循环可迭代对象中的每个元素作为键值，并赋予同样的值（来至value参数）。</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; QueryDict.fromkeys(['a', 'a', 'b'], value='val')
+&lt;QueryDict: {'a': ['val', 'val'], 'b': ['val']}&gt;
+</pre>
+ </div> 
+ <h3>3. QueryDict.update(other_dict)</h3> 
+ <p>用新的QueryDict或字典更新当前QueryDict。类似<code>dict.update()</code>，但是追加内容，而不是更新并替换它们。 像这样：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; q = QueryDict('a=1', mutable=True)
+&gt;&gt;&gt; q.update({'a': '2'})
+&gt;&gt;&gt; q.getlist('a')
+['1', '2']
+&gt;&gt;&gt; q['a'] # returns the last
+'2'
+</pre>
+ </div> 
+ <h3>4. QueryDict.items()</h3> 
+ <p>类似<code>dict.items()</code>，如果有重复项目，返回最近的一个，而不是都返回：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; q = QueryDict('a=1&amp;a=2&amp;a=3')
+&gt;&gt;&gt; q.items()
+[('a', '3')]
+</pre>
+ </div> 
+ <h3>5. QueryDict.values()</h3> 
+ <p>类似<code>dict.values()</code>，但是只返回最近的值。 像这样：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; q = QueryDict('a=1&amp;a=2&amp;a=3')
+&gt;&gt;&gt; q.values()
+['3']
+</pre>
+ </div> 
+ <h3>6. QueryDict.copy()[source]</h3> 
+ <p>使用copy.deepcopy()返回QueryDict对象的副本。 此副本是可变的！</p> 
+ <h3>7. QueryDict.getlist(key, default=None)</h3> 
+ <p>返回键对应的值列表。 如果该键不存在并且未提供默认值，则返回一个空列表。</p> 
+ <h3>8. QueryDict.setlist(key, list_)[source]</h3> 
+ <p>为<code>list_</code>设置给定的键。</p> 
+ <h3>9. QueryDict.appendlist(key, item)[source]</h3> 
+ <p>将键追加到内部与键相关联的列表中。</p> 
+ <h3>10. QueryDict.setdefault(key, default=None)[source]</h3> 
+ <p>类似dict.setdefault()，为某个键设置默认值。</p> 
+ <h3>11. QueryDict.setlistdefault(key, default_list=None)[source]</h3> 
+ <p>类似setdefault()，除了它需要的是一个值的列表而不是单个值。</p> 
+ <h3>12. QueryDict.lists()</h3> 
+ <p>类似items()，只是它将其中的每个键的值作为列表放在一起。 像这样：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; q = QueryDict('a=1&amp;a=2&amp;a=3')
+&gt;&gt;&gt; q.lists()
+[('a', ['1', '2', '3'])]
+</pre>
+ </div> 
+ <h3>13. QueryDict.pop(key)[source]</h3> 
+ <p>返回给定键的值的列表，并从QueryDict中移除该键。 如果键不存在，将引发KeyError。 像这样：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; q = QueryDict('a=1&amp;a=2&amp;a=3', mutable=True)
+&gt;&gt;&gt; q.pop('a')
+['1', '2', '3']
+</pre>
+ </div> 
+ <h3>14. QueryDict.popitem()[source]</h3> 
+ <p>删除QueryDict任意一个键，并返回二值元组，包含键和键的所有值的列表。在一个空的字典上调用时将引发KeyError。 像这样：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; q = QueryDict('a=1&amp;a=2&amp;a=3', mutable=True)
+&gt;&gt;&gt; q.popitem()
+('a', ['1', '2', '3'])
+</pre>
+ </div> 
+ <h3>15. QueryDict.dict()</h3> 
+ <p>将QueryDict转换为Python的字典数据类型，并返回该字典。</p> 
+ <p>如果出现重复的键，则将所有的值打包成一个列表，最为新字典中键的值。</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; q = QueryDict('a=1&amp;a=3&amp;a=5')
+&gt;&gt;&gt; q.dict()
+{'a': '5'}
+</pre>
+ </div> 
+ <h3>16. QueryDict.urlencode(safe=None)[source]</h3> 
+ <p>已url的编码格式返回数据字符串。 像这样：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; q = QueryDict('a=2&amp;b=3&amp;b=5')
+&gt;&gt;&gt; q.urlencode()
+'a=2&amp;b=3&amp;b=5'
+</pre>
+ </div> 
+ <p>使用safe参数传递不需要编码的字符。 像这样：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; q = QueryDict(mutable=True)
+&gt;&gt;&gt; q['next'] = '/a&amp;b/'
+&gt;&gt;&gt; q.urlencode(safe='/')
+'next=/a%26b/'
+</pre>
+ </div> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/138"> <i class="fa fa-arrow-left"></i>&nbsp;HttpRequest对象</a> 
+  <a class="float-right" href="/course/django/140"> HttpResponse对象&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 4</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/139">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva2.sinaimg.cn/crop.0.0.180.180.50/a6adf22djw1e8qgp5bmzyj2050050aa8.jpg?KID=imgbed,tva&amp;Expires=1587286724&amp;ssig=dPpLx873mO" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>QueryDict.get()， 返回键的对应的值，如果是有多个值（序列），只返回最后一个值 QueryDict.getlist()，返回键对应的值列表</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 吉了个继 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年4月19日 15:01</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2047">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.1080.1080.50/006xIWURly8g3w3jk5kmcj30u00u03zs.jpg?Expires=1562507709&amp;ssig=ZhQEgD7Ax2&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>在HttpRequest对象中，GET和POST属性都是一个QueryDict的实例.</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 蔷薇-Nina </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年7月7日 21:04</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1433">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.0.0.996.996.50/006xIWURly8fu5i5w2xi6j30ro0ro75p.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>文章总结得很棒。但是，最重要的QueryDict.get()方法却遗漏了。。。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 蔷薇-Nina </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年10月24日 20:55</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/796">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.720.720.50/c1b446bbjw8eh3ipz350ej20k00k0acc.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>博主能添加上就好了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> who抢了我的昵称 &nbsp;&nbsp;回复&nbsp;&nbsp; 蔷薇-Nina </span> 
+      <em>2019年5月7日 10:37</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1315">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

@@ -1,0 +1,223 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>CSRF与AJAX</h1> 
+ <small>阅读:&nbsp;20309&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：5 </small> 
+ <hr> 
+ <p>CSRF（Cross-site request forgery）跨站请求伪造，是一种常见的网络攻击手段，具体内容和含义请大家自行百度。</p> 
+ <p>Django为我们提供了防范CSRF攻击的机制。</p> 
+ <h2>一、基本使用</h2> 
+ <p>默认情况下，使用<code>django-admin startproject xxx</code>命令创建工程时，CSRF防御机制就已经开启了。如果没有开启，请在MIDDLEWARE设置中添加'django.middleware.csrf.CsrfViewMiddleware'。</p> 
+ <p><strong>对于GET请求，一般来说没有这个问题，CSRF通常是针对POST方法的！</strong></p> 
+ <p>在含有POST表单的模板中，需要在其<code>&lt;form&gt;</code>表单元素内部添加<code>csrf_token</code>标签，如下所示：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="nt">&lt;form</span> <span class="na">action=</span><span class="s">""</span> <span class="na">method=</span><span class="s">"post"</span><span class="nt">&gt;</span>
+    {% csrf_token %}
+    ....
+<span class="nt">&lt;/form&gt;</span>
+</pre>
+ </div> 
+ <p>这样，当表单数据通过POST方法，发送到后台服务器的时候，除了正常的表单数据外，还会携带一个CSRF令牌随机字符串，用于进行csrf验证。其实没有多么麻烦和复杂，对么？如果表单中没有携带这个csrf令牌，你将会获得一枚403奖章。</p> 
+ <p>额外提示：对于初学者，要明白一件事情，就是我们上面讲的都是Django项目自己内部的事务，不涉及与外界的关系。例如，你不能把上面那个表单发往百度，百度会懵逼的，你这发的啥？其次，那样也不安全，可能引起CSRF信息泄露而导致自己的站点出现漏洞。</p> 
+ <h2>二、 AJAX</h2> 
+ <p>我们知道，在前端的世界，有一种叫做AJAX的东西，也就是“Asynchronous Javascript And XML”（异步 JavaScript 和 XML），经常被用来在不刷新页面的情况下，提交和请求数据。如果我们的Django服务器接收的是一个通过AJAX发送过来的POST请求的话，那么将很麻烦。</p> 
+ <p>为什么？因为AJAX中，没有办法像form表单中那样携带<code>{% csrf_token %}</code>令牌。</p> 
+ <p>那怎么办呢？</p> 
+ <p>好办！在你的前端模版的JavaScript代码处，添加下面的代码：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="c1">// using jQuery</span>
+<span class="kd">function</span> <span class="nx">getCookie</span><span class="p">(</span><span class="nx">name</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">cookieValue</span> <span class="o">=</span> <span class="kc">null</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nb">document</span><span class="p">.</span><span class="nx">cookie</span> <span class="o">&amp;&amp;</span> <span class="nb">document</span><span class="p">.</span><span class="nx">cookie</span> <span class="o">!==</span> <span class="s1">''</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kd">var</span> <span class="nx">cookies</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">cookie</span><span class="p">.</span><span class="nx">split</span><span class="p">(</span><span class="s1">';'</span><span class="p">);</span>
+        <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">cookies</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+            <span class="kd">var</span> <span class="nx">cookie</span> <span class="o">=</span> <span class="nx">jQuery</span><span class="p">.</span><span class="nx">trim</span><span class="p">(</span><span class="nx">cookies</span><span class="p">[</span><span class="nx">i</span><span class="p">]);</span>
+            <span class="c1">// Does this cookie string begin with the name we want?</span>
+            <span class="k">if</span> <span class="p">(</span><span class="nx">cookie</span><span class="p">.</span><span class="nx">substring</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nx">name</span><span class="p">.</span><span class="nx">length</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">===</span> <span class="p">(</span><span class="nx">name</span> <span class="o">+</span> <span class="s1">'='</span><span class="p">))</span> <span class="p">{</span>
+                <span class="nx">cookieValue</span> <span class="o">=</span> <span class="nb">decodeURIComponent</span><span class="p">(</span><span class="nx">cookie</span><span class="p">.</span><span class="nx">substring</span><span class="p">(</span><span class="nx">name</span><span class="p">.</span><span class="nx">length</span> <span class="o">+</span> <span class="mi">1</span><span class="p">));</span>
+                <span class="k">break</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="nx">cookieValue</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="kd">var</span> <span class="nx">csrftoken</span> <span class="o">=</span> <span class="nx">getCookie</span><span class="p">(</span><span class="s1">'csrftoken'</span><span class="p">);</span>
+
+<span class="kd">function</span> <span class="nx">csrfSafeMethod</span><span class="p">(</span><span class="nx">method</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// 这些HTTP方法不要求CSRF包含</span>
+    <span class="k">return</span> <span class="p">(</span><span class="sr">/^(GET|HEAD|OPTIONS|TRACE)$/</span><span class="p">.</span><span class="nx">test</span><span class="p">(</span><span class="nx">method</span><span class="p">));</span>
+<span class="p">}</span>
+<span class="nx">$</span><span class="p">.</span><span class="nx">ajaxSetup</span><span class="p">({</span>
+    <span class="nx">beforeSend</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">xhr</span><span class="p">,</span> <span class="nx">settings</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">csrfSafeMethod</span><span class="p">(</span><span class="nx">settings</span><span class="p">.</span><span class="nx">type</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="k">this</span><span class="p">.</span><span class="nx">crossDomain</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nx">xhr</span><span class="p">.</span><span class="nx">setRequestHeader</span><span class="p">(</span><span class="s2">"X-CSRFToken"</span><span class="p">,</span> <span class="nx">csrftoken</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+</pre>
+ </div> 
+ <p>上面代码的作用就是让你的ajax的POST方法带上CSRF需要的令牌，它依赖Jquery库，必须提前加载Jquery。这是Django官方提供的解决方案哦，^-^。</p> 
+ <h2>三、装饰器</h2> 
+ <h3>1. 单独指定csrf验证需要</h3> 
+ <p>有时候，我们在全站上关闭了CSRF功能，但是希望某些视图还有CSRF防御，那怎么办呢？</p> 
+ <p>Django为我们提供了一个<code>csrf_protect(view)</code>装饰器，使用起来非常方便，如下所示：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.views.decorators.csrf</span> <span class="kn">import</span> <span class="n">csrf_protect</span>
+<span class="kn">from</span> <span class="nn">django.shortcuts</span> <span class="kn">import</span> <span class="n">render</span>
+
+<span class="nd">@csrf_protect</span>
+<span class="k">def</span> <span class="nf">my_view</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="c1"># ...</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s2">"a_template.html"</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>现在，虽然全站关掉了csrf，但是my_view视图依然需要进行csrf验证。</p> 
+ <h3>2. 单独指定忽略csrf验证</h3> 
+ <p>有正就有反。在全站开启CSRF机制的时候，有些视图我们并不想开启这个功能。比如，有另外一台机器通过requests库，模拟HTTP通信，以POST请求向我们的Django主机服务器发送过来了一段保密数据。它无法携带CSRF令牌，必然会被403。</p> 
+ <p>这怎么办呢？</p> 
+ <p>在接收这个POST请求的视图上为CSRF开道口子，不进行验证。这就需要使用Django为我们提供的<code>csrf_exempt(view)</code>装饰器了，下面是使用范例：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.views.decorators.csrf</span> <span class="kn">import</span> <span class="n">csrf_exempt</span>
+<span class="kn">from</span> <span class="nn">django.http</span> <span class="kn">import</span> <span class="n">HttpResponse</span>
+
+<span class="nd">@csrf_exempt</span>
+<span class="k">def</span> <span class="nf">my_view</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="s1">'Hello world'</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>这下POST数据是没问题了，但是又带来了新的安全问题，需要你自己处理。</p> 
+ <h3>3. 确保csrf令牌被设置</h3> 
+ <p>Django还提供了一个装饰器，确保被装饰的视图在返回页面时同时将csrf令牌一起返回。</p> 
+ <p>这个装饰器是：ensure_csrf_cookie(view)，其使用方法和上面的一样：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.views.decorators.csrf</span> <span class="kn">import</span> <span class="n">ensure_csrf_cookie</span>
+<span class="kn">from</span> <span class="nn">django.http</span> <span class="kn">import</span> <span class="n">HttpResponse</span>
+
+<span class="nd">@ensure_csrf_cookie</span>
+<span class="k">def</span> <span class="nf">my_view</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="s1">'Hello world'</span><span class="p">)</span>
+</pre>
+ </div> 
+ <h3>4. requires_csrf_token(view)</h3> 
+ <p>这个装饰器类似csrf_protect，一样要进行csrf验证，但是它不会拒绝发送过来的请求。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.views.decorators.csrf</span> <span class="kn">import</span> <span class="n">requires_csrf_token</span>
+<span class="kn">from</span> <span class="nn">django.shortcuts</span> <span class="kn">import</span> <span class="n">render</span>
+
+<span class="nd">@requires_csrf_token</span>
+<span class="k">def</span> <span class="nf">my_view</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="c1"># ...</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s2">"a_template.html"</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span>
+</pre>
+ </div> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/178"> <i class="fa fa-arrow-left"></i>&nbsp;Authentication</a> 
+  <a class="float-right" href="/course/django/180"> 国际化和本地化&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 5</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/179">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.0.0.996.996.50/006xIWURly8gehjmghiqfj30ro0roq53.jpg?KID=imgbed,tva&amp;Expires=1592499791&amp;ssig=d5glsUHfb0" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>在Ajax中这样，beforeSend: function (xhr, settings) { xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token }}"); }，也可以的。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 失恋的蔷薇 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年6月20日 10:35</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2119">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>现在似乎不用这么麻烦了： $('#id_image').on('change', function () { var currentpath = window.location.pathname; var formData = new FormData($('form')[0]); formData.append('csrfmiddlewaretoken', '{{ csrf_token }}'); $.ajax({ url: currentpath, //server script to process data type: 'POST', data: formData, cache: false, contentType: false, processData: false }); }); 上面是溢栈网上的，使用 FormData对象就好了，我自己测试的时候，直接用 FormData 就解决了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 忧郁发条人 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年3月4日 02:20</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1100">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva4.sinaimg.cn/crop.0.0.996.996.50/005PuZnajw8f47lmnfqfij30ro0rpjul.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>博主，put和delete请求在django正怎么使用呢？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 小呀门小呀门小斌斌 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年8月30日 12:08</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/715">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.300.300.50/9713e0f0ly8fi1stl0ws7j208c08cq36.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>如果表单中没有携带这个csrf令牌，你将会获得一枚403奖章 博主童心未泯 很皮</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 豆蔻小玩子 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年5月18日 19:59</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/489">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.960.960.50/006xIWURly8fo9wxo24vzj30qo0qoaaz.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>是的。^_^</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 蔷薇-Nina &nbsp;&nbsp;回复&nbsp;&nbsp; 豆蔻小玩子 </span> 
+      <em>2018年5月28日 12:26</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/503">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

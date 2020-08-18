@@ -1,0 +1,241 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>自定义Admin actions</h1> 
+ <small>阅读:&nbsp;23847&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：1 </small> 
+ <hr> 
+ <p>通常情况下，admin的工作模式是“选中目标，然后修改目标”，但在同时修改大量目标的时候，这种模式就变得重复、繁琐。</p> 
+ <p>为此，admin提供了自定义功能函数actions的手段，可以批量对数据进行修改。admin内置了一个批量删除对象的操作，如下图所示：</p> 
+ <p><img alt="19.png-40.6kB" src="http://static.zybuluo.com/feixuelove1009/jzdfwkre56ltwxezgm0flm9i/19.png"></p> 
+ <p>下面以一个新闻应用的文章模型为例，介绍一个批量更新的自定义actions，它将选择的文章由“草稿”状态更新为“发布”状态：</p> 
+ <p>首先是模型的代码：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
+
+<span class="n">STATUS_CHOICES</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="p">(</span><span class="s1">'d'</span><span class="p">,</span> <span class="s1">'Draft'</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">'p'</span><span class="p">,</span> <span class="s1">'Published'</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">'w'</span><span class="p">,</span> <span class="s1">'Withdrawn'</span><span class="p">),</span>
+<span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">Article</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">title</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+    <span class="n">body</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">TextField</span><span class="p">()</span>
+    <span class="n">status</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="n">STATUS_CHOICES</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>              <span class="c1"># __unicode__ on Python 2</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">title</span>
+</pre>
+ </div> 
+ <h2>一、<strong>编写action</strong></h2> 
+ <p>action必须携带三个参数：</p> 
+ <ul> 
+  <li>当前的ModelAdmin</li> 
+  <li>当前的HttpRequest对象（即request）</li> 
+  <li>被选择的对象（即QuerySet）</li> 
+ </ul> 
+ <p>在应用中的admin.py文件中写入：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="k">def</span> <span class="nf">make_published</span><span class="p">(</span><span class="n">modeladmin</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">queryset</span><span class="p">):</span>
+    <span class="n">queryset</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="s1">'p'</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>注意：这里我们作为例子，简单地使用了queryset自带的update()方法，它能批量操作。但在多数情况下，你要自己遍历queryset的每个元素，并编写具体的操作。也就是：</p> 
+ <div class="codehilite">
+  <pre><span></span>for obj in queryset:
+    do_something_with(obj)
+</pre>
+ </div> 
+ <p>还可以设置一个简单易懂的简短描述(可以使用中文)，用于代替生硬的函数名：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="k">def</span> <span class="nf">make_published</span><span class="p">(</span><span class="n">modeladmin</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">queryset</span><span class="p">):</span>
+    <span class="n">queryset</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="s1">'p'</span><span class="p">)</span>
+<span class="c1"># 注意缩进，下面这句不在函数体内。</span>
+<span class="n">make_published</span><span class="o">.</span><span class="n">short_description</span> <span class="o">=</span> <span class="s2">"Mark selected stories as published"</span>
+</pre>
+ </div> 
+ <h2>二、将自定义action添加到对应的ModelAdmin中</h2> 
+ <p>关键是其中的<code>actions = [make_published]</code>这句。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.contrib</span> <span class="kn">import</span> <span class="n">admin</span>
+<span class="kn">from</span> <span class="nn">myapp.models</span> <span class="kn">import</span> <span class="n">Article</span>
+
+<span class="k">def</span> <span class="nf">make_published</span><span class="p">(</span><span class="n">modeladmin</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">queryset</span><span class="p">):</span>
+    <span class="n">queryset</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="s1">'p'</span><span class="p">)</span>
+<span class="n">make_published</span><span class="o">.</span><span class="n">short_description</span> <span class="o">=</span> <span class="s2">"Mark selected stories as published"</span>
+
+<span class="k">class</span> <span class="nc">ArticleAdmin</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">ModelAdmin</span><span class="p">):</span>
+    <span class="n">list_display</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'title'</span><span class="p">,</span> <span class="s1">'status'</span><span class="p">]</span>
+    <span class="n">ordering</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'title'</span><span class="p">]</span>
+    <span class="n">actions</span> <span class="o">=</span> <span class="p">[</span><span class="n">make_published</span><span class="p">]</span>
+
+<span class="n">admin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">Article</span><span class="p">,</span> <span class="n">ArticleAdmin</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>然后，页面看起来是下面的样子（注意下拉框）：</p> 
+ <p><img alt="20.png-61.5kB" src="http://static.zybuluo.com/feixuelove1009/o3vh2gh02s7jtl0tp9sg34a7/20.png"></p> 
+ <p><strong>处理错误</strong>：</p> 
+ <p>这其中，如果你能够预知在自定义的操作中可能产生的错误，请处理该错误，并通过<code>django.contrib.admin.ModelAdmin.message_user()</code>以友好的方式给予用户提示信息。</p> 
+ <h2>三、将action定义为ModelAdmin的方法</h2> 
+ <p>上面的<code>make_published</code>看起来已经不错了，但是我们一般会将它作为ModelAdmin的方法来使用。下面我们把它移到ArticleAdmin类中：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="k">class</span> <span class="nc">ArticleAdmin</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">ModelAdmin</span><span class="p">):</span>
+    <span class="o">...</span>
+
+    <span class="n">actions</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'make_published'</span><span class="p">]</span>  <span class="c1"># 请注意这里改成字符串引用了</span>
+    <span class="c1"># 第一个参数变为self</span>
+    <span class="k">def</span> <span class="nf">make_published</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">queryset</span><span class="p">):</span>
+        <span class="n">queryset</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="s1">'p'</span><span class="p">)</span>
+    <span class="n">make_published</span><span class="o">.</span><span class="n">short_description</span> <span class="o">=</span> <span class="s2">"Mark selected stories as published"</span>
+</pre>
+ </div> 
+ <p>这样做的好处是自定义方法可以直接访问类本身。例如下面使用self引用，为方法添加提示信息的功能：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="k">class</span> <span class="nc">ArticleAdmin</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">ModelAdmin</span><span class="p">):</span>
+    <span class="o">...</span>
+
+    <span class="k">def</span> <span class="nf">make_published</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">queryset</span><span class="p">):</span>
+        <span class="n">rows_updated</span> <span class="o">=</span> <span class="n">queryset</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="s1">'p'</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">rows_updated</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">message_bit</span> <span class="o">=</span> <span class="s2">"1 story was"</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">message_bit</span> <span class="o">=</span> <span class="s2">"</span><span class="si">%s</span><span class="s2"> stories were"</span> <span class="o">%</span> <span class="n">rows_updated</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message_user</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s2">"</span><span class="si">%s</span><span class="s2"> successfully marked as published."</span> <span class="o">%</span> <span class="n">message_bit</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>回到浏览器，再试试，你会看到如下图所示（注意顶部的绿色提示行）：</p> 
+ <p><img alt="21.png-68.8kB" src="http://static.zybuluo.com/feixuelove1009/q8bay7zj42ne877scmbrhn7j/21.png"></p> 
+ <h2>四、跳转到中间页面</h2> 
+ <p>默认情况下，执行完actions后，浏览器会返回先前的修改列表页面。但有时候，一些复杂的action需要返回中间页面，例如内置的删除方法，在执行删除动作之前，会弹出一个删除确认页面。</p> 
+ <p>要实现这个功能，只需要在action方法中返回一个HttpResponse（或它的子类）。 例如下面是一个利用Django内置的序列化函数将一个对象保存为json格式的范例：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.http</span> <span class="kn">import</span> <span class="n">HttpResponse</span>
+<span class="kn">from</span> <span class="nn">django.core</span> <span class="kn">import</span> <span class="n">serializers</span>
+
+<span class="k">def</span> <span class="nf">export_as_json</span><span class="p">(</span><span class="n">modeladmin</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">queryset</span><span class="p">):</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="n">content_type</span><span class="o">=</span><span class="s2">"application/json"</span><span class="p">)</span>
+    <span class="n">serializers</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span><span class="s2">"json"</span><span class="p">,</span> <span class="n">queryset</span><span class="p">,</span> <span class="n">stream</span><span class="o">=</span><span class="n">response</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">response</span>
+</pre>
+ </div> 
+ <p>多数情况下，我们会使用HttpResponseRedirect跳转到一个中间页面，并在GET方法的url中携带别选择的对象作为参数传递过去，然后在这个新的视图中接收这个参数，并编写具体的更加复杂的业务逻辑，如下面的代码所示：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.contrib</span> <span class="kn">import</span> <span class="n">admin</span>
+<span class="kn">from</span> <span class="nn">django.contrib.contenttypes.models</span> <span class="kn">import</span> <span class="n">ContentType</span>
+<span class="kn">from</span> <span class="nn">django.http</span> <span class="kn">import</span> <span class="n">HttpResponseRedirect</span>
+
+<span class="k">def</span> <span class="nf">export_selected_objects</span><span class="p">(</span><span class="n">modeladmin</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">queryset</span><span class="p">):</span>
+    <span class="c1"># 获得被打钩的checkbox对应的对象</span>
+    <span class="n">selected</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="o">.</span><span class="n">getlist</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">ACTION_CHECKBOX_NAME</span><span class="p">)</span>
+    <span class="c1"># 获取对应的模型</span>
+    <span class="n">ct</span> <span class="o">=</span> <span class="n">ContentType</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get_for_model</span><span class="p">(</span><span class="n">queryset</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
+    <span class="c1"># 构造访问的url，使用GET方法，跳转到相应的页面</span>
+    <span class="k">return</span> <span class="n">HttpResponseRedirect</span><span class="p">(</span><span class="s2">"/export/?ct=</span><span class="si">%s</span><span class="s2">&amp;ids=</span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span> <span class="p">(</span><span class="n">ct</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span> <span class="s2">","</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">selected</span><span class="p">)))</span>
+</pre>
+ </div> 
+ <p>具体的业务views这里没有给出，作为练习，留给大家。</p> 
+ <h2>五、编写可用于整个admin站点的action</h2> 
+ <p>前面创建的actions智能应用于绑定的模型。实际上有时候，我们还需要可以对admin站点内所有模型都有效的acitons。上面写的<code>export_selected_objects</code>函数可以是一个很好的例子。要实现这一功能，你需要使用内置的<code>AdminSite.add_action</code>方法：</p> 
+ <p>AdminSite.add_action(action, name=None)[source]</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.contrib</span> <span class="kn">import</span> <span class="n">admin</span>
+
+<span class="n">admin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">add_action</span><span class="p">(</span><span class="n">export_selected_objects</span><span class="p">)</span>
+</pre>
+ </div> 
+ <h2>六、禁用acitons</h2> 
+ <p>有时候，对于某些actions，我们想全局禁用或者局部禁用它。需要使用AdminSite.disable_action(name)方法。</p> 
+ <ul> 
+  <li>禁用全站级别的acitons：</li> 
+ </ul> 
+ <p>例如，禁用内置的删除方法：</p> 
+ <div class="codehilite">
+  <pre><span></span>admin.site.disable_action('delete_selected')
+</pre>
+ </div> 
+ <ul> 
+  <li>全站禁用，但个别可用：在ModelAdmin.actions中显式地引用。</li> 
+ </ul> 
+ <p>例如：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="c1"># 全站禁用删除功能</span>
+<span class="n">admin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">disable_action</span><span class="p">(</span><span class="s1">'delete_selected'</span><span class="p">)</span>
+
+<span class="c1"># 这个老老实实的被禁了</span>
+<span class="k">class</span> <span class="nc">SomeModelAdmin</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">ModelAdmin</span><span class="p">):</span>
+    <span class="n">actions</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'some_other_action'</span><span class="p">]</span>
+    <span class="o">...</span>
+
+<span class="c1"># 这个声明：我还要用</span>
+<span class="k">class</span> <span class="nc">AnotherModelAdmin</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">ModelAdmin</span><span class="p">):</span>
+    <span class="n">actions</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'delete_selected'</span><span class="p">,</span> <span class="s1">'a_third_action'</span><span class="p">]</span>
+    <span class="o">...</span>
+</pre>
+ </div> 
+ <ul> 
+  <li>在指定模型中禁用所有actions：设置ModelAdmin.actions为None。（这会连带全局actions一起禁用了。）</li> 
+ </ul> 
+ <div class="codehilite">
+  <pre><span></span>    <span class="k">class</span> <span class="n">MyModelAdmin</span>(<span class="n">admin</span>.<span class="n">ModelAdmin</span>):
+        <span class="n">actions</span> = <span class="n">None</span>
+</pre>
+ </div> 
+ <ul> 
+  <li>根据条件自动启用或禁用：</li> 
+ </ul> 
+ <p>还可以根据条件自动选择性的启动或禁用某些acitons，你只需要改写<code>ModelAdmin.get_actions()</code>方法。</p> 
+ <p>该方法将返回一个包含actions的字典。字典的键是aciton的名字（也就是前面的'delete_selected', 'a_third_action'之类），值是一个元组，包含（函数、名字、别名）</p> 
+ <p>例如，允许用户名以“J”开头的用户批量删除对象，但其它用户不行：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="k">class</span> <span class="nc">MyModelAdmin</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">ModelAdmin</span><span class="p">):</span>
+    <span class="o">...</span>
+
+    <span class="k">def</span> <span class="nf">get_actions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+        <span class="n">actions</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">MyModelAdmin</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">get_actions</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">username</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="o">!=</span> <span class="s1">'J'</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s1">'delete_selected'</span> <span class="ow">in</span> <span class="n">actions</span><span class="p">:</span>
+                <span class="k">del</span> <span class="n">actions</span><span class="p">[</span><span class="s1">'delete_selected'</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">actions</span>
+</pre>
+ </div> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/158"> <i class="fa fa-arrow-left"></i>&nbsp;自定制Admin</a> 
+  <a class="float-right" href="/course/django/160"> Admin文档生成器&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 1</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/159">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.960.960.50/006xIWURly8fo9wxo24vzj30qo0qoaaz.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>有用</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 蔷薇-Nina </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年5月22日 17:29</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/496">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

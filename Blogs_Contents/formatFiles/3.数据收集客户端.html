@@ -1,0 +1,555 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>3.数据收集客户端</h1> 
+ <small>阅读:&nbsp;34899&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：18 </small> 
+ <hr> 
+ <p>CMDB最主要的管理对象是各种类型大量的服务器，其数据信息自然不可能通过手工收集，必须以客户端的方式，定时自动收集并报告给远程的服务器。</p> 
+ <p>下面，让我们暂时忘掉Django，进入Python运维的世界......</p> 
+ <h2>一、客户端程序组织</h2> 
+ <p>编写客户端，不能一个py脚本包打天下，要有组织有目的，通常我们会采取下面的结构：</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/119-1.png"></p> 
+ <p>在Pycharm中，项目根目录下，创建一个Client目录，作为客户端的根目录。</p> 
+ <p>在Client下，创建下面的包。注意是包，不是文件夹：</p> 
+ <ul> 
+  <li>bin：客户端启动脚本的所在目录</li> 
+  <li>conf：配置文件目录</li> 
+  <li>core：核心代码目录</li> 
+  <li>log：日志文件目录</li> 
+  <li>plugins：插件或工具目录</li> 
+ </ul> 
+ <h2>二、开发数据收集客户端</h2> 
+ <h3>1.程序入口脚本</h3> 
+ <p>在bin目录中新建<code>main.py</code>文件，写入下面的代码：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># -*- coding:utf-8 -*-</span>
+
+<span class="sd">"""</span>
+<span class="sd">完全可以把客户端信息收集脚本做成windows和linux两个不同的版本。</span>
+<span class="sd">"""</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+
+<span class="n">BASE_DIR</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">())</span>
+<span class="c1"># 设置工作目录，使得包和模块能够正常导入</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">BASE_DIR</span><span class="p">)</span>
+
+<span class="kn">from</span> <span class="nn">core</span> <span class="kn">import</span> <span class="n">handler</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">'__main__'</span><span class="p">:</span>
+
+    <span class="n">handler</span><span class="o">.</span><span class="n">ArgvHandler</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p><strong>在pycharm中可能出现导入失败的红色波浪线警告信息，其实是可以导入的，请忽略它。</strong></p> 
+ <ul> 
+  <li>通过os和sys模块的配合，将当前客户端所在目录设置为工作目录，如果不这么做，会无法导入其它模块；</li> 
+  <li>handler模块是核心代码模块，在core目录中，我们一会来实现它。</li> 
+  <li>以后调用客户端就只需要执行<code>python main.py 参数</code>就可以了</li> 
+ </ul> 
+ <p><strong>这里有个问题一定要强调一下，那就是Python解释器的调用，执行命令的方式和代码第一行<code>#!/usr/bin/env python</code>的指定方式一定不能冲突，要根据你的实际情况实际操作和修改代码！</strong></p> 
+ <h3>2.主功能模块</h3> 
+ <p>在core下，创建<code>handler.py</code>文件，写入下面的代码：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="c1"># -*- coding:utf-8 -*-</span>
+
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">urllib.parse</span>
+<span class="kn">import</span> <span class="nn">urllib.request</span>
+<span class="kn">from</span> <span class="nn">core</span> <span class="kn">import</span> <span class="n">info_collection</span>
+<span class="kn">from</span> <span class="nn">conf</span> <span class="kn">import</span> <span class="n">settings</span>
+
+
+<span class="k">class</span> <span class="nc">ArgvHandler</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">args</span> <span class="o">=</span> <span class="n">args</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">parse_args</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">"""</span>
+<span class="sd">        分析参数，如果有参数指定的方法，则执行该功能，如果没有，打印帮助说明。</span>
+<span class="sd">        :return:</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+            <span class="n">func</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">func</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">help_msg</span><span class="p">()</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">help_msg</span><span class="p">():</span>
+        <span class="sd">"""</span>
+<span class="sd">        帮助说明</span>
+<span class="sd">        :return:</span>
+<span class="sd">        """</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="s1">'''</span>
+<span class="s1">        参数名               功能</span>
+
+<span class="s1">        collect_data        测试收集硬件信息的功能</span>
+
+<span class="s1">        report_data         收集硬件信息并汇报</span>
+<span class="s1">        '''</span>
+        <span class="k">print</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">collect_data</span><span class="p">():</span>
+        <span class="sd">"""收集硬件信息,用于测试！"""</span>
+        <span class="n">info</span> <span class="o">=</span> <span class="n">info_collection</span><span class="o">.</span><span class="n">InfoCollection</span><span class="p">()</span>
+        <span class="n">asset_data</span> <span class="o">=</span> <span class="n">info</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
+        <span class="k">print</span><span class="p">(</span><span class="n">asset_data</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">report_data</span><span class="p">():</span>
+        <span class="sd">"""</span>
+<span class="sd">        收集硬件信息，然后发送到服务器。</span>
+<span class="sd">        :return:</span>
+<span class="sd">        """</span>
+        <span class="c1"># 收集信息</span>
+        <span class="n">info</span> <span class="o">=</span> <span class="n">info_collection</span><span class="o">.</span><span class="n">InfoCollection</span><span class="p">()</span>
+        <span class="n">asset_data</span> <span class="o">=</span> <span class="n">info</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
+        <span class="c1"># 将数据打包到一个字典内，并转换为json格式</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"asset_data"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">asset_data</span><span class="p">)}</span>
+        <span class="c1"># 根据settings中的配置，构造url</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="s2">"http://</span><span class="si">%s</span><span class="s2">:</span><span class="si">%s%s</span><span class="s2">"</span> <span class="o">%</span> <span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">Params</span><span class="p">[</span><span class="s1">'server'</span><span class="p">],</span> <span class="n">settings</span><span class="o">.</span><span class="n">Params</span><span class="p">[</span><span class="s1">'port'</span><span class="p">],</span> <span class="n">settings</span><span class="o">.</span><span class="n">Params</span><span class="p">[</span><span class="s1">'url'</span><span class="p">])</span>
+        <span class="k">print</span><span class="p">(</span><span class="s1">'正在将数据发送至： [</span><span class="si">%s</span><span class="s1">]  ......'</span> <span class="o">%</span> <span class="n">url</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># 使用Python内置的urllib.request库，发送post请求。</span>
+            <span class="c1"># 需要先将数据进行封装，并转换成bytes类型</span>
+            <span class="n">data_encode</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">parse</span><span class="o">.</span><span class="n">urlencode</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">()</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="n">url</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data_encode</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">Params</span><span class="p">[</span><span class="s1">'request_timeout'</span><span class="p">])</span>
+            <span class="k">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\033</span><span class="s2">[31;1m发送完毕！</span><span class="se">\033</span><span class="s2">[0m "</span><span class="p">)</span>
+            <span class="n">message</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span>
+            <span class="k">print</span><span class="p">(</span><span class="s2">"返回结果：</span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span> <span class="n">message</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">message</span> <span class="o">=</span> <span class="s1">'发送失败'</span> <span class="o">+</span> <span class="s2">"   错误原因：  {}"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\033</span><span class="s2">[31;1m发送失败，错误原因： </span><span class="si">%s</span><span class="se">\033</span><span class="s2">[0m"</span> <span class="o">%</span> <span class="n">e</span><span class="p">)</span>
+        <span class="c1"># 记录发送日志</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">PATH</span><span class="p">,</span> <span class="s1">'ab'</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>  <span class="c1"># 以byte的方式写入，防止出现编码错误</span>
+            <span class="n">log</span> <span class="o">=</span> <span class="s1">'发送时间：</span><span class="si">%s</span><span class="s1"> </span><span class="se">\t</span><span class="s1"> 服务器地址：</span><span class="si">%s</span><span class="s1"> </span><span class="se">\t</span><span class="s1"> 返回结果：</span><span class="si">%s</span><span class="s1"> </span><span class="se">\n</span><span class="s1">'</span> <span class="o">%</span> <span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">'%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%M:%S'</span><span class="p">),</span> <span class="n">url</span><span class="p">,</span> <span class="n">message</span><span class="p">)</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">log</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span>
+            <span class="k">print</span><span class="p">(</span><span class="s2">"日志记录成功！"</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>说明：</p> 
+ <ul> 
+  <li>handler模块中只有一个ArgvHandler类；</li> 
+  <li>在main模块中也是实例化了一个ArgvHandler类的对象，并将调用参数传递进去；</li> 
+  <li>首先，初始化方法会保存调用参数，然后执行parse_args()方法分析参数；</li> 
+  <li>如果ArgvHandler类有参数指定的功能，则执行该功能，如果没有，打印帮助说明。</li> 
+  <li>目前ArgvHandler类只有两个核心方法：<code>collect_data</code>和<code>report_data</code>；</li> 
+  <li><code>collect_data</code>收集数据并打印到屏幕，用于测试；<code>report_data</code>方法才会将实际的数据发往服务器。</li> 
+  <li>数据的收集由<code>info_collection.InfoCollection</code>类负责，一会再看；</li> 
+  <li><code>report_data</code>方法会将收集到的数据打包到一个字典内，并转换为json格式；</li> 
+  <li>然后通过settings中的配置，构造发送目的地url；</li> 
+  <li>通过Python内置的urllib.parse对数据进行封装；</li> 
+  <li>通过urllib.request将数据发送到目的url；</li> 
+  <li>接收服务器返回的信息；</li> 
+  <li>将成功或者失败的信息写入日志文件中。</li> 
+ </ul> 
+ <p>以后，我们要测试数据收集，执行<code>python main.py collect_data</code>；要实际往服务器发送收集到的数据，则执行<code>python main.py report_data</code>。</p> 
+ <h3>3.配置文件</h3> 
+ <p>要将所有可能修改的数据、常量、配置等都尽量以配置文件的形式组织起来，尽量不要在代码中写死任何数据。</p> 
+ <p>在conf中，新建<code>settings.py</code>文件，写入下面的代码：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="c1"># -*- coding:utf-8 -*-</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="c1"># 远端接收数据的服务器</span>
+<span class="n">Params</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"server"</span><span class="p">:</span> <span class="s2">"192.168.0.100"</span><span class="p">,</span>
+    <span class="s2">"port"</span><span class="p">:</span> <span class="mi">8000</span><span class="p">,</span>
+    <span class="s1">'url'</span><span class="p">:</span> <span class="s1">'/assets/report/'</span><span class="p">,</span>
+    <span class="s1">'request_timeout'</span><span class="p">:</span> <span class="mi">30</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="c1"># 日志文件配置</span>
+
+<span class="n">PATH</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()),</span> <span class="s1">'log'</span><span class="p">,</span> <span class="s1">'cmdb.log'</span><span class="p">)</span>
+
+
+<span class="c1"># 更多配置，请都集中在此文件中</span>
+</pre>
+ </div> 
+ <p>这里，配置了服务器地址、端口、发送的url、请求的超时时间，以及日志文件路径。请根据你的实际情况进行修改。</p> 
+ <h3>4.信息收集模块</h3> 
+ <p>在core中新建<code>info_collection.py</code>文件，写入下面的代码：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="c1"># -*- coding:utf-8 -*-</span>
+
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">platform</span>
+
+
+<span class="k">class</span> <span class="nc">InfoCollection</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">collect</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># 收集平台信息</span>
+        <span class="c1"># 首先判断当前平台，根据平台的不同，执行不同的方法</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">func</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">platform</span><span class="o">.</span><span class="n">system</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span>
+            <span class="n">info_data</span> <span class="o">=</span> <span class="n">func</span><span class="p">()</span>
+            <span class="n">formatted_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">build_report_data</span><span class="p">(</span><span class="n">info_data</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">formatted_data</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="s2">"不支持当前操作系统： [</span><span class="si">%s</span><span class="s2">]! "</span> <span class="o">%</span> <span class="n">platform</span><span class="o">.</span><span class="n">system</span><span class="p">())</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">linux</span><span class="p">():</span>
+        <span class="kn">from</span> <span class="nn">plugins.collect_linux_info</span> <span class="kn">import</span> <span class="n">collect</span>
+        <span class="k">return</span> <span class="n">collect</span><span class="p">()</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">windows</span><span class="p">():</span>
+        <span class="kn">from</span> <span class="nn">plugins.collect_windows_info</span> <span class="kn">import</span> <span class="n">Win32Info</span>
+        <span class="k">return</span> <span class="n">Win32Info</span><span class="p">()</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">build_report_data</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+        <span class="c1"># 留下一个接口，方便以后增加功能或者过滤数据</span>
+        <span class="k">pass</span>
+        <span class="k">return</span> <span class="n">data</span>
+</pre>
+ </div> 
+ <p>该模块的作用很简单：</p> 
+ <ul> 
+  <li>首先通过Python内置的platform模块获取执行main脚本的操作系统类别，通常是windows和Linux，暂时不支持其它操作系统；</li> 
+  <li>根据操作系统的不同，反射获取相应的信息收集方法，并执行；</li> 
+  <li>如果是客户端不支持的操作系统，比如苹果系统，则提示并退出客户端。</li> 
+ </ul> 
+ <p>因为windows和Linux两大操作系统的巨大平台差异，我们必须写两个收集信息的脚本。</p> 
+ <p>到目前为止，我们的客户端结构如下图所示：</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/119-2.png"></p> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/118"> <i class="fa fa-arrow-left"></i>&nbsp;2.模型设计</a> 
+  <a class="float-right" href="/course/django/120"> 4.收集Windows数据&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 18</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/119">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax2.sinaimg.cn/crop.0.0.667.667.50/007CxANgly8fzs8komn9hj30ij0ijq3v.jpg?KID=imgbed,tva&amp;Expires=1588081816&amp;ssig=qmg3pq4%2FRd" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>pycharm里面的包标红色波浪，引用的是当前路径，是不是应该是上一级路径，因此每个from + 包名处，是不是应当在包名前加上..，这样就不会标红了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; MrTyrr </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年4月28日 18:52</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2056">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax3.sinaimg.cn/crop.0.0.896.896.50/4cb249b3ly8g1nf3shn3xj20ow0ow79d.jpg?KID=imgbed,tva&amp;Expires=1566804365&amp;ssig=440mGOP8Bs" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>mac系统没法做下去了？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 穿越哥在流浪 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年8月26日 12:26</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1590">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax3.sinaimg.cn/crop.0.0.512.512.50/005ugQy0ly8g4586xib3dj30e80e8mxf.jpg?KID=imgbed,tva&amp;Expires=1566905219&amp;ssig=ElrXX7EYlJ" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>大概是得自己改造吧</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> waitingMissL &nbsp;&nbsp;回复&nbsp;&nbsp; 穿越哥在流浪 </span> 
+      <em>2019年8月27日 16:27</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1597">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax3.sinaimg.cn/crop.0.0.512.512.50/005Hldw4ly8ftv1yxj5knj30e80e8t8k.jpg?KID=imgbed,tva&amp;Expires=1576675660&amp;ssig=HxfKeqTlCD" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>MacOS 是类Unix系统你不知道？还玩什么Mac啊？当Linux用就行的.......</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 就叫我Daddy吧 &nbsp;&nbsp;回复&nbsp;&nbsp; 穿越哥在流浪 </span> 
+      <em>2019年12月18日 18:28</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1772">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.300.0.764.764.50/97867009gw1f7m5ojassgj211y0lcduj.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>执行：python main.py report_data 报错： from plugins.windows import sys_info as win_sys_info ImportError: No module named 'plugins.windows'</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; Hello_zhdya </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年3月2日 17:17</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1094">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.300.0.764.764.50/97867009gw1f7m5ojassgj211y0lcduj.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>忽略，忽略，，不好意思，后面文章有介绍！！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> Hello_zhdya &nbsp;&nbsp;回复&nbsp;&nbsp; Hello_zhdya </span> 
+      <em>2019年3月2日 17:46</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1095">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.0.0.480.480.50/005NtmT0ly8fwh5kv0nqlj30dc0dcmxp.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>formatted_data = self.build_report_data(info_data) 这里有点看不明白</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; IIRROONN_Stark </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年10月24日 17:21</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/795">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva3.sinaimg.cn/crop.0.0.180.180.50/7ccfb5b4jw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>这就是作者所说的留下一个接口，方便以后过滤数据所用</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> kangvcar &nbsp;&nbsp;回复&nbsp;&nbsp; IIRROONN_Stark </span> 
+      <em>2018年12月12日 19:32</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/936">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我执行这个命令 python main.py collect_data 报这个错，不知道怎么解决？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; lucl999 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年9月28日 11:23</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/755">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.104.45.384.384.50/948f4af0gw1egbeqmi59yj20hs0dcdi2.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我是用pip install pywin32com 然后导入的 win32com 的时候一直报错：No module named 'plugins'</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 她她她--迷人 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年7月18日 11:49</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/600">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.39.4.133.133.50/a81c9686jw8f3rfwg033fj206806oq2y.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>ValueError: attempted relative import beyond top-level package 刘大 from ..core import handler 我是这么导入的 是还要配置才行吗, 一直报这个错</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 赵鹏飞飞飞飞飞飞飞飞 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年4月22日 12:18</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/403">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.996.996.50/006mbSp6ly8ffiwekd507j30ro0rp440.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我也是报的这个错 解决了吗</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 爱他么谁谁的快意人生 &nbsp;&nbsp;回复&nbsp;&nbsp; 赵鹏飞飞飞飞飞飞飞飞 </span> 
+      <em>2019年2月21日 22:37</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1075">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.1080.1080.50/5ec2a85bjw8eh4ja956ryj20u00u0abc.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>def linux_sys_info(): from plugins.linux import sys_info return sys_info.collect() def windows_sys_info(): from plugins.windows import sys_info as win_sys_info return win_sys_info.collect() 里面sys_info是红线报错的,不知道为什么,sys_info是引用的哪里</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 秋秋秋秋方 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年3月29日 14:21</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/343">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.1080.1080.50/5ec2a85bjw8eh4ja956ryj20u00u0abc.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>..原来在后面一章,sorry,我没看,主要运维这块不太懂- -</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 秋秋秋秋方 &nbsp;&nbsp;回复&nbsp;&nbsp; 秋秋秋秋方 </span> 
+      <em>2018年3月29日 14:23</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/344">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.960.960.50/006xIWURly8fo9wxo24vzj30qo0qoaaz.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>如果执行python main.py collect_data提示“没有模块”之类的，可以试试下面的解决方法：执行python -m main collect_data，注意main.py不带扩展名。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 蔷薇-Nina </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年3月27日 09:46</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/330">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.996.996.50/af3a5069ly8fjv3yl1bowj20ro0roq4r.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>美女，看你很活跃，想加你QQ，共同努力学习Python和django。我QQ2424013264</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 深情默默爱格格 &nbsp;&nbsp;回复&nbsp;&nbsp; 蔷薇-Nina </span> 
+      <em>2018年3月30日 15:22</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/349">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva4.sinaimg.cn/crop.0.0.996.996.50/006bkF7vjw8fbtucf9bgcj30ro0rodij.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>即使执行了　pyhton -m main collect_data 也不行　还是报错No module named 'plugins.linux' 收集不了信息　用的是虚拟机，</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 靖大树 &nbsp;&nbsp;回复&nbsp;&nbsp; 蔷薇-Nina </span> 
+      <em>2018年4月30日 23:38</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/422">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.0.0.960.960.50/eb8b3905ly8fjsqhgn10sj20qo0qojru.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>请问您解决了吗</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> DarklessOne &nbsp;&nbsp;回复&nbsp;&nbsp; 靖大树 </span> 
+      <em>2019年1月12日 23:21</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1014">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

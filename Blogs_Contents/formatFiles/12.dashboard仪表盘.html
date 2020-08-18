@@ -1,0 +1,1058 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>12.dashboard仪表盘</h1> 
+ <small>阅读:&nbsp;42218&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：34 </small> 
+ <hr> 
+ <p>对于运维管理平台，一个总览的dashboard仪表盘界面是必须有的，不但提升整体格调，也有利于向老板‘邀功请赏’。</p> 
+ <p>dashboard页面必须酷炫吊炸天，所以界面元素应当美观、丰富、富有冲击力。</p> 
+ <p>完整的dashboard.html文件代码如下：</p> 
+ <div class="codehilite">
+  <pre><span></span>{% extends 'base.html' %}
+{% load static %}
+{% block title %}仪表盘{% endblock %}
+{% block css %}{% endblock %}
+
+{% block breadcrumb %}
+    <span class="c">&lt;!-- Content Header (Page header) --&gt;</span>
+    <span class="p">&lt;</span><span class="nt">section</span> <span class="na">class</span><span class="o">=</span><span class="s">"content-header"</span><span class="p">&gt;</span>
+      <span class="p">&lt;</span><span class="nt">h1</span><span class="p">&gt;</span>
+        仪表盘
+        <span class="p">&lt;</span><span class="nt">small</span><span class="p">&gt;</span>dashboard<span class="p">&lt;/</span><span class="nt">small</span><span class="p">&gt;</span>
+      <span class="p">&lt;/</span><span class="nt">h1</span><span class="p">&gt;</span>
+      <span class="p">&lt;</span><span class="nt">ol</span> <span class="na">class</span><span class="o">=</span><span class="s">"breadcrumb"</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">li</span><span class="p">&gt;&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">"#"</span><span class="p">&gt;&lt;</span><span class="nt">i</span> <span class="na">class</span><span class="o">=</span><span class="s">"fa fa-dashboard"</span><span class="p">&gt;&lt;/</span><span class="nt">i</span><span class="p">&gt;</span> 主页<span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">li</span> <span class="na">class</span><span class="o">=</span><span class="s">"active"</span><span class="p">&gt;</span>仪表盘<span class="p">&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+      <span class="p">&lt;/</span><span class="nt">ol</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="nt">section</span><span class="p">&gt;</span>
+{% endblock %}
+
+{% block content %}
+
+      <span class="c">&lt;!-- Main content --&gt;</span>
+    <span class="p">&lt;</span><span class="nt">section</span> <span class="na">class</span><span class="o">=</span><span class="s">"content"</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"row"</span><span class="p">&gt;</span>
+        <span class="c">&lt;!-- row --&gt;</span>
+        <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"col-md-12"</span><span class="p">&gt;</span>
+          <span class="c">&lt;!-- jQuery Knob --&gt;</span>
+          <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"box box-solid"</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"box-header"</span><span class="p">&gt;</span>
+              <span class="p">&lt;</span><span class="nt">i</span> <span class="na">class</span><span class="o">=</span><span class="s">"fa fa-bar-chart-o"</span><span class="p">&gt;&lt;/</span><span class="nt">i</span><span class="p">&gt;</span>
+
+              <span class="p">&lt;</span><span class="nt">h3</span> <span class="na">class</span><span class="o">=</span><span class="s">"box-title"</span><span class="p">&gt;</span>设备状态<span class="p">&lt;</span><span class="nt">small</span><span class="p">&gt;</span>(%)<span class="p">&lt;/</span><span class="nt">small</span><span class="p">&gt;&lt;/</span><span class="nt">h3</span><span class="p">&gt;</span>
+
+              <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"box-tools pull-right"</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="nt">button</span> <span class="na">type</span><span class="o">=</span><span class="s">"button"</span> <span class="na">class</span><span class="o">=</span><span class="s">"btn btn-default btn-sm"</span> <span class="na">data-widget</span><span class="o">=</span><span class="s">"collapse"</span><span class="p">&gt;&lt;</span><span class="nt">i</span> <span class="na">class</span><span class="o">=</span><span class="s">"fa fa-minus"</span><span class="p">&gt;&lt;/</span><span class="nt">i</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="nt">button</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="nt">button</span> <span class="na">type</span><span class="o">=</span><span class="s">"button"</span> <span class="na">class</span><span class="o">=</span><span class="s">"btn btn-default btn-sm"</span> <span class="na">data-widget</span><span class="o">=</span><span class="s">"remove"</span><span class="p">&gt;&lt;</span><span class="nt">i</span> <span class="na">class</span><span class="o">=</span><span class="s">"fa fa-times"</span><span class="p">&gt;&lt;/</span><span class="nt">i</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="nt">button</span><span class="p">&gt;</span>
+              <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+            <span class="c">&lt;!-- /.box-header --&gt;</span>
+            <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"box-body"</span><span class="p">&gt;</span>
+              <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"row"</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"col-xs-6 col-md-2 col-md-offset-1 text-center"</span><span class="p">&gt;</span>
+                  <span class="p">&lt;</span><span class="nt">input</span> <span class="na">type</span><span class="o">=</span><span class="s">"text"</span> <span class="na">class</span><span class="o">=</span><span class="s">"knob"</span> <span class="na">value</span><span class="o">=</span><span class="s">"{{ up_rate }}"</span> <span class="na">data-width</span><span class="o">=</span><span class="s">"90"</span> <span class="na">data-height</span><span class="o">=</span><span class="s">"90"</span> <span class="na">data-fgColor</span><span class="o">=</span><span class="s">"#00a65a"</span> <span class="na">data-readonly</span><span class="o">=</span><span class="s">"true"</span><span class="p">&gt;</span>
+
+                  <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"knob-label"</span><span class="p">&gt;</span>在线<span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+                <span class="c">&lt;!-- ./col --&gt;</span>
+                <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"col-xs-6 col-md-2 text-center"</span><span class="p">&gt;</span>
+                  <span class="p">&lt;</span><span class="nt">input</span> <span class="na">type</span><span class="o">=</span><span class="s">"text"</span> <span class="na">class</span><span class="o">=</span><span class="s">"knob"</span> <span class="na">value</span><span class="o">=</span><span class="s">"{{ o_rate }}"</span> <span class="na">data-width</span><span class="o">=</span><span class="s">"90"</span> <span class="na">data-height</span><span class="o">=</span><span class="s">"90"</span> <span class="na">data-fgColor</span><span class="o">=</span><span class="s">"#f56954"</span> <span class="na">data-readonly</span><span class="o">=</span><span class="s">"true"</span><span class="p">&gt;</span>
+
+                  <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"knob-label"</span><span class="p">&gt;</span>下线<span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+                <span class="c">&lt;!-- ./col --&gt;</span>
+
+
+                <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"col-xs-6 col-md-2 text-center"</span><span class="p">&gt;</span>
+                  <span class="p">&lt;</span><span class="nt">input</span> <span class="na">type</span><span class="o">=</span><span class="s">"text"</span> <span class="na">class</span><span class="o">=</span><span class="s">"knob"</span> <span class="na">value</span><span class="o">=</span><span class="s">"{{ bd_rate }}"</span> <span class="na">data-width</span><span class="o">=</span><span class="s">"90"</span> <span class="na">data-height</span><span class="o">=</span><span class="s">"90"</span> <span class="na">data-fgColor</span><span class="o">=</span><span class="s">"#932ab6"</span> <span class="na">data-readonly</span><span class="o">=</span><span class="s">"true"</span><span class="p">&gt;</span>
+
+                  <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"knob-label"</span><span class="p">&gt;</span>故障<span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+                <span class="c">&lt;!-- ./col --&gt;</span>
+                <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"col-xs-6 col-md-2 text-center"</span><span class="p">&gt;</span>
+                  <span class="p">&lt;</span><span class="nt">input</span> <span class="na">type</span><span class="o">=</span><span class="s">"text"</span> <span class="na">class</span><span class="o">=</span><span class="s">"knob"</span> <span class="na">value</span><span class="o">=</span><span class="s">"{{ bu_rate }}"</span> <span class="na">data-width</span><span class="o">=</span><span class="s">"90"</span> <span class="na">data-height</span><span class="o">=</span><span class="s">"90"</span> <span class="na">data-fgColor</span><span class="o">=</span><span class="s">"#3c8dbc"</span> <span class="na">data-readonly</span><span class="o">=</span><span class="s">"true"</span><span class="p">&gt;</span>
+
+                  <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"knob-label"</span><span class="p">&gt;</span>备用<span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+                  <span class="c">&lt;!-- ./col --&gt;</span>
+                <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"col-xs-6 col-md-2 text-center"</span><span class="p">&gt;</span>
+                  <span class="p">&lt;</span><span class="nt">input</span> <span class="na">type</span><span class="o">=</span><span class="s">"text"</span> <span class="na">class</span><span class="o">=</span><span class="s">"knob"</span> <span class="na">value</span><span class="o">=</span><span class="s">"{{ un_rate }}"</span> <span class="na">data-width</span><span class="o">=</span><span class="s">"90"</span> <span class="na">data-height</span><span class="o">=</span><span class="s">"90"</span> <span class="na">data-fgColor</span><span class="o">=</span><span class="s">"#cccccc"</span> <span class="na">data-readonly</span><span class="o">=</span><span class="s">"true"</span><span class="p">&gt;</span>
+
+                  <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"knob-label"</span><span class="p">&gt;</span>未知<span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+                <span class="c">&lt;!-- ./col --&gt;</span>
+              <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+              <span class="c">&lt;!-- /.row --&gt;</span>
+            <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+            <span class="c">&lt;!-- /.box-body --&gt;</span>
+          <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+          <span class="c">&lt;!-- /.box --&gt;</span>
+        <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+        <span class="c">&lt;!-- /.col --&gt;</span>
+
+
+        <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"col-md-6"</span><span class="p">&gt;</span>
+            <span class="c">&lt;!-- BAR CHART --&gt;</span>
+          <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"box box-success"</span><span class="p">&gt;</span>
+
+            <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"box-header with-border"</span><span class="p">&gt;</span>
+              <span class="p">&lt;</span><span class="nt">h3</span> <span class="na">class</span><span class="o">=</span><span class="s">"box-title"</span><span class="p">&gt;</span>各状态资产数量统计：<span class="p">&lt;/</span><span class="nt">h3</span><span class="p">&gt;</span>
+
+              <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"box-tools pull-right"</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="nt">button</span> <span class="na">type</span><span class="o">=</span><span class="s">"button"</span> <span class="na">class</span><span class="o">=</span><span class="s">"btn btn-box-tool"</span> <span class="na">data-widget</span><span class="o">=</span><span class="s">"collapse"</span><span class="p">&gt;&lt;</span><span class="nt">i</span> <span class="na">class</span><span class="o">=</span><span class="s">"fa fa-minus"</span><span class="p">&gt;&lt;/</span><span class="nt">i</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="nt">button</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="nt">button</span> <span class="na">type</span><span class="o">=</span><span class="s">"button"</span> <span class="na">class</span><span class="o">=</span><span class="s">"btn btn-box-tool"</span> <span class="na">data-widget</span><span class="o">=</span><span class="s">"remove"</span><span class="p">&gt;&lt;</span><span class="nt">i</span> <span class="na">class</span><span class="o">=</span><span class="s">"fa fa-times"</span><span class="p">&gt;&lt;/</span><span class="nt">i</span><span class="p">&gt;&lt;/</span><span class="nt">button</span><span class="p">&gt;</span>
+              <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"box-body"</span><span class="p">&gt;</span>
+                {# 百度Echarts实现柱状图#}
+                <span class="p">&lt;</span><span class="nt">div</span> <span class="na">id</span><span class="o">=</span><span class="s">"barChart"</span> <span class="na">style</span><span class="o">=</span><span class="s">"width: 600px;height:400px;"</span><span class="p">&gt;&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+            <span class="c">&lt;!-- /.box-body --&gt;</span>
+          <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+
+
+
+        <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"col-md-6"</span><span class="p">&gt;</span>
+          <span class="c">&lt;!-- DONUT CHART --&gt;</span>
+          <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"box box-danger"</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"box-header with-border"</span><span class="p">&gt;</span>
+              <span class="p">&lt;</span><span class="nt">h3</span> <span class="na">class</span><span class="o">=</span><span class="s">"box-title"</span><span class="p">&gt;</span>各类型资产数量统计：<span class="p">&lt;/</span><span class="nt">h3</span><span class="p">&gt;</span>
+
+              <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"box-tools pull-right"</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="nt">button</span> <span class="na">type</span><span class="o">=</span><span class="s">"button"</span> <span class="na">class</span><span class="o">=</span><span class="s">"btn btn-box-tool"</span> <span class="na">data-widget</span><span class="o">=</span><span class="s">"collapse"</span><span class="p">&gt;&lt;</span><span class="nt">i</span> <span class="na">class</span><span class="o">=</span><span class="s">"fa fa-minus"</span><span class="p">&gt;&lt;/</span><span class="nt">i</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="nt">button</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="nt">button</span> <span class="na">type</span><span class="o">=</span><span class="s">"button"</span> <span class="na">class</span><span class="o">=</span><span class="s">"btn btn-box-tool"</span> <span class="na">data-widget</span><span class="o">=</span><span class="s">"remove"</span><span class="p">&gt;&lt;</span><span class="nt">i</span> <span class="na">class</span><span class="o">=</span><span class="s">"fa fa-times"</span><span class="p">&gt;&lt;/</span><span class="nt">i</span><span class="p">&gt;&lt;/</span><span class="nt">button</span><span class="p">&gt;</span>
+              <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"box-body"</span><span class="p">&gt;</span>
+                {# 百度Echarts实现饼状图#}
+              <span class="p">&lt;</span><span class="nt">div</span> <span class="na">id</span><span class="o">=</span><span class="s">"donutChart"</span> <span class="na">style</span><span class="o">=</span><span class="s">"width: 600px;height:400px;"</span><span class="p">&gt;&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+            <span class="c">&lt;!-- /.box-body --&gt;</span>
+          <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+          <span class="c">&lt;!-- /.box --&gt;</span>
+        <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+        <span class="c">&lt;!-- /.col (RIGHT) --&gt;</span>
+      <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+      <span class="c">&lt;!-- /.row --&gt;</span>
+
+    <span class="p">&lt;/</span><span class="nt">section</span><span class="p">&gt;</span>
+    <span class="c">&lt;!-- /.content --&gt;</span>
+
+{% endblock %}
+
+{% block script %}
+
+    <span class="p">&lt;</span><span class="nt">script</span> <span class="na">src</span><span class="o">=</span><span class="s">"https://cdn.bootcss.com/echarts/4.2.1/echarts.min.js"</span><span class="p">&gt;&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+    <span class="c">&lt;!-- AdminLTE App --&gt;</span>
+    <span class="p">&lt;</span><span class="nt">script</span> <span class="na">src</span><span class="o">=</span><span class="s">"{% static 'adminlet-2.4.10/bower_components/jquery-knob/js/jquery.knob.js' %}"</span><span class="p">&gt;&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+    <span class="c">&lt;!-- page script --&gt;</span>
+
+    <span class="p">&lt;</span><span class="nt">script</span> <span class="na">type</span><span class="o">=</span><span class="s">"text/javascript"</span><span class="p">&gt;</span>
+
+    <span class="c1">// 顶部服务器状态百分率圆图</span>
+    <span class="nx">$</span><span class="p">(</span><span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+        <span class="cm">/* jQueryKnob */</span>
+
+        <span class="nx">$</span><span class="p">(</span><span class="s2">".knob"</span><span class="p">).</span><span class="nx">knob</span><span class="p">({</span>
+             <span class="cm">/*change : function (value) {</span>
+<span class="cm">       //console.log("change : " + value);</span>
+<span class="cm">       },</span>
+<span class="cm">       release : function (value) {</span>
+<span class="cm">       console.log("release : " + value);</span>
+<span class="cm">       },</span>
+<span class="cm">       cancel : function () {</span>
+<span class="cm">       console.log("cancel : " + this.value);</span>
+<span class="cm">       },*/</span>
+      <span class="nx">draw</span><span class="o">:</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+             <span class="c1">// "tron" case</span>
+        <span class="k">if</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">$</span><span class="p">.</span><span class="nx">data</span><span class="p">(</span><span class="s1">'skin'</span><span class="p">)</span> <span class="o">==</span> <span class="s1">'tron'</span>
+                <span class="p">)</span> <span class="p">{</span>
+
+          <span class="kd">var</span> <span class="nx">a</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">angle</span><span class="p">(</span><span class="k">this</span><span class="p">.</span>
+
+                    <span class="nx">cv</span><span class="p">)</span>  <span class="c1">// Angle</span>
+              <span class="p">,</span> <span class="nx">sa</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span>
+                            <span class="nx">startAngle</span>          <span class="c1">// Previous start angle</span>
+              <span class="p">,</span> <span class="nx">sat</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">startAngle</span>         <span class="c1">// Start angle</span>
+              <span class="p">,</span> <span class="nx">ea</span>                            <span class="c1">// Previous end angle</span>
+              <span class="p">,</span> <span class="nx">eat</span> <span class="o">=</span> <span class="nx">sat</span> <span class="o">+</span> <span class="nx">a</span>                 <span class="c1">// End angle</span>
+              <span class="p">,</span> <span class="nx">r</span> <span class="o">=</span> <span class="kc">true</span><span class="p">;</span>
+
+          <span class="k">this</span><span class="p">.</span><span class="nx">g</span><span class="p">.</span><span class="nx">lineWidth</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">lineWidth</span><span class="p">;</span>
+
+          <span class="k">this</span><span class="p">.</span><span class="nx">o</span><span class="p">.</span><span class="nx">cursor</span>
+          <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="nx">sat</span> <span class="o">=</span> <span class="nx">eat</span> <span class="o">-</span> <span class="mf">0.3</span><span class="p">)</span>
+          <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="nx">eat</span> <span class="o">=</span> <span class="nx">eat</span> <span class="o">+</span> <span class="mf">0.3</span><span class="p">);</span>
+
+          <span class="k">if</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">o</span><span class="p">.</span><span class="nx">displayPrevious</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nx">ea</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">startAngle</span> <span class="o">+</span> <span class="k">this</span><span class="p">.</span><span class="nx">angle</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">value</span><span class="p">);</span>
+            <span class="k">this</span><span class="p">.</span><span class="nx">o</span><span class="p">.</span><span class="nx">cursor</span>
+            <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="nx">sa</span> <span class="o">=</span> <span class="nx">ea</span> <span class="o">-</span> <span class="mf">0.3</span><span class="p">)</span>
+            <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="nx">ea</span> <span class="o">=</span> <span class="nx">ea</span> <span class="o">+</span> <span class="mf">0.3</span><span class="p">);</span>
+            <span class="k">this</span><span class="p">.</span><span class="nx">g</span><span class="p">.</span><span class="nx">beginPath</span><span class="p">();</span>
+            <span class="k">this</span><span class="p">.</span><span class="nx">g</span><span class="p">.</span><span class="nx">strokeStyle</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">previousColor</span><span class="p">;</span>
+            <span class="k">this</span><span class="p">.</span><span class="nx">g</span><span class="p">.</span><span class="nx">arc</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">xy</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="nx">xy</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="nx">radius</span> <span class="o">-</span> <span class="k">this</span><span class="p">.</span><span class="nx">lineWidth</span><span class="p">,</span> <span class="nx">sa</span><span class="p">,</span> <span class="nx">ea</span><span class="p">,</span> <span class="kc">false</span><span class="p">);</span>
+            <span class="k">this</span><span class="p">.</span><span class="nx">g</span><span class="p">.</span><span class="nx">stroke</span><span class="p">();</span>
+          <span class="p">}</span>
+
+          <span class="k">this</span><span class="p">.</span><span class="nx">g</span><span class="p">.</span><span class="nx">beginPath</span><span class="p">();</span>
+          <span class="k">this</span><span class="p">.</span><span class="nx">g</span><span class="p">.</span><span class="nx">strokeStyle</span> <span class="o">=</span> <span class="nx">r</span> <span class="o">?</span> <span class="k">this</span><span class="p">.</span><span class="nx">o</span><span class="p">.</span><span class="nx">fgColor</span> <span class="o">:</span> <span class="k">this</span><span class="p">.</span><span class="nx">fgColor</span><span class="p">;</span>
+          <span class="k">this</span><span class="p">.</span><span class="nx">g</span><span class="p">.</span><span class="nx">arc</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">xy</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="nx">xy</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="nx">radius</span> <span class="o">-</span> <span class="k">this</span><span class="p">.</span><span class="nx">lineWidth</span><span class="p">,</span> <span class="nx">sat</span><span class="p">,</span> <span class="nx">eat</span><span class="p">,</span> <span class="kc">false</span><span class="p">);</span>
+          <span class="k">this</span><span class="p">.</span><span class="nx">g</span><span class="p">.</span><span class="nx">stroke</span><span class="p">();</span>
+
+          <span class="k">this</span><span class="p">.</span><span class="nx">g</span><span class="p">.</span><span class="nx">lineWidth</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
+          <span class="k">this</span><span class="p">.</span><span class="nx">g</span><span class="p">.</span><span class="nx">beginPath</span><span class="p">();</span>
+          <span class="k">this</span><span class="p">.</span><span class="nx">g</span><span class="p">.</span><span class="nx">strokeStyle</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">o</span><span class="p">.</span><span class="nx">fgColor</span><span class="p">;</span>
+          <span class="k">this</span><span class="p">.</span><span class="nx">g</span><span class="p">.</span><span class="nx">arc</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">xy</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="nx">xy</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="nx">radius</span> <span class="o">-</span> <span class="k">this</span><span class="p">.</span><span class="nx">lineWidth</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">+</span> <span class="k">this</span><span class="p">.</span><span class="nx">lineWidth</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">/</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">PI</span><span class="p">,</span> <span class="kc">false</span><span class="p">);</span>
+          <span class="k">this</span><span class="p">.</span><span class="nx">g</span><span class="p">.</span><span class="nx">stroke</span><span class="p">();</span>
+
+          <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+        <span class="p">}</span>
+      <span class="p">}</span>
+    <span class="p">});</span>
+    <span class="cm">/* END JQUERY KNOB */</span>
+    <span class="p">});</span>
+
+    <span class="c1">//不同状态资产数量统计 柱状图</span>
+    <span class="nx">$</span><span class="p">(</span><span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+        <span class="c1">// 基于准备好的dom，初始化echarts实例</span>
+        <span class="kd">var</span> <span class="nx">myChart</span> <span class="o">=</span> <span class="nx">echarts</span><span class="p">.</span><span class="nx">init</span><span class="p">(</span><span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'barChart'</span><span class="p">));</span>
+
+        <span class="c1">// 指定图表的配置项和数据</span>
+        <span class="kd">var</span> <span class="nx">option</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="nx">color</span><span class="o">:</span> <span class="p">[</span><span class="s1">'#3398DB'</span><span class="p">],</span>
+            <span class="nx">title</span><span class="o">:</span> <span class="p">{</span>
+                <span class="nx">text</span><span class="o">:</span> <span class="s1">'数量'</span>
+            <span class="p">},</span>
+            <span class="nx">tooltip</span><span class="o">:</span> <span class="p">{},</span>
+            <span class="nx">legend</span><span class="o">:</span> <span class="p">{</span> <span class="nx">data</span><span class="o">:</span><span class="p">[</span><span class="s1">''</span><span class="p">]</span>
+            <span class="p">},</span>
+            <span class="nx">xAxis</span><span class="o">:</span> <span class="p">{</span>
+                <span class="nx">data</span><span class="o">:</span> <span class="p">[</span><span class="s2">"在线"</span><span class="p">,</span> <span class="s2">"下线"</span><span class="p">,</span><span class="s2">"故障"</span><span class="p">,</span><span class="s2">"备用"</span><span class="p">,</span><span class="s2">"未知"</span><span class="p">]</span> <span class="p">},</span>
+            <span class="nx">yAxis</span><span class="o">:</span> <span class="p">{</span>
+            <span class="p">},</span>
+            <span class="nx">series</span><span class="o">:</span>
+                <span class="p">[{</span>
+                <span class="nx">name</span><span class="o">:</span> <span class="s1">'数量'</span><span class="p">,</span>
+                <span class="nx">type</span><span class="o">:</span> <span class="s1">'bar'</span><span class="p">,</span>
+                <span class="nx">barWidth</span><span class="o">:</span> <span class="s1">'50%'</span><span class="p">,</span>
+                <span class="nx">data</span><span class="o">:</span> <span class="p">[{{</span> <span class="nx">upline</span> <span class="p">}},</span> <span class="p">{{</span> <span class="nx">offline</span> <span class="p">}},</span> <span class="p">{{</span> <span class="nx">breakdown</span> <span class="p">}},</span> <span class="p">{{</span> <span class="nx">backup</span> <span class="p">}},</span> <span class="p">{{</span> <span class="nx">unknown</span> <span class="p">}}]</span>
+            <span class="p">}]</span>
+        <span class="p">};</span>
+            <span class="c1">// 使用刚指定的配置项和数据显示图表。</span>
+            <span class="nx">myChart</span><span class="p">.</span><span class="nx">setOption</span><span class="p">(</span><span class="nx">option</span><span class="p">);</span>
+    <span class="p">});</span>
+
+    <span class="c1">//资产类型数量统计 饼图</span>
+    <span class="nx">$</span><span class="p">(</span><span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+        <span class="c1">// 基于准备好的dom，初始化echarts实例</span>
+        <span class="kd">var</span> <span class="nx">myChart</span> <span class="o">=</span> <span class="nx">echarts</span><span class="p">.</span><span class="nx">init</span><span class="p">(</span><span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'donutChart'</span><span class="p">));</span>
+
+        <span class="c1">// 指定图表的配置项和数据</span>
+        <span class="nx">option</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="nx">title</span> <span class="o">:</span> <span class="p">{</span>
+                <span class="nx">x</span><span class="o">:</span><span class="s1">'center'</span>
+            <span class="p">},</span>
+            <span class="nx">tooltip</span> <span class="o">:</span> <span class="p">{</span>
+                <span class="nx">trigger</span><span class="o">:</span> <span class="s1">'item'</span><span class="p">,</span>
+                <span class="nx">formatter</span><span class="o">:</span> <span class="s2">"{a} &lt;br/&gt;{b} : {c} ({d}%)"</span>
+            <span class="p">},</span>
+            <span class="nx">legend</span><span class="o">:</span> <span class="p">{</span>
+                <span class="nx">orient</span><span class="o">:</span> <span class="s1">'vertical'</span><span class="p">,</span>
+                <span class="nx">left</span><span class="o">:</span> <span class="s1">'left'</span><span class="p">,</span>
+                <span class="nx">data</span><span class="o">:</span> <span class="p">[</span><span class="s1">'服务器'</span><span class="p">,</span><span class="s1">'网络设备'</span><span class="p">,</span><span class="s1">'存储设备'</span><span class="p">,</span><span class="s1">'安全设备'</span><span class="p">,</span><span class="s1">'软件资产'</span><span class="p">]</span>
+            <span class="p">},</span>
+            <span class="nx">series</span> <span class="o">:</span> <span class="p">[</span>
+                <span class="p">{</span>
+                    <span class="nx">name</span><span class="o">:</span> <span class="s1">'资产类型'</span><span class="p">,</span>
+                    <span class="nx">type</span><span class="o">:</span> <span class="s1">'pie'</span><span class="p">,</span>
+                    <span class="nx">radius</span> <span class="o">:</span> <span class="s1">'55%'</span><span class="p">,</span>
+                    <span class="nx">center</span><span class="o">:</span> <span class="p">[</span><span class="s1">'50%'</span><span class="p">,</span> <span class="s1">'60%'</span><span class="p">],</span>
+                    <span class="nx">data</span><span class="o">:</span><span class="p">[</span>
+                        <span class="p">{</span><span class="nx">value</span><span class="o">:</span><span class="p">{{</span> <span class="nx">server_number</span> <span class="p">}},</span> <span class="nx">name</span><span class="o">:</span><span class="s1">'服务器'</span><span class="p">},</span>
+                        <span class="p">{</span><span class="nx">value</span><span class="o">:</span><span class="p">{{</span> <span class="nx">networkdevice_number</span> <span class="p">}},</span> <span class="nx">name</span><span class="o">:</span><span class="s1">'网络设备'</span><span class="p">},</span>
+                        <span class="p">{</span><span class="nx">value</span><span class="o">:</span><span class="p">{{</span> <span class="nx">storagedevice_number</span> <span class="p">}},</span> <span class="nx">name</span><span class="o">:</span><span class="s1">'存储设备'</span><span class="p">},</span>
+                        <span class="p">{</span><span class="nx">value</span><span class="o">:</span><span class="p">{{</span> <span class="nx">securitydevice_number</span> <span class="p">}},</span> <span class="nx">name</span><span class="o">:</span><span class="s1">'安全设备'</span><span class="p">},</span>
+                        <span class="p">{</span><span class="nx">value</span><span class="o">:</span><span class="p">{{</span> <span class="nx">software_number</span> <span class="p">}},</span> <span class="nx">name</span><span class="o">:</span><span class="s1">'软件资产'</span><span class="p">}</span>
+                    <span class="p">],</span>
+                    <span class="nx">itemStyle</span><span class="o">:</span> <span class="p">{</span>
+                        <span class="nx">emphasis</span><span class="o">:</span> <span class="p">{</span>
+                            <span class="nx">shadowBlur</span><span class="o">:</span> <span class="mi">10</span><span class="p">,</span>
+                            <span class="nx">shadowOffsetX</span><span class="o">:</span> <span class="mi">0</span><span class="p">,</span>
+                            <span class="nx">shadowColor</span><span class="o">:</span> <span class="s1">'rgba(0, 0, 0, 0.5)'</span>
+                        <span class="p">}</span>
+                    <span class="p">}</span>
+                <span class="p">}</span>
+            <span class="p">]</span>
+        <span class="p">};</span>
+            <span class="c1">// 使用刚指定的配置项和数据显示图表。</span>
+            <span class="nx">myChart</span><span class="p">.</span><span class="nx">setOption</span><span class="p">(</span><span class="nx">option</span><span class="p">);</span>
+    <span class="p">});</span>
+
+    <span class="p">&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+
+{% endblock %}
+</pre>
+ </div> 
+ <h2>一、资产状态占比图</h2> 
+ <p>首先，制作一个资产状态百分比表盘，用于显示上线、下线、未知、故障和备用五种资产在总资产中的占比。<strong>注意是占比，不是数量！</strong></p> 
+ <p>按照AdminLTE中提供的示例，在HTML中添加相应的标签，在script中添加相应的JS代码（jQueryKnob）。JS代码基本照抄，不需要改动。对于显示的圆圈，可以修改其颜色、大小、形态、是否只读等属性，可以参照AdminLTE中的范例。</p> 
+ <p>最重要的是，需要从数据库中获取相应的数据，修改<code>assets/views.py</code>中的dashboard视图，最终如下：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="k">def</span> <span class="nf">dashboard</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="n">total</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">Asset</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+    <span class="n">upline</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">Asset</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+    <span class="n">offline</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">Asset</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+    <span class="n">unknown</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">Asset</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+    <span class="n">breakdown</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">Asset</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+    <span class="n">backup</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">Asset</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+    <span class="n">up_rate</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">upline</span><span class="o">/</span><span class="n">total</span><span class="o">*</span><span class="mi">100</span><span class="p">)</span>
+    <span class="n">o_rate</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">offline</span><span class="o">/</span><span class="n">total</span><span class="o">*</span><span class="mi">100</span><span class="p">)</span>
+    <span class="n">un_rate</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">unknown</span><span class="o">/</span><span class="n">total</span><span class="o">*</span><span class="mi">100</span><span class="p">)</span>
+    <span class="n">bd_rate</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">breakdown</span><span class="o">/</span><span class="n">total</span><span class="o">*</span><span class="mi">100</span><span class="p">)</span>
+    <span class="n">bu_rate</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">backup</span><span class="o">/</span><span class="n">total</span><span class="o">*</span><span class="mi">100</span><span class="p">)</span>
+    <span class="n">server_number</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">Server</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+    <span class="n">networkdevice_number</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">NetworkDevice</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+    <span class="n">storagedevice_number</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">StorageDevice</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+    <span class="n">securitydevice_number</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">SecurityDevice</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+    <span class="n">software_number</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">Software</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'assets/dashboard.html'</span><span class="p">,</span> <span class="nb">locals</span><span class="p">())</span>
+</pre>
+ </div> 
+ <p>代码很简单，分别获取资产总数量，上线、下线、未知、故障和备用资产的数量，然后计算出各自的占比，例如上线率<code>up_rate</code>。同时获取服务器、网络设备、安全设备和软件设备的数量，后面需要使用。</p> 
+ <p>在dashboard.html中修改各input框的value属性为<code>value="{{ up_rate }}"</code>（以上线率为例），这是最关键的步骤，前端会根据这个值的大小，决定圆圈的幅度。</p> 
+ <p>完成后的页面如下图所示：</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/128-1.png"></p> 
+ <h2>二、不同状态资产数量统计柱状图</h2> 
+ <p>要绘制柱状图，不可能我们自己一步步从无到有写起，建议使用第三方插件。AdminLTE中内置的是Chartjs插件，但更建议大家使用百度开源的Echarts插件，功能更强大，更容易学习。</p> 
+ <p>百度Echarts的网址是：<a href="http://echarts.baidu.com/">http://echarts.baidu.com/</a>，提供插件下载、说明文档和在线帮助。</p> 
+ <p>这里，我们使用CDN的方式，直接引用Echarts：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="nt">&lt;script</span> <span class="na">src=</span><span class="s">"https://cdn.bootcss.com/echarts/4.2.1/echarts.min.js"</span><span class="nt">&gt;&lt;/script&gt;</span>
+</pre>
+ </div> 
+ <p>使用Echarts的柱状图很简单，首先生成一个用于放置图形的容器：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"col-md-6"</span><span class="p">&gt;</span>
+    <span class="c">&lt;!-- BAR CHART --&gt;</span>
+  <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"box box-success"</span><span class="p">&gt;</span>
+
+    <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"box-header with-border"</span><span class="p">&gt;</span>
+      <span class="p">&lt;</span><span class="nt">h3</span> <span class="na">class</span><span class="o">=</span><span class="s">"box-title"</span><span class="p">&gt;</span>各状态资产数量统计：<span class="p">&lt;/</span><span class="nt">h3</span><span class="p">&gt;</span>
+
+      <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"box-tools pull-right"</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">button</span> <span class="na">type</span><span class="o">=</span><span class="s">"button"</span> <span class="na">class</span><span class="o">=</span><span class="s">"btn btn-box-tool"</span> <span class="na">data-widget</span><span class="o">=</span><span class="s">"collapse"</span><span class="p">&gt;&lt;</span><span class="nt">i</span> <span class="na">class</span><span class="o">=</span><span class="s">"fa fa-minus"</span><span class="p">&gt;&lt;/</span><span class="nt">i</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="nt">button</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">button</span> <span class="na">type</span><span class="o">=</span><span class="s">"button"</span> <span class="na">class</span><span class="o">=</span><span class="s">"btn btn-box-tool"</span> <span class="na">data-widget</span><span class="o">=</span><span class="s">"remove"</span><span class="p">&gt;&lt;</span><span class="nt">i</span> <span class="na">class</span><span class="o">=</span><span class="s">"fa fa-times"</span><span class="p">&gt;&lt;/</span><span class="nt">i</span><span class="p">&gt;&lt;/</span><span class="nt">button</span><span class="p">&gt;</span>
+      <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"box-body"</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">div</span> <span class="na">id</span><span class="o">=</span><span class="s">"barChart"</span> <span class="na">style</span><span class="o">=</span><span class="s">"width: 600px;height:400px;"</span><span class="p">&gt;&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+    <span class="c">&lt;!-- /.box-body --&gt;</span>
+  <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+</pre>
+ </div> 
+ <p>上面的核心是<code>&lt;div id="barChart" style="width: 600px;height:400px;"&gt;&lt;/div&gt;</code>这句，它指明了图表的id和容器大小。其它的都是AdminLTE框架需要的元素，用于生成表头和折叠、关闭动作按钮。我们的容器是可以折叠和删除的，也是移动端自适应的。</p> 
+ <p>构造了容器后，在<code>&lt;script&gt;&lt;/script&gt;</code>中，添加初始化的js代码：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="nx">$</span><span class="p">(</span><span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+        <span class="c1">// 基于准备好的dom，初始化echarts实例</span>
+        <span class="kd">var</span> <span class="nx">myChart</span> <span class="o">=</span> <span class="nx">echarts</span><span class="p">.</span><span class="nx">init</span><span class="p">(</span><span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'barChart'</span><span class="p">));</span>
+
+        <span class="c1">// 指定图表的配置项和数据</span>
+        <span class="kd">var</span> <span class="nx">option</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="nx">color</span><span class="o">:</span> <span class="p">[</span><span class="s1">'#3398DB'</span><span class="p">],</span>
+            <span class="nx">title</span><span class="o">:</span> <span class="p">{</span>
+                <span class="nx">text</span><span class="o">:</span> <span class="s1">'数量'</span>
+            <span class="p">},</span>
+            <span class="nx">tooltip</span><span class="o">:</span> <span class="p">{},</span>
+            <span class="nx">legend</span><span class="o">:</span> <span class="p">{</span> <span class="nx">data</span><span class="o">:</span><span class="p">[</span><span class="s1">''</span><span class="p">]</span>
+            <span class="p">},</span>
+            <span class="nx">xAxis</span><span class="o">:</span> <span class="p">{</span>
+                <span class="nx">data</span><span class="o">:</span> <span class="p">[</span><span class="s2">"在线"</span><span class="p">,</span> <span class="s2">"下线"</span><span class="p">,</span><span class="s2">"故障"</span><span class="p">,</span><span class="s2">"备用"</span><span class="p">,</span><span class="s2">"未知"</span><span class="p">]</span> <span class="p">},</span>
+            <span class="nx">yAxis</span><span class="o">:</span> <span class="p">{},</span>
+            <span class="nx">series</span><span class="o">:</span>
+                <span class="p">[{</span>
+                <span class="nx">name</span><span class="o">:</span> <span class="s1">'数量'</span><span class="p">,</span>
+                <span class="nx">type</span><span class="o">:</span> <span class="s1">'bar'</span><span class="p">,</span>
+                <span class="nx">barWidth</span><span class="o">:</span> <span class="s1">'50%'</span><span class="p">,</span>
+                <span class="nx">data</span><span class="o">:</span> <span class="p">[{{</span> <span class="nx">upline</span> <span class="p">}},</span> <span class="p">{{</span> <span class="nx">offline</span> <span class="p">}},</span> <span class="p">{{</span> <span class="nx">breakdown</span> <span class="p">}},</span> <span class="p">{{</span> <span class="nx">backup</span> <span class="p">}},</span> <span class="p">{{</span> <span class="nx">unknown</span> <span class="p">}}]</span>
+            <span class="p">}]</span>
+        <span class="p">};</span>
+            <span class="c1">// 使用刚指定的配置项和数据显示图表。</span>
+            <span class="nx">myChart</span><span class="p">.</span><span class="nx">setOption</span><span class="p">(</span><span class="nx">option</span><span class="p">);</span>
+    <span class="p">});</span>
+</pre>
+ </div> 
+ <p>上面的js代码中，中文文字部分很容易理解，就是x轴的说明文字。还可以设置柱状图的颜色、宽度等特性。关键是series列表，其中的type指定该图表是什么类型，bar表示柱状图，而data就是至关重要的具体数据了，利用模板语言，将从数据库中获取的具体数值传入进来，Echarts插件会根据数值进行动态调整。</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/128-2.png"></p> 
+ <h2>三、各类型资产数量统计饼图</h2> 
+ <p>类似上面的柱状图，在HTML中需要先添加一个容器。不同之处在于初始化的JS代码：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="c1">//资产类型数量统计 饼图</span>
+    <span class="nx">$</span><span class="p">(</span><span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+        <span class="c1">// 基于准备好的dom，初始化echarts实例</span>
+        <span class="kd">var</span> <span class="nx">myChart</span> <span class="o">=</span> <span class="nx">echarts</span><span class="p">.</span><span class="nx">init</span><span class="p">(</span><span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'donutChart'</span><span class="p">));</span>
+
+        <span class="c1">// 指定图表的配置项和数据</span>
+        <span class="nx">option</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="nx">title</span> <span class="o">:</span> <span class="p">{</span>
+                <span class="nx">x</span><span class="o">:</span><span class="s1">'center'</span>
+            <span class="p">},</span>
+            <span class="nx">tooltip</span> <span class="o">:</span> <span class="p">{</span>
+                <span class="nx">trigger</span><span class="o">:</span> <span class="s1">'item'</span><span class="p">,</span>
+                <span class="nx">formatter</span><span class="o">:</span> <span class="s2">"{a} &lt;br/&gt;{b} : {c} ({d}%)"</span>
+            <span class="p">},</span>
+            <span class="nx">legend</span><span class="o">:</span> <span class="p">{</span>
+                <span class="nx">orient</span><span class="o">:</span> <span class="s1">'vertical'</span><span class="p">,</span>
+                <span class="nx">left</span><span class="o">:</span> <span class="s1">'left'</span><span class="p">,</span>
+                <span class="nx">data</span><span class="o">:</span> <span class="p">[</span><span class="s1">'服务器'</span><span class="p">,</span><span class="s1">'网络设备'</span><span class="p">,</span><span class="s1">'存储设备'</span><span class="p">,</span><span class="s1">'安全设备'</span><span class="p">,</span><span class="s1">'软件资产'</span><span class="p">]</span>
+            <span class="p">},</span>
+            <span class="nx">series</span> <span class="o">:</span> <span class="p">[</span>
+                <span class="p">{</span>
+                    <span class="nx">name</span><span class="o">:</span> <span class="s1">'资产类型'</span><span class="p">,</span>
+                    <span class="nx">type</span><span class="o">:</span> <span class="s1">'pie'</span><span class="p">,</span>
+                    <span class="nx">radius</span> <span class="o">:</span> <span class="s1">'55%'</span><span class="p">,</span>
+                    <span class="nx">center</span><span class="o">:</span> <span class="p">[</span><span class="s1">'50%'</span><span class="p">,</span> <span class="s1">'60%'</span><span class="p">],</span>
+                    <span class="nx">data</span><span class="o">:</span><span class="p">[</span>
+                        <span class="p">{</span><span class="nx">value</span><span class="o">:</span><span class="p">{{</span> <span class="nx">server_number</span> <span class="p">}},</span> <span class="nx">name</span><span class="o">:</span><span class="s1">'服务器'</span><span class="p">},</span>
+                        <span class="p">{</span><span class="nx">value</span><span class="o">:</span><span class="p">{{</span> <span class="nx">networkdevice_number</span> <span class="p">}},</span> <span class="nx">name</span><span class="o">:</span><span class="s1">'网络设备'</span><span class="p">},</span>
+                        <span class="p">{</span><span class="nx">value</span><span class="o">:</span><span class="p">{{</span> <span class="nx">storagedevice_number</span> <span class="p">}},</span> <span class="nx">name</span><span class="o">:</span><span class="s1">'存储设备'</span><span class="p">},</span>
+                        <span class="p">{</span><span class="nx">value</span><span class="o">:</span><span class="p">{{</span> <span class="nx">securitydevice_number</span> <span class="p">}},</span> <span class="nx">name</span><span class="o">:</span><span class="s1">'安全设备'</span><span class="p">},</span>
+                        <span class="p">{</span><span class="nx">value</span><span class="o">:</span><span class="p">{{</span> <span class="nx">software_number</span> <span class="p">}},</span> <span class="nx">name</span><span class="o">:</span><span class="s1">'软件资产'</span><span class="p">}</span>
+                    <span class="p">],</span>
+                    <span class="nx">itemStyle</span><span class="o">:</span> <span class="p">{</span>
+                        <span class="nx">emphasis</span><span class="o">:</span> <span class="p">{</span>
+                            <span class="nx">shadowBlur</span><span class="o">:</span> <span class="mi">10</span><span class="p">,</span>
+                            <span class="nx">shadowOffsetX</span><span class="o">:</span> <span class="mi">0</span><span class="p">,</span>
+                            <span class="nx">shadowColor</span><span class="o">:</span> <span class="s1">'rgba(0, 0, 0, 0.5)'</span>
+                        <span class="p">}</span>
+                    <span class="p">}</span>
+                <span class="p">}</span>
+            <span class="p">]</span>
+        <span class="p">};</span>
+            <span class="c1">// 使用刚指定的配置项和数据显示图表。</span>
+            <span class="nx">myChart</span><span class="p">.</span><span class="nx">setOption</span><span class="p">(</span><span class="nx">option</span><span class="p">);</span>
+    <span class="p">});</span>
+</pre>
+ </div> 
+ <p>series中的type指定为pie，表示饼图，data列表动态传入各种资产类型的数量。其它的设置可参考官方文档。</p> 
+ <p>为了展示的方便，我们在admin中新建一些网络设备、安全设备、软件资产等其它类型的资产，然后查看资产总表和饼图。</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/128-3.png"></p> 
+ <p>查看dashboard如下图所示：</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/128-4.png"></p> 
+ <h2>四、项目总结</h2> 
+ <p>至此，CMDB项目就基本讲解完毕。</p> 
+ <p>还是要强调的是，这是一个教学版，很多内容和细节没有实现，必然存在bug和不足。但不管怎么样，它至少包含CMDB资产管理的主体内容，如果你能从中有点收获，那么教程的目的就达到了。</p> 
+ <p>项目的整体代码托管在GitHub上，地址如下：</p> 
+ <p><a href="https://github.com/feixuelove1009/CMDB">https://github.com/feixuelove1009/CMDB</a></p> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/127"> <i class="fa fa-arrow-left"></i>&nbsp;11.资产详细页面</a> 
+  <a class="float-right" href="#">后面没有了....&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 34</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/128">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax2.sinaimg.cn/crop.28.23.71.71.50/006zNHg0ly8fu2bght5awj303l03bdg2.jpg?KID=imgbed,tva&amp;Expires=1595246932&amp;ssig=V%2BfNI8yqRx" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>您好，博主辛苦了。下载了github上的源码，但是运行出现如下问题。 1.在后台批准新资产上线时，会报错。JSONDecodeError at /admin/assets/newassetapprovalzone/ Expecting value: line 1 column 1 (char 0) Request Method: POST Request URL: http://127.0.0.1:8000/admin/assets/newassetapprovalzone/ Django Version: 2.2 Exception Type: JSONDecodeError Exception Value: Expecting value: line 1 column 1 (char 0) Exception Location: D:\Program Files\Python37\lib\json\decoder.py in raw_decode, line 355。 2.无法打开http://192.168.0.100:8000/assets/dashboard/等页面。 无法访问此网站 192.168.0.100 的响应时间过长。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 注册者2010 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年7月20日 17:13</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2145">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1595566769&amp;ssig=qVeSsp06gY" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>JSONDecodeError 通常是编码问题，也就是str和byte类型的问题。至于页面无法打开，那可能性太多了。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 注册者2010 </span> 
+      <em>2020年7月24日 10:03</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2153">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax4.sinaimg.cn/crop.0.0.996.996.50/9122e587ly8fm0any488xj20ro0roabp.jpg?KID=imgbed,tva&amp;Expires=1587101397&amp;ssig=%2BKQPj2Cw9N" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>终于看完了，感谢分享！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 手机用户2434983303 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年4月17日 10:30</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2036">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva2.sinaimg.cn/crop.66.3.150.150.50/005NhZF7gw1eu4low6qvsj306j04laac.jpg?KID=imgbed,tva&amp;Expires=1585857820&amp;ssig=8sGbFEbjGn" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>打卡，受益匪浅，非常感谢！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 绿茶味lol </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年4月5日 23:43</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2010">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1586851613&amp;ssig=EAgcKENHyi" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>共同进步</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 绿茶味lol </span> 
+      <em>2020年4月14日 13:37</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2030">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva1.sinaimg.cn/crop.0.0.500.500.50/a5288890jw8ezom68pcmbj20dw0dw75i.jpg?KID=imgbed,tva&amp;Expires=1585309027&amp;ssig=4G%2FjTJjGYD" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>Markup！ Anaconda3-2019.10/python3.7.6、Django2.2.10、vscode、Windows10 运行正常，感谢刘老师</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; shfanzie </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年4月3日 13:58</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2003">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1586851613&amp;ssig=EAgcKENHyi" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>恭喜</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; shfanzie </span> 
+      <em>2020年4月14日 13:37</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2029">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax3.sinaimg.cn/crop.0.0.1008.1008.50/0061WLGjly8gdjgc05i9kj30s00s0goi.jpg?KID=imgbed,tva&amp;Expires=1591099837&amp;ssig=HZQwUgpVDC" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>您好，我是初学者，请求指导几个问题可以吗</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 程杰杰梦想环游全球 &nbsp;&nbsp;回复&nbsp;&nbsp; shfanzie </span> 
+      <em>2020年6月2日 17:11</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2089">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif?KID=imgbed,tva&amp;Expires=1583514754&amp;ssig=2X602Tt4lB" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>受益匪浅，感谢刘老师，步骤很详细，照着做一遍，一次成功。 但是我就是不喜欢modal，太被框死了，想自己用原始的sql的方式实现数据库增删改。 使用modal的好处是什么？我还没领悟。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户3503744060 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年3月6日 22:46</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1951">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1583472635&amp;ssig=ZxtcMRQSIL" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>祝贺！！ 使用model，也就是ORM系统，最主要的是实现SQL操作的Python化。 从效率来说，ORM不见得高，反而还绕了一层。 但优点是代码统一化，提高了方便性、减少了学习成本、降低了门槛度，也就是所谓的下限低，因为不是每个人都是DBA。更多的好处，在工程化中才能进一步领悟。当然，缺点也是有的，不适合高端玩法，上限也低。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 用户3503744060 </span> 
+      <em>2020年3月7日 08:44</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1952">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_female_50.gif?KID=imgbed,tva&amp;Expires=1580500978&amp;ssig=wcV%2BWqVLqw" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>博主能不能最后再补充一节前台查询和ajax处理的内容，这样就完美了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户6866094843 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年2月1日 15:12</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1861">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_female_50.gif?KID=imgbed,tva&amp;Expires=1580500786&amp;ssig=wMceAbrDhP" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>少有的好文！要是再加一些ajax的例子就更好了～</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户6866094843 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年2月1日 01:02</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1858">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax4.sinaimg.cn/crop.0.0.996.996.50/005HezmHly8fjbccyi8ynj30ro0rojst.jpg?KID=imgbed,tva&amp;Expires=1578318137&amp;ssig=%2BzV3qFND%2FO" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>请问dashboard里面怎么加筛选条件，比如时间？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 事事nan料 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年1月6日 18:43</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1829">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva1.sinaimg.cn/crop.49.72.540.540.50/c488253bjw1e7mksfb0wtj20go0p1n26.jpg?KID=imgbed,tva&amp;Expires=1576497331&amp;ssig=xUVaviFZn9" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>Markup！ python3.7.5、Django3.0、Pycharm2019.3.1、Windows10 运行正常，膜拜大神</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 时光贝影 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年12月27日 15:53</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1809">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1577334347&amp;ssig=QyjwpbGyW9" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>恭喜！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 时光贝影 </span> 
+      <em>2019年12月28日 08:53</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1810">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax4.sinaimg.cn/crop.0.0.664.664.50/006Znun5ly8g593czt268j30ig0igjt6.jpg?KID=imgbed,tva&amp;Expires=1581274489&amp;ssig=fr%2BxspwFah" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>能不能向你讨要个adminlet-2.4.10完整的源码包呀</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 一伊面一 &nbsp;&nbsp;回复&nbsp;&nbsp; 时光贝影 </span> 
+      <em>2020年2月11日 13:32</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1885">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif?KID=imgbed,tva&amp;Expires=1583514754&amp;ssig=2X602Tt4lB" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>https://blog.csdn.net/hubing_hust/article/details/90897689</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 用户3503744060 &nbsp;&nbsp;回复&nbsp;&nbsp; 一伊面一 </span> 
+      <em>2020年3月6日 22:40</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1949">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.996.996.50/006RxDZBly8fshtitinn9j30ro0rotak.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>请问数据怎么动态刷新啊？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 弗隆18799 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年4月13日 22:17</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1253">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1577334347&amp;ssig=QyjwpbGyW9" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>做一个Ajax长轮询，定时请求数据刷新页面</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 弗隆18799 </span> 
+      <em>2019年12月28日 08:54</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1811">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.1.0.506.506.50/e4a747eejw1ef733a2wyfj20e60hbgp4.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>m_time是更新时间</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 想象之中的单人旅途 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年1月8日 03:14</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1005">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.2.0.1237.1237.50/7074e05fly8fiwh6mvd7dj20yi0yd40r.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我想问下，网页做出来了，怎么做才能只有管理员才能登录到资产表查看网页</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; parc_de </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年7月24日 18:55</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/635">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1577334347&amp;ssig=QyjwpbGyW9" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>添加用户认证和权限管理功能</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; parc_de </span> 
+      <em>2019年12月28日 08:54</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1812">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>顶部QQ群怎么找不到了，有好心人分享一下么</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户6099754674 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年5月17日 10:34</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/484">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.996.996.50/af3a5069ly8fjv3yl1bowj20ro0roq4r.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我的柱状图和饼图出不来啊</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 深情默默爱格格 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年4月17日 18:06</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/389">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.540.540.50/ea7dd574jw8eqsab0tnq3j20f00f0751.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>需要自己下载echarts.js，然后放在static文件夹下</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 水木foreveryu &nbsp;&nbsp;回复&nbsp;&nbsp; 深情默默爱格格 </span> 
+      <em>2018年5月10日 15:16</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/471">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif?KID=imgbed,tva&amp;Expires=1583514754&amp;ssig=2X602Tt4lB" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>仔细阅读刘老师的adminlet-2.4.10开头部分，你应该3个文件夹没有拷贝完整。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 用户3503744060 &nbsp;&nbsp;回复&nbsp;&nbsp; 深情默默爱格格 </span> 
+      <em>2020年3月6日 22:42</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1950">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.960.960.50/006xIWURly8fo9wxo24vzj30qo0qoaaz.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>顺利搞定！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 蔷薇-Nina </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年3月30日 22:15</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/352">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>congratulations</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 爱吃老窝头 &nbsp;&nbsp;回复&nbsp;&nbsp; 蔷薇-Nina </span> 
+      <em>2018年8月5日 21:33</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/660">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva4.sinaimg.cn/crop.0.0.180.180.50/6407cc92jw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>请问设备状态里都是文本输入框、没有圆环图是怎么回事？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 夜替四噶 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2017年12月6日 16:36</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/71">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva4.sinaimg.cn/crop.0.0.180.180.50/6407cc92jw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>缓存问题，清理缓存就好了。。。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 夜替四噶 &nbsp;&nbsp;回复&nbsp;&nbsp; 夜替四噶 </span> 
+      <em>2017年12月6日 17:49</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/72">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.512.512.50/9b68390fly8foxign7n49j20e80e8js5.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>为什么我还是文本框，怎么破</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 张恒硕seven &nbsp;&nbsp;回复&nbsp;&nbsp; 夜替四噶 </span> 
+      <em>2018年4月8日 17:15</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/364">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 12em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>你的圆环出来了么， 我还是没有啊</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 用户6099754674 &nbsp;&nbsp;回复&nbsp;&nbsp; 张恒硕seven </span> 
+      <em>2018年5月11日 17:37</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/473">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 16em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>圆环出现不了的原因多半是JS代码没有正常引用或者调用</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 用户6099754674 </span> 
+      <em>2018年7月17日 18:18</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/596">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 16em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax2.sinaimg.cn/crop.0.0.880.880.50/005NtmT0ly8g3n6j8j1raj30og0og3zm.jpg?KID=imgbed,tva&amp;Expires=1571390399&amp;ssig=oZsSHnOpKm" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>或者是自己改了一些变量名，也会出错</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> IIRROONN_Stark &nbsp;&nbsp;回复&nbsp;&nbsp; 用户6099754674 </span> 
+      <em>2019年10月30日 17:08</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1686">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

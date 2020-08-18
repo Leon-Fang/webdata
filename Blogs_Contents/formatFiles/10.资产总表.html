@@ -1,0 +1,908 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>10.资产总表</h1> 
+ <small>阅读:&nbsp;31017&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：40 </small> 
+ <hr> 
+ <p>当前，我们的资产总表如下图所示，还没有任何数据：</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/126-1.png"></p> 
+ <p>这需要我们从数据库中查询数据，然后渲染到前端页面中。</p> 
+ <p>数据的获取很简单，一句<code>assets = models.Asset.objects.all()</code>就搞定。当然，你也可以设置过滤条件，添加分页等等。</p> 
+ <p>而在前端，我们往往需要以表格的形式，规整、美观、可排序的展示出来。这里推荐一个前端插件datatables，是一个非常好的表格插件，功能强大、配置简单。</p> 
+ <p>其官网为：<a href="https://datatables.net/">https://datatables.net/</a> 中文网站：<a href="http://datatables.club/">http://datatables.club/</a></p> 
+ <p>在AdminLTE中，集成了datatables插件，无需额外下载和安装，直接引入使用就可以。</p> 
+ <p>下面给出一个完整的index.html模板代码：</p> 
+ <div class="codehilite">
+  <pre><span></span>{% extends 'base.html' %}
+{% load static %}
+{% block title %}资产总表{% endblock %}
+
+{% block css %}
+ <span class="p">&lt;</span><span class="nt">link</span> <span class="na">rel</span><span class="o">=</span><span class="s">"stylesheet"</span> <span class="na">href</span><span class="o">=</span><span class="s">"{% static 'adminlet-2.4.10/bower_components/datatables.net-bs/css/dataTables.bootstrap.min.css' %}"</span><span class="p">&gt;</span>
+{% endblock %}
+
+{% block breadcrumb %}
+<span class="c">&lt;!-- Content Header (Page header) --&gt;</span>
+    <span class="p">&lt;</span><span class="nt">section</span> <span class="na">class</span><span class="o">=</span><span class="s">"content-header"</span><span class="p">&gt;</span>
+      <span class="p">&lt;</span><span class="nt">h1</span><span class="p">&gt;</span>
+        资产总表
+        <span class="p">&lt;</span><span class="nt">small</span><span class="p">&gt;</span>assets list<span class="p">&lt;/</span><span class="nt">small</span><span class="p">&gt;</span>
+      <span class="p">&lt;/</span><span class="nt">h1</span><span class="p">&gt;</span>
+      <span class="p">&lt;</span><span class="nt">ol</span> <span class="na">class</span><span class="o">=</span><span class="s">"breadcrumb"</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">li</span><span class="p">&gt;&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">"#"</span><span class="p">&gt;&lt;</span><span class="nt">i</span> <span class="na">class</span><span class="o">=</span><span class="s">"fa fa-dashboard"</span><span class="p">&gt;&lt;/</span><span class="nt">i</span><span class="p">&gt;</span> 主页<span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">li</span> <span class="na">class</span><span class="o">=</span><span class="s">"active"</span><span class="p">&gt;</span>资产总表<span class="p">&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+      <span class="p">&lt;/</span><span class="nt">ol</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="nt">section</span><span class="p">&gt;</span>
+{% endblock %}
+
+{% block content %}
+
+
+    <span class="c">&lt;!-- Main content --&gt;</span>
+    <span class="p">&lt;</span><span class="nt">section</span> <span class="na">class</span><span class="o">=</span><span class="s">"content"</span><span class="p">&gt;</span>
+      <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"row"</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"col-xs-12"</span><span class="p">&gt;</span>
+
+        <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"box"</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"box-header"</span><span class="p">&gt;</span>
+          <span class="p">&lt;</span><span class="nt">h3</span> <span class="na">class</span><span class="o">=</span><span class="s">"box-title"</span><span class="p">&gt;</span>资产总表<span class="p">&lt;</span><span class="nt">small</span><span class="p">&gt;</span>(不含软件)<span class="p">&lt;/</span><span class="nt">small</span><span class="p">&gt;&lt;/</span><span class="nt">h3</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+        <span class="c">&lt;!-- /.box-header --&gt;</span>
+        <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"box-body"</span><span class="p">&gt;</span>
+          <span class="p">&lt;</span><span class="nt">table</span> <span class="na">id</span><span class="o">=</span><span class="s">"assets_table"</span> <span class="na">class</span><span class="o">=</span><span class="s">"table table-bordered table-striped"</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="nt">thead</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="nt">tr</span><span class="p">&gt;</span>
+              <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>序号<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+              <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>资产类型<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+              <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>子类型<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+              <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>资产名称<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+              <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>SN<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+              <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>业务线<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+              <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>状态<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+              <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>机房<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+              <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>更新日期<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+              <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>标签<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="nt">tr</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="nt">thead</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="nt">tbody</span><span class="p">&gt;</span>
+
+                {% for asset in assets %}
+                <span class="p">&lt;</span><span class="nt">tr</span><span class="p">&gt;</span>
+                  <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>{{ forloop.counter }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                  {% if asset.asset_type == 'server' %}
+                      <span class="p">&lt;</span><span class="nt">td</span> <span class="na">class</span><span class="o">=</span><span class="s">"text-green text-bold"</span><span class="p">&gt;</span>{{ asset.get_asset_type_display }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                      <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>{{ asset.server.get_sub_asset_type_display }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                  {% elif asset.asset_type == "networkdevice" %}
+                      <span class="p">&lt;</span><span class="nt">td</span> <span class="na">class</span><span class="o">=</span><span class="s">"text-yellow text-bold"</span><span class="p">&gt;</span>{{ asset.get_asset_type_display }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                      <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>{{ asset.networkdevice.get_sub_asset_type_display }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                  {% elif asset.asset_type == "storagedevice" %}
+                      <span class="p">&lt;</span><span class="nt">td</span> <span class="na">class</span><span class="o">=</span><span class="s">"text-blue text-bold"</span><span class="p">&gt;</span>{{ asset.get_asset_type_display }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                      <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>{{ asset.storagedevice.get_sub_asset_type_display }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                  {% elif asset.asset_type == "securitydevice" %}
+                      <span class="p">&lt;</span><span class="nt">td</span> <span class="na">class</span><span class="o">=</span><span class="s">"text-red text-bold"</span><span class="p">&gt;</span>{{ asset.get_asset_type_display }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                      <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>{{ asset.securitydevice.get_sub_asset_type_display }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                  {% endif %}
+                    {% if asset.asset_type == 'server' %}
+                        <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">"{% url 'assets:detail' asset.id %}"</span><span class="p">&gt;</span>{{ asset.name }}<span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                    {% else %}
+                        <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>{{ asset.name }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                    {% endif %}
+                  <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>{{ asset.sn }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                  <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>{{ asset.business_unit|default_if_none:"-" }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                    {% if asset.status == 0 %}
+                      <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;&lt;</span><span class="nt">label</span> <span class="na">class</span><span class="o">=</span><span class="s">"label label-success"</span><span class="p">&gt;</span>{{ asset.get_status_display }}<span class="p">&lt;/</span><span class="nt">label</span><span class="p">&gt;&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                    {% elif asset.status == 1 %}
+                      <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;&lt;</span><span class="nt">label</span> <span class="na">class</span><span class="o">=</span><span class="s">"label label-warning"</span><span class="p">&gt;</span>{{ asset.get_status_display }}<span class="p">&lt;/</span><span class="nt">label</span><span class="p">&gt;&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                    {% elif asset.status == 2 %}
+                      <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;&lt;</span><span class="nt">label</span> <span class="na">class</span><span class="o">=</span><span class="s">"label label-default"</span><span class="p">&gt;</span>{{ asset.get_status_display }}<span class="p">&lt;/</span><span class="nt">label</span><span class="p">&gt;&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                    {% elif asset.status == 3 %}
+                      <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;&lt;</span><span class="nt">label</span> <span class="na">class</span><span class="o">=</span><span class="s">"label label-danger"</span><span class="p">&gt;</span>{{ asset.get_status_display }}<span class="p">&lt;/</span><span class="nt">label</span><span class="p">&gt;&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                    {% elif asset.status == 4 %}
+                      <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;&lt;</span><span class="nt">label</span> <span class="na">class</span><span class="o">=</span><span class="s">"label label-info"</span><span class="p">&gt;</span>{{ asset.get_status_display }}<span class="p">&lt;/</span><span class="nt">label</span><span class="p">&gt;&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                    {% endif %}
+                  <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>{{ asset.idc|default:"-" }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                  <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>{{ asset.m_time|date:"Y/m/d [H:m:s]" }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                  <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>
+                      {% for tag in asset.tags.all %}
+                        <span class="p">&lt;</span><span class="nt">label</span> <span class="na">class</span><span class="o">=</span><span class="s">"label label-primary"</span><span class="p">&gt;</span>{{ tag.name }}<span class="p">&lt;/</span><span class="nt">label</span><span class="p">&gt;</span>
+                      {% empty %}
+                          -
+                      {% endfor %}
+                  <span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="nt">tr</span><span class="p">&gt;</span>
+                {% empty %}
+                  <span class="p">&lt;</span><span class="nt">tr</span><span class="p">&gt;</span>没有数据！<span class="p">&lt;/</span><span class="nt">tr</span><span class="p">&gt;</span>
+                {% endfor %}
+
+            <span class="p">&lt;/</span><span class="nt">tbody</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="nt">tfoot</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="nt">tr</span><span class="p">&gt;</span>
+              <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>序号<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+              <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>资产类型<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+              <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>子类型<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+              <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>资产名称<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+              <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>SN<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+              <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>业务线<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+              <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>状态<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+              <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>机房<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+              <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>更新日期<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+              <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>标签<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="nt">tr</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="nt">tfoot</span><span class="p">&gt;</span>
+          <span class="p">&lt;/</span><span class="nt">table</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+        <span class="c">&lt;!-- /.box-body --&gt;</span>
+      <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+      <span class="c">&lt;!-- /.box --&gt;</span>
+        <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+    <span class="c">&lt;!-- /.col --&gt;</span>
+      <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+    <span class="c">&lt;!-- /.row --&gt;</span>
+    <span class="p">&lt;/</span><span class="nt">section</span><span class="p">&gt;</span>
+
+
+{% endblock %}
+
+
+{% block script %}
+
+<span class="p">&lt;</span><span class="nt">script</span> <span class="na">src</span><span class="o">=</span><span class="s">"{% static 'adminlet-2.4.10/bower_components/datatables.net/js/jquery.dataTables.min.js' %}"</span><span class="p">&gt;&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">script</span> <span class="na">src</span><span class="o">=</span><span class="s">"{% static 'adminlet-2.4.10/bower_components/datatables.net-bs/js/dataTables.bootstrap.min.js' %}"</span><span class="p">&gt;&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+
+<span class="p">&lt;</span><span class="nt">script</span><span class="p">&gt;</span>
+<span class="nx">$</span><span class="p">(</span><span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+        <span class="nx">$</span><span class="p">(</span><span class="s1">'#assets_table'</span><span class="p">).</span><span class="nx">DataTable</span><span class="p">({</span>
+          <span class="s2">"paging"</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>       <span class="c">&lt;!--</span> <span class="nx">允许分页</span> <span class="o">--&gt;</span>
+          <span class="s2">"lengthChange"</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span> <span class="c">&lt;!--</span> <span class="nx">允许改变每页显示的行数</span> <span class="o">--&gt;</span>
+          <span class="s2">"searching"</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>    <span class="c">&lt;!--</span> <span class="nx">允许内容搜索</span> <span class="o">--&gt;</span>
+          <span class="s2">"ordering"</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>     <span class="c">&lt;!--</span> <span class="nx">允许排序</span> <span class="o">--&gt;</span>
+          <span class="s2">"info"</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>         <span class="c">&lt;!--</span> <span class="nx">显示信息</span> <span class="o">--&gt;</span>
+          <span class="s2">"autoWidth"</span><span class="o">:</span> <span class="kc">false</span>    <span class="c">&lt;!--</span> <span class="nx">固定宽度</span> <span class="o">--&gt;</span>
+        <span class="p">});</span>
+      <span class="p">});</span>
+<span class="p">&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+
+
+{% endblock %}
+</pre>
+ </div> 
+ <p><strong>首先我们导入了datatables需要的CSS和JS文件。</strong></p> 
+ <p>主要是新增了表格相关的html代码和初始化表格的js代码。</p> 
+ <p><code>&lt;table id="assets_table" class="table table-bordered table-striped"&gt;</code>中的id属性非常重要，用于关联相应的初始化js代码。</p> 
+ <p>表格中，循环每一个资产：</p> 
+ <ul> 
+  <li>首先生成一个排序的列；</li> 
+  <li>再根据资产类型的不同，用不同的颜色生成不同的资产类型名和子类型名；</li> 
+  <li>通过<code>{{ asset.get_asset_type_display }}</code>的模板语法，拿到资产类型的直观名称，比如‘服务器’，而不是显示呆板的‘server’；</li> 
+  <li>通过<code>{{ asset.server.get_sub_asset_type_display }}</code>，获取资产对应类型的子类型。这是Django特有的模板语法，非常类似其ORM的语法；</li> 
+  <li>在资产名的栏目，增加了超级链接，用于显示资产的详细内容。这里只实现了服务器类型资产的详细页面，其它类型请自行完善。注意其中使用<code>url</code>模板标签，实现自动的详细页面url地址生成；</li> 
+  <li>根据资产状态的不同，用不同的颜色显示；</li> 
+  <li>利用<code>{{ asset.m_time|date:"Y/m/d [H:m:s]" }}</code>调整时间的显示格式；</li> 
+  <li>由于资产和tas标签属于多对多的关系，所以需要一个循环，遍历每个tas并打印其名称；</li> 
+  <li>通过<code>asset.tags.all</code>可以获取一个资产对应的多对多字段的全部对象，很类似ORM的做法。</li> 
+ </ul> 
+ <p>表格的初始化JS代码如下：</p> 
+ <div class="codehilite">
+  <pre><span></span>    <span class="o">&lt;</span><span class="nx">script</span><span class="o">&gt;</span>
+      <span class="nx">$</span><span class="p">(</span><span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+        <span class="nx">$</span><span class="p">(</span><span class="s1">'#assets_table'</span><span class="p">).</span><span class="nx">DataTable</span><span class="p">({</span>
+          <span class="s2">"paging"</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>       <span class="c">&lt;!--</span> <span class="nx">允许分页</span> <span class="o">--&gt;</span>
+          <span class="s2">"lengthChange"</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span> <span class="c">&lt;!--</span> <span class="nx">允许改变每页显示的行数</span> <span class="o">--&gt;</span>
+          <span class="s2">"searching"</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>    <span class="c">&lt;!--</span> <span class="nx">允许内容搜索</span> <span class="o">--&gt;</span>
+          <span class="s2">"ordering"</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>     <span class="c">&lt;!--</span> <span class="nx">允许排序</span> <span class="o">--&gt;</span>
+          <span class="s2">"info"</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>         <span class="c">&lt;!--</span> <span class="nx">显示信息</span> <span class="o">--&gt;</span>
+          <span class="s2">"autoWidth"</span><span class="o">:</span> <span class="kc">false</span>    <span class="c">&lt;!--</span> <span class="nx">固定宽度</span> <span class="o">--&gt;</span>
+        <span class="p">});</span>
+      <span class="p">});</span>
+    <span class="o">&lt;</span><span class="err">/script&gt;</span>
+</pre>
+ </div> 
+ <p>其中可定义是否允许分页、改变显示的行数、搜索、排序、显示信息、固定宽度等等，通过表格的id进行关联。</p> 
+ <p>下面，我们通过后台admin界面，多增加几个服务器实例，并修改其子类型、业务线、状态、机房、标签，再刷新资产总表，可以看到效果如下：</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/126-2.png"></p> 
+ <p>试着使用一下排序和搜索功能吧！datatables还是相当强大的！</p> 
+ <p>现在点击资产名称，可以链接到资产详细页面，但没有任何数据显示，在下一节中，我们来实现它。</p> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/125"> <i class="fa fa-arrow-left"></i>&nbsp;9.前端框架AdminLTE</a> 
+  <a class="float-right" href="/course/django/127"> 11.资产详细页面&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 40</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/126">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva2.sinaimg.cn/crop.66.3.150.150.50/005NhZF7gw1eu4low6qvsj306j04laac.jpg?KID=imgbed,tva&amp;Expires=1585857820&amp;ssig=8sGbFEbjGn" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>打卡</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 绿茶味lol </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年4月5日 23:06</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2009">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.0.0.132.132.50/007uYQqIly4fxr6xcxkaqj303o03owea.jpg?Expires=1566489550&amp;ssig=LOPzvL93Yj&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>python3.7 DJango2.2 AdminLTE2.4.10 表格的初始化JS代码不生效，表格内容正常显示，分页不显示，求解决。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户6870721128 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年8月22日 23:01</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1585">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.0.0.996.996.50/007hcZPQly8fyuphlyd8gj30ro0ro772.jpg?Expires=1562817209&amp;ssig=sNKQfDeXkO&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>博主 请问 分页是不是Django后端也要处理下</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户6667225170 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年7月15日 15:59</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1456">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?Expires=1563275830&amp;ssig=bpp9YzPFp%2F&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>绝大多数情况下，分页是后端的活，前端只是展示页码。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 用户6667225170 </span> 
+      <em>2019年7月16日 18:29</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1469">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva4.sinaimg.cn/crop.0.0.1342.1342.50/005NQBQ8jw8f5q3for1d6j311a11ak05.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>"GET /assets/dashboard/ HTTP/1.1" 200 7239 [11/Apr/2019 17:28:30] "GET /assets/index/ HTTP/1.1" 200 18646 我全是http的红色标识，然后datatable没有出来，能显示数据，我去官网下载的最新的datatable版本</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; SEE__终极 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年4月11日 17:30</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1245">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva3.sinaimg.cn/crop.0.58.440.440.50/b8253f15jw8eayptqq27uj20c80fh755.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>资产总表添加资产的时候，，设备状态无论选什么都是显示不在可用选项中。新上线待批准区批准上线的时候显示Expecting value: line 1 column 1 (char 0)</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 衰老的粽子 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年1月24日 15:55</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1033">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>在这个实战的篇头http://www.liujiangblog.com/course/django/116，我说明了一些相关的内容，请务必查看，尤其是使用的环境和库的版本。我贴出来的代码，肯定都是在我本机能够运行流畅的，但由于各种原因，可能在别处就会出现问题，这是难免的。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 衰老的粽子 </span> 
+      <em>2019年1月24日 20:37</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1034">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva3.sinaimg.cn/crop.0.58.440.440.50/b8253f15jw8eayptqq27uj20c80fh755.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>cmdb那个界面不能增删资产啊，两个画面合二为一就更好了哈哈。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 衰老的粽子 &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2019年1月25日 14:38</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1037">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/default/images/default_avatar_male_50.gif?Expires=1564995416&amp;ssig=qODbZfryGb&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>status = models.CharField(choices=asset_status, max_length=2,default='0', verbose_name="设备状态")</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> Noob5200 &nbsp;&nbsp;回复&nbsp;&nbsp; 衰老的粽子 </span> 
+      <em>2019年8月6日 17:01</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1542">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>前端页面的最下面，datatables定义是否允许分页、改变显示的行数、搜索、排序代码没有生效，都没有显示出来。怎么解决？谢谢！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; ora1998_686 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年12月22日 13:17</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/970">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>将AdminLTE源文件包里的bootstrap、dist和plugins三个文件夹，全部拷贝到 static目录中。 我直接使用了从Github上下载的bootstrap、dist和plugins三个文件夹，全部COPY到static后也是不行。代码都比对过很多次了。 1， 检查settings配置，没问题 2， 检查html文件的head和foot, 代码也都一样 3，table的名字id也都注意了 就是出不来显示行数，翻页，自动排序，搜索那些好看的东东啊。博主救我。。。谢谢！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> ora1998_686 &nbsp;&nbsp;回复&nbsp;&nbsp; ora1998_686 </span> 
+      <em>2018年12月22日 22:48</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/971">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>开发环境也没报什么错误，就是结果不对啊</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> ora1998_686 &nbsp;&nbsp;回复&nbsp;&nbsp; ora1998_686 </span> 
+      <em>2018年12月22日 22:52</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/972">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>1，使用1.10.19版本 \n CSS：\n &lt;link rel="stylesheet" href="http://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css"&gt; \n js：\n &lt;script src="http://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"&gt;&lt;/script&gt; \n 调用：\n $(document).ready(function () { $('#myTable').DataTable(); }); \n 2、如果加选中一行事件，可以： \n $(function () { $("#services_table").on("click-row.bs.table", function (e, row, ele) { $(".danger").removeClass("danger"); $(ele).addClass("danger"); }); var table = $('#services_table').DataTable(); $("#services_table tbody").on('click', 'tr', function (e, row, ele) { if ($(this).hasClass('selected')) { $(this).removeClass('selected'); } else { table.$('tr.selected').removeClass('selected'); $(this).addClass('selected'); } }); }); \n 4、关于浏览器： \n 我试了IE, Google Chrome, 360，IE不行，其他2个都可以。 \n 希望对后来人有帮助。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> ora1998_686 &nbsp;&nbsp;回复&nbsp;&nbsp; ora1998_686 </span> 
+      <em>2018年12月24日 09:16</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/975">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>试了下载的1.10.15版本，不可以。只有1.10.19才可以</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> ora1998_686 &nbsp;&nbsp;回复&nbsp;&nbsp; ora1998_686 </span> 
+      <em>2018年12月24日 09:30</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/976">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.0.0.132.132.50/007uYQqIly4fxr6xcxkaqj303o03owea.jpg?Expires=1566489550&amp;ssig=LOPzvL93Yj&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>表格内容正常显示，分页不显示，解决了吗？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 用户6870721128 &nbsp;&nbsp;回复&nbsp;&nbsp; ora1998_686 </span> 
+      <em>2019年8月22日 23:02</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1586">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva3.sinaimg.cn/crop.0.0.132.132.50/005XFr1cjw8ep58zs06hrj303o03o748.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我有一个问题，求助 我的交易APP中的models文件里面有如下类、 1：订单 2：订单明细 3：交易 4：交易明细 （在一个models文件中） 订单 - 订单明细：一对多 订单 - 交易 ： 一对一 交易 - 交易明细：一对多 在映射数据表的时候，订单和订单明细数据库表生成了，但是在生成交易的时候，报订单已存在！！！！ raise errorclass(errno, errval) django.db.utils.InternalError: (1050, "Table 'jzs_order' already exists")</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 零度87556 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年12月8日 23:22</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/929">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva3.sinaimg.cn/crop.191.6.614.614.50/005PIs5utw1elqmaxcqdsj30sg0hnn1l.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我的dataTable表格里排序的那个图标不显示，但是能够进行排序。这是怎么回事？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户4398297080 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年12月4日 19:41</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/914">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.0.180.180.50/447f29c7jw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>博主你好，在资产总表中如果需要筛选数据，那么是不是获取json数据而不是在模板中遍历比较好？但这么做有个问题是如果表格中有外键数据那么展示的是外键的id而不是名称？一种解决方法是在js中根据数值逐个定义好展示的名称，但这样不够灵活，有没有其他的方式可以实现？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; Mr-时光 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年11月7日 17:22</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/833">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>做数据筛选，无非两种，一是在后端数据获取的时候就进行，比如数据库查询条件；另一种就是在前端通过js进行，比如datatables的一些功能。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; Mr-时光 </span> 
+      <em>2018年11月7日 20:33</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/835">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva3.sinaimg.cn/crop.0.0.132.132.50/005XFr1cjw8ep58zs06hrj303o03o748.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我有一个问题，求助我的交易APP中的模特文件里面有如下类，1：订单2：订单明细3：交易4：交易明细（在一个模特文件中）订单 - 订单明细：一对多订单 - 交易：一对一交易 - 交易明细：一对多在映射数据表的时候，订单和订单明细数据库表生成了，但是在生成交易的时候，报订单已存在!!!! raise errorclass（errno，errval ）django.db.utils.InternalError：（1050，“表'jzs_order'已存在”） 我执行了python manage.py migrate --fake ；以及删表操作，都不行。我觉得是不是交易表在执行0001-ini初始化文件的时候又要求再创建order表呢？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 零度87556 &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2018年12月8日 23:38</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/930">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.0.0.480.480.50/005NtmT0ly8fwh5kv0nqlj30dc0dcmxp.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>在django2.1下，关于detail的显示，这个urls和views的内容该怎么配？还有正则也写不对，怎么都没有改过来，求助。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; IIRROONN_Stark </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年11月7日 14:28</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/831">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>重点是，在django2.x中，你只需要使用from django.urls import re_path正确导入re_path()方法，并用它替换Django1.x的url配置中的url()方法就可以了。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; IIRROONN_Stark </span> 
+      <em>2018年11月7日 15:48</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/832">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>{% block script %} &lt;script&gt; $(function () { $("operations").DataTable({ "paging": true, &lt;!-- 允许分页 --&gt; "lengthChange": true, &lt;!-- 允许改变每页显示的行数 --&gt; "searching": true, &lt;!-- 允许内容搜索 --&gt; "ordering": true, &lt;!-- 允许排序 --&gt; "info": true, &lt;!-- 显示信息 --&gt; "autoWidth": false, &lt;!-- 固定宽度 --&gt; }); }); &lt;/script&gt; {% endblock %} 我在我的前端页面中添加以上代码不生效，大概会是什么问题呢？由于百度不出来，就在此麻烦博主帮忙解答一下。Thanks！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 不想为生活而活的人 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年7月18日 11:15</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/597">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>问题已解决。 我还有个问题想问一下，分页、显示行数、排序、搜索等功能是出来，但是英文的，有办法弄成中文吗？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 不想为生活而活的人 &nbsp;&nbsp;回复&nbsp;&nbsp; 不想为生活而活的人 </span> 
+      <em>2018年7月18日 11:48</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/599">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>请阅读DataTables的官方文档，有详细的自定义教程</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 不想为生活而活的人 </span> 
+      <em>2018年7月18日 21:42</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/610">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 12em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>问题已解决，感谢博主！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 不想为生活而活的人 &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2018年7月19日 11:29</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/611">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>请问你是怎么解决 没有分页的，我也遇到同样的问题</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> SamK6517433923 &nbsp;&nbsp;回复&nbsp;&nbsp; 不想为生活而活的人 </span> 
+      <em>2018年9月2日 16:46</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/719">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我使用的最新版本AdminLTE 2.4.0，存在js版本不兼容问题，不知道怎么来解决。 使用AdminLTE 2.3.10版本可以出现分页，不过会提示”DataTables warning: table id=assets_table - Requested unknown parameter '8' for row 0. For more information about this error,“</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> SamK6517433923 &nbsp;&nbsp;回复&nbsp;&nbsp; 不想为生活而活的人 </span> 
+      <em>2018年9月2日 18:27</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/720">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 12em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>点确定，看页面表格显示哪里不对，对照table里的标签检查一下格式。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 真司仪 &nbsp;&nbsp;回复&nbsp;&nbsp; SamK6517433923 </span> 
+      <em>2019年1月8日 16:38</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1006">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我也碰到这个问题了，请问怎么解决的？谢谢！ ora1998@163.com</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> ora1998_686 &nbsp;&nbsp;回复&nbsp;&nbsp; 不想为生活而活的人 </span> 
+      <em>2018年12月22日 13:15</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/968">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我的前端页面中添加以上代码也是不生效，会是什么问题呢？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> ora1998_686 &nbsp;&nbsp;回复&nbsp;&nbsp; 不想为生活而活的人 </span> 
+      <em>2018年12月22日 13:16</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/969">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.996.996.50/c3d26465ly8fqqbaxwz4vj20ro0rodib.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>一个引号的错误找了好长时间，哭死</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 海盗小船雷小瑶 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年5月9日 16:15</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/465">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.996.996.50/af3a5069ly8fjv3yl1bowj20ro0roq4r.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>NoReverseMatch at /assets/index/ Error during template rendering In template D:\django\untitled1\templates\assets\base.html, error at line 0 'assets' is not a registered namespace</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 深情默默爱格格 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年4月15日 20:32</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/386">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.960.960.50/006xIWURly8fo9wxo24vzj30qo0qoaaz.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>完成</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 蔷薇-Nina </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年3月30日 22:22</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/353">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.2.0.1237.1237.50/7074e05fly8fiwh6mvd7dj20yi0yd40r.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>局域网的主机能获取到吗？?我只能获取到本地自己电脑的，局域网的电脑好像没反应</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> parc_de &nbsp;&nbsp;回复&nbsp;&nbsp; 蔷薇-Nina </span> 
+      <em>2018年7月16日 17:55</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/592">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>你在 settings.py 配置文件中的 ALLOWED_HOSTS = ['*'] ，[ ] 在这里面添加内容，再开放主机端口就可以了。ALLOWED_HOSTS = ['*'] 如需了解更多信息，就到官方文档去看看吧。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 不想为生活而活的人 &nbsp;&nbsp;回复&nbsp;&nbsp; parc_de </span> 
+      <em>2018年7月18日 11:20</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/598">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 12em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.2.0.1237.1237.50/7074e05fly8fiwh6mvd7dj20yi0yd40r.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我在settings.py 配置文件中的 ALLOWED_HOSTS = ['*']，局域网的电脑能获取，但局域网的电脑都要安装Python wmi 运行Python main.py，才能获取。你们能自动获取吗?还是每台电脑都要安装client，发送脚本才能获取</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> parc_de &nbsp;&nbsp;回复&nbsp;&nbsp; 不想为生活而活的人 </span> 
+      <em>2018年7月18日 15:35</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/604">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 16em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.996.996.50/d17cf9a3jw8f2hc167wnaj20ro0rpjsw.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>朋友，这个问题解决了吗。实际目前上只能手动在客户端上安装Python再运行脚本发送信息，</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> July2124 &nbsp;&nbsp;回复&nbsp;&nbsp; parc_de </span> 
+      <em>2018年7月31日 18:04</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/648">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 20em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>首先，收集和发送信息的脚本是Python写的，所以必须在客户端上装Python，否则你用C或者Java等别的语言写也行。其次，没有哪台计算机会自动地发送数据，你不设置自动发送，或者使用定时任务，那么必然是要手动触发。还有，CMDB实战是一个和运维工程师结合比较紧密的项目，批量安装、设置、管理远程主机是基本功，这些都是隐含的基础需求。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; July2124 </span> 
+      <em>2018年7月31日 19:10</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/649">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 24em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.996.996.50/d17cf9a3jw8f2hc167wnaj20ro0rpjsw.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>非常感谢博主，受益良多。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> July2124 &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2018年8月1日 10:45</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/651">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

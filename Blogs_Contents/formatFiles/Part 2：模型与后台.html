@@ -1,0 +1,2664 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>Part 2：模型与后台</h1> 
+ <small>阅读:&nbsp;158845&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：130 </small> 
+ <hr> 
+ <p>接着第一部分，本节将讲述如何配置数据库，编写第一个模型以及简要的介绍下Django自动生成的后台管理admin站点。</p> 
+ <h2>一、数据库配置</h2> 
+ <p>打开<code>mysite/settings.py</code>配置文件，这是整个Django项目的设置中心。Django默认使用SQLite数据库，因为Python源生支持SQLite数据库，所以你无须安装任何程序，就可以直接使用它。当然，如果你是在创建一个实际的项目，可以使用类似PostgreSQL的数据库，避免以后数据库迁移的相关问题。</p> 
+ <div class="codehilite">
+  <pre><span></span># mysite/settings.py
+
+# Database
+# https://docs.djangoproject.com/en/1.11/ref/settings/#databases
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+    }
+}
+</pre>
+ </div> 
+ <p>如果你想使用其他的数据库，请先安装相应的数据库操作模块，并将settings文件中DATABASES位置的<code>’default’</code>的键值进行相应的修改，用于连接你的数据库。其中：</p> 
+ <ul> 
+  <li> <p>ENGINE（引擎）：可以是<code>django.db.backends.sqlite3</code>、<code>django.db.backends.postgresql</code>、<code>django.db.backends.mysql</code>、<code>django.db.backends.oracle</code>，当然其它的也行。</p> </li> 
+  <li> <p>NAME（名称）：类似Mysql数据库管理系统中用于保存项目内容的数据库的名字。如果你使用的是默认的SQLite，那么数据库将作为一个文件将存放在你的本地机器内，此时的NAME应该是这个文件的完整绝对路径包括文件名，默认值<code>os.path.join(BASE_DIR, ’db.sqlite3’)</code>，将把该文件储存在你的项目目录下。</p> </li> 
+ </ul> 
+ <p><strong>注意</strong>：</p> 
+ <ul> 
+  <li><strong>在使用非SQLite的数据库时，请务必预先在数据库管理系统的提示符交互模式下创建数据库，你可以使用命令：<code>CREATE DATABASE database_name;</code>。Django不会自动帮你做这一步工作。</strong></li> 
+  <li>确保你在settings文件中提供的数据库用户具有创建数据库表的权限，因为在接下来的教程中，我们需要自动创建一个test数据表。（在实际项目中也需要确认这一条要求。）</li> 
+  <li>如果你使用的是SQLite，那么你无需做任何预先配置，直接使用就可以了。</li> 
+ </ul> 
+ <p>在修改settings文件时，请顺便将<code>TIME_ZONE</code>设置为国内所在的时区<code>Asia/Shanghai</code>。</p> 
+ <p>同时，请注意settings文件中顶部的<code>INSTALLED_APPS</code>设置项。它列出了所有的项目中被激活的Django应用（app）。你必须将你自定义的app注册在这里。每个应用可以被多个项目使用，并且可以打包和分发给其他人在他们的项目中使用。</p> 
+ <p>默认情况，<code>INSTALLED_APPS</code>中会自动包含下列条目，它们都是Django自动生成的：</p> 
+ <ul> 
+  <li>django.contrib.admin：admin管理后台站点</li> 
+  <li>django.contrib.auth：身份认证系统</li> 
+  <li>django.contrib.contenttypes：内容类型框架</li> 
+  <li>django.contrib.sessions：会话框架</li> 
+  <li>django.contrib.messages：消息框架</li> 
+  <li>django.contrib.staticfiles：静态文件管理框架</li> 
+ </ul> 
+ <p>上面的一些应用也需要建立一些数据库表，所以在使用它们之前我们要在数据库中创建这些表。使用下面的命令创建数据表：</p> 
+ <div class="codehilite">
+  <pre><span></span>$ python manage.py migrate
+</pre>
+ </div> 
+ <p>migrate命令将遍历<code>INSTALLED_APPS</code>设置中的所有项目，在数据库中创建对应的表，并打印出每一条动作信息。如果你感兴趣，可以在你的数据库命令行下输入：<code>\dt</code> (PostgreSQL)、 <code>SHOW TABLES;</code>(MySQL)或 <code>.schema</code>(SQLite) 来列出 Django 所创建的表。</p> 
+ <p>提示：对于极简主义者，你完全可以在INSTALLED_APPS内注释掉任何或者全部的Django提供的通用应用。这样，migrate也不会再创建对应的数据表。</p> 
+ <h2>二、创建模型</h2> 
+ <p>现在，我们来定义模型model，模型本质上就是数据库表的布局，再附加一些元数据。</p> 
+ <p>Django通过自定义Python类的形式来定义具体的模型，每个模型的物理存在方式就是一个Python的类Class，每个模型代表数据库中的一张表，每个类的实例代表数据表中的一行数据，类中的每个变量代表数据表中的一列字段。Django通过模型，将Python代码和数据库操作结合起来，实现对SQL查询语言的封装。也就是说，你可以不会管理数据库，可以不会SQL语言，你同样能通过Python的代码进行数据库的操作。Django通过ORM对数据库进行操作，奉行代码优先的理念，将Python程序员和数据库管理员进行分工解耦。</p> 
+ <p>在这个简单的投票应用中，我们将创建两个模型：<code>Question</code>和<code>Choice</code>。Question包含一个问题和一个发布日期。Choice包含两个字段：该选项的文本描述和该选项的投票数。每一条Choice都关联到一个Question。这些都是由Python的类来体现，编写的全是Python的代码，不接触任何SQL语句。现在，编辑<code>polls/models.py</code>文件，具体代码如下：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="c1"># polls/models.py</span>
+
+<span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
+
+
+<span class="k">class</span> <span class="nc">Question</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">question_text</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">200</span><span class="p">)</span>
+    <span class="n">pub_date</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateTimeField</span><span class="p">(</span><span class="s1">'date published'</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">Choice</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">question</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Question</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
+    <span class="n">choice_text</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">200</span><span class="p">)</span>
+    <span class="n">votes</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">IntegerField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>上面的代码非常简单明了。每一个类都是<code>django.db.models.Model</code>的子类。每一个字段都是<code>Field</code>类的一个实例，例如用于保存字符数据的CharField和用于保存时间类型的DateTimeField，它们告诉Django每一个字段保存的数据类型。</p> 
+ <p>每一个Field实例的名字就是字段的名字（如： question_text 或者 pub_date ）。在你的Python代码中会使用这个值，你的数据库也会将这个值作为表的列名。</p> 
+ <p>你也可以在每个Field中使用一个可选的第一位置参数用于提供一个人类可读的字段名，让你的模型更友好，更易读，并且将被作为文档的一部分来增强代码的可读性。</p> 
+ <p>一些Field类必须提供某些特定的参数。例如CharField需要你指定max_length。这不仅是数据库结构的需要，同样也用于数据验证功能。</p> 
+ <p>有必填参数，当然就会有可选参数，比如在votes里我们将其默认值设为0.</p> 
+ <p>最后请注意，我们使用<code>ForeignKey</code>定义了一个外键关系。它告诉Django，每一个Choice关联到一个对应的Question（注意要将外键写在‘多’的一方）。Django支持通用的数据关系：一对一，多对一和多对多。</p> 
+ <h2>三、启用模型</h2> 
+ <p>上面的代码看着有点少，其实包含了大量的信息，据此，Django会做下面两件事：</p> 
+ <ul> 
+  <li>创建该app对应的数据库表结构</li> 
+  <li>为Question和Choice对象创建基于Python的数据库访问API</li> 
+ </ul> 
+ <p>但是，首先我们得先告诉Django项目，我们要使用投票app。</p> 
+ <p>要将应用添加到项目中，需要在<code>INSTALLED_APPS</code>设置中增加指向该应用的配置文件的链接。对于本例的投票应用，它的配置类文件PollsConfig是<code>polls/apps.py</code>，所以它的点式路径为<code>polls.apps.PollsConfig</code>。我们需要在<code>INSTALLED_APPS</code>中，将该路径添加进去：</p> 
+ <div class="codehilite">
+  <pre><span></span># mysite/settings.py
+
+INSTALLED_APPS = [
+'polls.apps.PollsConfig',
+'django.contrib.admin',
+'django.contrib.auth',
+'django.contrib.contenttypes',
+'django.contrib.sessions',
+'django.contrib.messages',
+'django.contrib.staticfiles',
+]
+</pre>
+ </div> 
+ <p>实际上，在多数情况下，我们简写成‘polls’就可以了：</p> 
+ <div class="codehilite">
+  <pre><span></span># mysite/settings.py
+
+INSTALLED_APPS = [
+'polls',
+'django.contrib.admin',
+'django.contrib.auth',
+'django.contrib.contenttypes',
+'django.contrib.sessions',
+'django.contrib.messages',
+'django.contrib.staticfiles',
+]
+</pre>
+ </div> 
+ <p>现在Django已经知道你的投票应用的存在了，并把它加入了项目大家庭。</p> 
+ <p>我们需要再运行下一个命令：</p> 
+ <div class="codehilite">
+  <pre><span></span>$ python manage.py makemigrations polls
+</pre>
+ </div> 
+ <p>你会看到类似下面的提示：</p> 
+ <div class="codehilite">
+  <pre><span></span>Migrations for 'polls':
+  polls/migrations/0001_initial.py:
+    - Create model Choice
+    - Create model Question
+    - Add field question to choice
+</pre>
+ </div> 
+ <p>通过运行<code>makemigrations</code>命令，Django 会检测你对模型文件的修改，也就是告诉Django你对模型有改动，并且你想把这些改动保存为一个“迁移(migration)”。</p> 
+ <p><code>migrations</code>是Django保存模型修改记录的文件，这些文件保存在磁盘上。在例子中，它就是<code>polls/migrations/0001_initial.py</code>，你可以打开它看看，里面保存的都是人类可读并且可编辑的内容，方便你随时手动修改。</p> 
+ <p>接下来有一个叫做<code>migrate</code>的命令将对数据库执行真正的迁移动作。但是在此之前，让我们先看看在migration的时候实际执行的SQL语句是什么。有一个叫做<code>sqlmigrate</code>的命令可以展示SQL语句，例如：</p> 
+ <div class="codehilite">
+  <pre><span></span>$ python manage.py sqlmigrate polls <span class="m">0001</span>
+</pre>
+ </div> 
+ <p>你将会看到如下类似的文本（经过适当的格式调整，方便阅读）：</p> 
+ <div class="codehilite">
+  <pre><span></span>BEGIN;
+--
+-- Create model Choice
+--
+CREATE TABLE "polls_choice" (
+    "id" serial NOT NULL PRIMARY KEY,
+    "choice_text" varchar(200) NOT NULL,
+    "votes" integer NOT NULL
+);
+--
+-- Create model Question
+--
+CREATE TABLE "polls_question" (
+    "id" serial NOT NULL PRIMARY KEY,
+    "question_text" varchar(200) NOT NULL,
+    "pub_date" timestamp with time zone NOT NULL
+);
+--
+-- Add field question to choice
+--
+ALTER TABLE "polls_choice" ADD COLUMN "question_id" integer NOT NULL;
+ALTER TABLE "polls_choice" ALTER COLUMN "question_id" DROP DEFAULT;
+CREATE INDEX "polls_choice_7aa0f6ee" ON "polls_choice" ("question_id");
+ALTER TABLE "polls_choice"
+  ADD CONSTRAINT "polls_choice_question_id_246c99a640fbbd72_fk_polls_question_id"
+    FOREIGN KEY ("question_id")
+    REFERENCES "polls_question" ("id")
+    DEFERRABLE INITIALLY DEFERRED;
+
+COMMIT;
+</pre>
+ </div> 
+ <p><strong>请注意：</strong></p> 
+ <ul> 
+  <li>实际的输出内容将取决于您使用的数据库会有所不同。上面的是PostgreSQL的输出。</li> 
+  <li>表名是自动生成的，通过组合应用名 (polls) 和小写的模型名<code>question</code>和<code>choice</code> 。 ( 你可以重写此行为。)</li> 
+  <li>主键 (IDs) 是自动添加的。( 你也可以重写此行为。)</li> 
+  <li>按照惯例，Django 会在外键字段名上附加 "_id" 。 (你仍然可以重写此行为。)</li> 
+  <li>生成SQL语句时针对你所使用的数据库，会为你自动处理特定于数据库的字段，例如 auto_increment (MySQL), serial (PostgreSQL), 或integer primary key (SQLite) 。 在引用字段名时也是如此 – 比如使用双引号或单引号。</li> 
+  <li>这些SQL命令并没有在你的数据库中实际运行，它只是在屏幕上显示出来，以便让你了解Django真正执行的是什么。</li> 
+ </ul> 
+ <p>如果你感兴趣，也可以运行<code>python manage.py check</code>命令，它将检查项目中的错误，并不实际进行迁移或者链接数据库的操作。</p> 
+ <p>现在，我们可以运行migrate命令，在数据库中进行真正的表操作了。</p> 
+ <div class="codehilite">
+  <pre><span></span>$ python manage.py migrate
+Operations to perform:
+    Apply all migrations: admin, auth, contenttypes, polls, sessions
+Running migrations:
+    Rendering model states... DONE
+    Applying polls.0001_initial... OK
+</pre>
+ </div> 
+ <p>migrate命令对所有还未实施的迁移记录进行操作，本质上就是将你对模型的修改体现到数据库中具体的表上面。Django通过一张叫做django_migrations的表，记录并跟踪已经实施的migrate动作，通过对比获得哪些migrations尚未提交。</p> 
+ <p>migrations的功能非常强大，允许你随时修改你的模型，而不需要删除或者新建你的数据库或数据表，在不丢失数据的同时，实时动态更新数据库。我们将在后面的章节对此进行深入的阐述，但是现在，只需要记住<strong>修改模型时的操作分三步</strong>：</p> 
+ <ul> 
+  <li>在models.py中修改模型；</li> 
+  <li>运行<code>python manage.py makemigrations</code>为改动创建迁移记录；</li> 
+  <li>运行<code>python manage.py migrate</code>，将操作同步到数据库。</li> 
+ </ul> 
+ <p>之所以要将创建和实施迁移的动作分成两个命令两步走是因为你也许要通过版本控制系统（例如github，svn）提交你的项目代码，如果没有一个中间过程的保存文件（migrations），那么github如何知道以及记录、同步、实施你所进行过的模型修改动作呢？毕竟，github不和数据库直接打交道，也没法和你本地的数据库通信。但是分开之后，你只需要将你的migration文件（例如上面的0001）上传到github，它就会知道一切。</p> 
+ <h2>四、使用模型的API</h2> 
+ <p>下面，让我们进入Python交互环境，尝试使用Django提供的数据库访问API。要进入Python的shell，请输入命令：</p> 
+ <div class="codehilite">
+  <pre><span></span>$ python manage.py shell
+</pre>
+ </div> 
+ <p>相比较直接输入“python”命令的方式进入Python环境，调用<code>manage.py</code>参数能将<code>DJANGO_SETTINGS_MODULE</code>环境变量导入，它将自动按照<code>mysite/settings.py</code>中的设置，配置好你的python shell环境，这样，你就可以导入和调用任何你项目内的模块了。</p> 
+ <p>或者你也可以这样，先进入一个纯净的python shell环境，然后启动Django，具体如下：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span> <span class="nn">django</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">django</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+</pre>
+ </div> 
+ <p>当你进入shell后，尝试一下下面的API吧：</p> 
+ <div class="codehilite">
+  <pre><span></span>    <span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">polls.models</span> <span class="kn">import</span> <span class="n">Question</span><span class="p">,</span> <span class="n">Choice</span> <span class="c1"># 导入我们写的模型类</span>
+    <span class="c1"># 现在系统内还没有questions对象</span>
+    <span class="o">&gt;&gt;&gt;</span> <span class="n">Question</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+    <span class="o">&lt;</span><span class="n">QuerySet</span> <span class="p">[]</span><span class="o">&gt;</span>
+
+    <span class="c1"># 创建一个新的question对象</span>
+    <span class="c1"># Django推荐使用timezone.now()代替python内置的datetime.datetime.now()</span>
+    <span class="c1"># 这个timezone就来自于Django的依赖库pytz</span>
+    <span class="kn">from</span> <span class="nn">django.utils</span> <span class="kn">import</span> <span class="n">timezone</span>
+    <span class="o">&gt;&gt;&gt;</span> <span class="n">q</span> <span class="o">=</span> <span class="n">Question</span><span class="p">(</span><span class="n">question_text</span><span class="o">=</span><span class="s2">"What's new?"</span><span class="p">,</span> <span class="n">pub_date</span><span class="o">=</span><span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">())</span>
+
+    <span class="c1"># 你必须显式的调用save()方法，才能将对象保存到数据库内</span>
+    <span class="o">&gt;&gt;&gt;</span> <span class="n">q</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+
+    <span class="c1"># 默认情况，你会自动获得一个自增的名为id的主键</span>
+    <span class="o">&gt;&gt;&gt;</span> <span class="n">q</span><span class="o">.</span><span class="n">id</span>
+    <span class="mi">1</span>
+
+    <span class="c1"># 通过python的属性调用方式，访问模型字段的值</span>
+    <span class="o">&gt;&gt;&gt;</span> <span class="n">q</span><span class="o">.</span><span class="n">question_text</span>
+    <span class="s2">"What's new?"</span>
+    <span class="o">&gt;&gt;&gt;</span> <span class="n">q</span><span class="o">.</span><span class="n">pub_date</span>
+    <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2012</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">26</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">775217</span><span class="p">,</span> <span class="n">tzinfo</span><span class="o">=&lt;</span><span class="n">UTC</span><span class="o">&gt;</span><span class="p">)</span>
+
+    <span class="c1"># 通过修改属性来修改字段的值，然后显式的调用save方法进行保存。</span>
+    <span class="o">&gt;&gt;&gt;</span> <span class="n">q</span><span class="o">.</span><span class="n">question_text</span> <span class="o">=</span> <span class="s2">"What's up?"</span>
+    <span class="o">&gt;&gt;&gt;</span> <span class="n">q</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+
+    <span class="c1"># objects.all() 用于查询数据库内的所有questions</span>
+    <span class="o">&gt;&gt;&gt;</span> <span class="n">Question</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+    <span class="o">&lt;</span><span class="n">QuerySet</span> <span class="p">[</span><span class="o">&lt;</span><span class="n">Question</span><span class="p">:</span> <span class="n">Question</span> <span class="nb">object</span><span class="o">&gt;</span><span class="p">]</span><span class="o">&gt;</span>
+</pre>
+ </div> 
+ <p>这里等一下：上面的<code>&lt;Question: Question object&gt;</code>是一个不可读的内容展示，你无法从中获得任何直观的信息，为此我们需要一点小技巧，让Django在打印对象时显示一些我们指定的信息。</p> 
+ <p>返回<code>polls/models.py</code>文件，修改一下question和Choice这两个类，代码如下：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
+
+<span class="k">class</span> <span class="nc">Question</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="c1"># ...</span>
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">question_text</span>
+
+<span class="k">class</span> <span class="nc">Choice</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="c1"># ...</span>
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">choice_text</span>
+</pre>
+ </div> 
+ <p>这个技巧不但对你打印对象时很有帮助，在你使用Django的admin站点时也同样有帮助。</p> 
+ <p>另外，这里我们自定义一个模型的方法，用于判断问卷是否最近时间段内发布度的：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">import</span> <span class="nn">datetime</span>
+
+<span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
+<span class="kn">from</span> <span class="nn">django.utils</span> <span class="kn">import</span> <span class="n">timezone</span>
+
+
+<span class="k">class</span> <span class="nc">Question</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="c1"># ...</span>
+    <span class="k">def</span> <span class="nf">was_published_recently</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">pub_date</span> <span class="o">&gt;=</span> <span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">-</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>请注意上面分别导入了两个关于时间的模块，一个是python内置的datetime一个是Django工具包提供的timezone。</p> 
+ <p>保存修改后，我们重新启动一个新的python shell，再来看看其他的API:</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">polls.models</span> <span class="kn">import</span> <span class="n">Question</span><span class="p">,</span> <span class="n">Choice</span>
+
+<span class="c1"># 先看看__str__()的效果，直观多了吧？</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Question</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+<span class="o">&lt;</span><span class="n">QuerySet</span> <span class="p">[</span><span class="o">&lt;</span><span class="n">Question</span><span class="p">:</span> <span class="n">What</span><span class="s1">'s up?&gt;]&gt;</span>
+
+<span class="c1"># Django提供了大量的关键字参数查询API</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Question</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="o">&lt;</span><span class="n">QuerySet</span> <span class="p">[</span><span class="o">&lt;</span><span class="n">Question</span><span class="p">:</span> <span class="n">What</span><span class="s1">'s up?&gt;]&gt;</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Question</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">question_text__startswith</span><span class="o">=</span><span class="s1">'What'</span><span class="p">)</span>
+<span class="o">&lt;</span><span class="n">QuerySet</span> <span class="p">[</span><span class="o">&lt;</span><span class="n">Question</span><span class="p">:</span> <span class="n">What</span><span class="s1">'s up?&gt;]&gt;</span>
+
+<span class="c1"># 获取今年发布的问卷</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">django.utils</span> <span class="kn">import</span> <span class="n">timezone</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">current_year</span> <span class="o">=</span> <span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">year</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Question</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">pub_date__year</span><span class="o">=</span><span class="n">current_year</span><span class="p">)</span>
+<span class="o">&lt;</span><span class="n">Question</span><span class="p">:</span> <span class="n">What</span><span class="s1">'s up?&gt;</span>
+
+<span class="c1"># 查询一个不存在的ID，会弹出异常</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Question</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">Traceback</span> <span class="p">(</span><span class="n">most</span> <span class="n">recent</span> <span class="n">call</span> <span class="n">last</span><span class="p">):</span>
+<span class="o">...</span>
+<span class="n">DoesNotExist</span><span class="p">:</span> <span class="n">Question</span> <span class="n">matching</span> <span class="n">query</span> <span class="n">does</span> <span class="ow">not</span> <span class="n">exist</span><span class="o">.</span>
+
+<span class="c1"># Django为主键查询提供了一个缩写：pk。下面的语句和Question.objects.get(id=1)效果一样.</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Question</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="o">&lt;</span><span class="n">Question</span><span class="p">:</span> <span class="n">What</span><span class="s1">'s up?&gt;</span>
+
+<span class="c1"># 看看我们自定义的方法用起来怎么样</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">q</span> <span class="o">=</span> <span class="n">Question</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">q</span><span class="o">.</span><span class="n">was_published_recently</span><span class="p">()</span>
+<span class="bp">True</span>
+
+<span class="c1"># 让我们试试主键查询</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">q</span> <span class="o">=</span> <span class="n">Question</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="c1"># 显示所有与q对象有关系的choice集合，目前是空的，还没有任何关联对象。</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">q</span><span class="o">.</span><span class="n">choice_set</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+<span class="o">&lt;</span><span class="n">QuerySet</span> <span class="p">[]</span><span class="o">&gt;</span>
+
+<span class="c1"># 创建3个choices.</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">q</span><span class="o">.</span><span class="n">choice_set</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">choice_text</span><span class="o">=</span><span class="s1">'Not much'</span><span class="p">,</span> <span class="n">votes</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="o">&lt;</span><span class="n">Choice</span><span class="p">:</span> <span class="n">Not</span> <span class="n">much</span><span class="o">&gt;</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">q</span><span class="o">.</span><span class="n">choice_set</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">choice_text</span><span class="o">=</span><span class="s1">'The sky'</span><span class="p">,</span> <span class="n">votes</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="o">&lt;</span><span class="n">Choice</span><span class="p">:</span> <span class="n">The</span> <span class="n">sky</span><span class="o">&gt;</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">c</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">choice_set</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">choice_text</span><span class="o">=</span><span class="s1">'Just hacking again'</span><span class="p">,</span> <span class="n">votes</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="c1"># Choice对象可通过API访问和他们关联的Question对象</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">c</span><span class="o">.</span><span class="n">question</span>
+<span class="o">&lt;</span><span class="n">Question</span><span class="p">:</span> <span class="n">What</span><span class="s1">'s up?&gt;</span>
+
+<span class="c1"># 同样的，Question对象也可通过API访问关联的Choice对象</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">q</span><span class="o">.</span><span class="n">choice_set</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+<span class="o">&lt;</span><span class="n">QuerySet</span> <span class="p">[</span><span class="o">&lt;</span><span class="n">Choice</span><span class="p">:</span> <span class="n">Not</span> <span class="n">much</span><span class="o">&gt;</span><span class="p">,</span> <span class="o">&lt;</span><span class="n">Choice</span><span class="p">:</span> <span class="n">The</span> <span class="n">sky</span><span class="o">&gt;</span><span class="p">,</span> <span class="o">&lt;</span><span class="n">Choice</span><span class="p">:</span> <span class="n">Just</span> <span class="n">hacking</span> <span class="n">again</span><span class="o">&gt;</span><span class="p">]</span><span class="o">&gt;</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">q</span><span class="o">.</span><span class="n">choice_set</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+<span class="mi">3</span>
+
+<span class="c1"># API会自动进行连表操作，通过双下划线分割关系对象。连表操作可以无限多级，一层一层的连接。</span>
+<span class="c1"># 下面是查询所有的Choices，它所对应的Question的发布日期是今年。（重用了上面的current_year结果）</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Choice</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">question__pub_date__year</span><span class="o">=</span><span class="n">current_year</span><span class="p">)</span>
+<span class="o">&lt;</span><span class="n">QuerySet</span> <span class="p">[</span><span class="o">&lt;</span><span class="n">Choice</span><span class="p">:</span> <span class="n">Not</span> <span class="n">much</span><span class="o">&gt;</span><span class="p">,</span> <span class="o">&lt;</span><span class="n">Choice</span><span class="p">:</span> <span class="n">The</span> <span class="n">sky</span><span class="o">&gt;</span><span class="p">,</span> <span class="o">&lt;</span><span class="n">Choice</span><span class="p">:</span> <span class="n">Just</span> <span class="n">hacking</span> <span class="n">again</span><span class="o">&gt;</span><span class="p">]</span><span class="o">&gt;</span>
+
+<span class="c1"># 使用delete方法删除对象</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">c</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">choice_set</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">choice_text__startswith</span><span class="o">=</span><span class="s1">'Just hacking'</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">c</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span>
+</pre>
+ </div> 
+ <p>关于模型的使用就暂时先介绍这么多。这部分内容是Django项目的核心，也是动态网站与数据库交互的核心，对于初学者，再难理解也要理解。</p> 
+ <h2>五、admin后台管理站点</h2> 
+ <p>很多时候，我们不光要开发针对客户使用的前端页面，还要给后台管理人员提供相应的管理界面。但是大多数时候为你的团队或客户编写用于增加、修改和删除内容的后台管理站点是一件非常乏味的工作并且没有多少创造性，而且也需要花不少的时间和精力。Django最大的优点之一，就是体贴的为你提供了一个基于项目model创建的一个后台管理站点admin。这个界面只给站点管理员使用，并不对大众开放。虽然admin的界面可能不是那么美观，功能不是那么强大，内容不一定符合你的要求，但是它是免费的、现成的，并且还是可定制的，有完善的帮助文档，那么，你还要什么自行车？</p> 
+ <h3>1. <strong>创建管理员用户</strong></h3> 
+ <p>首先，我们需要通过下面的命令，创建一个可以登录admin站点的用户：</p> 
+ <div class="codehilite">
+  <pre><span></span>$ python manage.py createsuperuser
+</pre>
+ </div> 
+ <p>输入用户名：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="n">Username</span><span class="o">:</span> <span class="n">admin</span>
+</pre>
+ </div> 
+ <p>输入邮箱地址：</p> 
+ <div class="codehilite">
+  <pre><span></span>Email address: xxx@xxx.xxx
+</pre>
+ </div> 
+ <p>输入密码：</p> 
+ <div class="codehilite">
+  <pre><span></span>Password: **********
+Password (again): *********
+Superuser created successfully.
+</pre>
+ </div> 
+ <p>注意：Django1.10版本后，超级用户的密码要求具备一定的复杂性，如果密码强度不够，Django会提示你，但是可以强制通过。</p> 
+ <h3>2. <strong>启动开发服务器</strong></h3> 
+ <p>服务器启动后，在浏览器访问<code>http://127.0.0.1:8000/admin/</code>。你就能看到admin的登陆界面了：</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/88-1.png"></p> 
+ <p>（下面的路由操作可选）</p> 
+ <p>在实际环境中，为了站点的安全性，我们一般不能将管理后台的url随便暴露给他人，不能用<code>/admin/</code>这么简单的路径。</p> 
+ <p>打开根url路由文件<code>mysite/urls.py</code>，修改其中admin.site.urls对应的表达式，换成你想要的，比如：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.contrib</span> <span class="kn">import</span> <span class="n">admin</span>
+<span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">path</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'polls/'</span><span class="p">,</span> <span class="n">include</span><span class="p">(</span><span class="s1">'polls.urls'</span><span class="p">)),</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'control/'</span><span class="p">,</span> <span class="n">admin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">urls</span><span class="p">),</span>
+<span class="p">]</span>
+</pre>
+ </div> 
+ <p>这样，我们必须访问<code>http://127.0.0.1:8000/control/</code>才能进入admin界面。</p> 
+ <h3>3. <strong>进入admin站点</strong></h3> 
+ <p>利用刚才建立的admin账户，登陆admin，你将看到如下的界面：</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/88-2.png"></p> 
+ <p>当前只有两个可编辑的内容：groups和users。它们是<code>django.contrib.auth</code>模块提供的身份认证框架。</p> 
+ <h3>4. <strong>在admin中注册投票应用</strong></h3> 
+ <p>现在还无法看到投票应用，必须先在admin中进行注册，告诉admin站点，请将polls的模型加入站点内，接受站点的管理。</p> 
+ <p>打开<code>polls/admin.py</code>文件，加入下面的内容：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.contrib</span> <span class="kn">import</span> <span class="n">admin</span>
+<span class="kn">from</span> <span class="nn">.models</span> <span class="kn">import</span> <span class="n">Question</span>
+
+<span class="n">admin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">Question</span><span class="p">)</span>
+</pre>
+ </div> 
+ <h3>4. <strong>admin站点的主要功能</strong></h3> 
+ <p>注册question模型后，刷新admin页面就能看到Question栏目了。</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/88-3.png"></p> 
+ <p>点击“Questions”，进入questions的修改列表页面。这个页面会显示所有的数据库内的questions对象，你可以在这里对它们进行修改。看到下面的<code>“What’s up?”</code>了么？它就是我们先前创建的一个question对象，并且通过<code>__str__</code>方法的帮助，显示了较为直观的信息，而不是一个冷冰冰的对象类型名称。</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/88-4.png"></p> 
+ <p>下面，点击<code>What’s up?</code>进入编辑界面：</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/88-5.png"></p> 
+ <p>这里需要注意的是：</p> 
+ <ul> 
+  <li>页面中的表单是由Question模型自动生成的。</li> 
+  <li>不同的模型字段类型(DateTimeField, CharField)会表现为不同的<code>HTML input</code>框类型。</li> 
+  <li>每一个<code>DateTimeField</code>都会自动生成一个可点击链接。日期是Today，并有一个日历弹出框；时间是Now，并有一个通用的时间输入列表框。</li> 
+ </ul> 
+ <p>在页面的底部，则是一些可选项按钮：</p> 
+ <ul> 
+  <li><code>delete</code>：弹出一个删除确认页面</li> 
+  <li><code>save and add another</code>：保存当前修改，并加载一个新的空白的当前类型对象的表单。</li> 
+  <li><code>save and continue editing</code>：保存当前修改，并重新加载该对象的编辑页面。</li> 
+  <li><code>save</code>：保存修改，返回当前对象类型的列表页面。</li> 
+ </ul> 
+ <p>如果<code>Date published</code>字段的值和你在前面教程创建它的时候不一致，可能是你没有正确的配置<code>TIME_ZONE</code>，在国内，通常是8个小时的时间差别。修改TIME_ZONE配置并重新加载页面，就能显示正确的时间了。</p> 
+ <p>在页面的右上角，点击<code>History</code>按钮，你会看到你对当前对象的所有修改操作都在这里有记录，包括修改时间和操作人员，如下图所示：</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/88-6.png"></p> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/87"> <i class="fa fa-arrow-left"></i>&nbsp;Part 1：请求与响应</a> 
+  <a class="float-right" href="/course/django/89"> Part 3：视图和模板&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 130</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/88">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax4.sinaimg.cn/crop.0.0.960.960.50/006mN7DJly8g0f86mthmrj30qo0qoq4p.jpg?KID=imgbed,tva&amp;Expires=1594906257&amp;ssig=GOqnfremfB" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>老师 我照着你的步骤，然后在&gt;&gt;&gt; q = Question(question_text="What's new?", pub_date=timezone.now()) Traceback (most recent call last): File "&lt;console&gt;", line 1, in &lt;module&gt; TypeError: __init__() got an unexpected keyword argument 'question_text' 出现这个问题，我找不到原因，也百度了，感觉不是我这个错误，请老师指点一下，谢谢！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 呼呼呼呼2018 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年7月16日 18:32</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2136">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax2.sinaimg.cn/crop.111.17.277.277.50/007LS0cTly8ggxdawnpafj30dw08pwee.jpg?KID=imgbed,tva&amp;Expires=1595233489&amp;ssig=O6ozN0pINc" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>你看看你的polls/models 文件里面的代码，question_text 是不是有拼写错误</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> WBo0o0o &nbsp;&nbsp;回复&nbsp;&nbsp; 呼呼呼呼2018 </span> 
+      <em>2020年7月20日 13:26</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2144">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.0.0.1006.1006.50/e7ce1b17ly8g3vm1cb06fj20ry0ry40b.jpg?KID=imgbed,tva&amp;Expires=1596049137&amp;ssig=mr4%2BnRKMd2" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我也遇到这个问题了 请问怎么解决的</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 娜鲁naru_ &nbsp;&nbsp;回复&nbsp;&nbsp; 呼呼呼呼2018 </span> 
+      <em>2020年7月29日 23:59</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2163">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_female_50.gif?KID=imgbed,tva&amp;Expires=1596427956&amp;ssig=%2B0S5R5L8wy" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我遇到这个问题 是因为models.py里面把question_text达成了question_test 希望我的经验对大家有帮助。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 用户7064910029 &nbsp;&nbsp;回复&nbsp;&nbsp; 呼呼呼呼2018 </span> 
+      <em>2020年8月3日 09:13</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2164">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.0.0.690.690.50/006XvVFIly8fm0guuii9bj30j60j6wl9.jpg?KID=imgbed,tva&amp;Expires=1591739605&amp;ssig=f6YqzPkTHh" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>老师，新手API这里看不懂怎么操作的。 您文中提到修改一下question和Choice这两个类 from django.db import models class Question(models.Model): # ... def __str__(self): return self.question_text class Choice(models.Model): # ... def __str__(self): return self.choice_text 就是把原来所有的code都替换成这个吗？还有后面： import datetime from django.db import models from django.utils import timezone class Question(models.Model): # ... def was_published_recently(self): return self.pub_date &gt;= timezone.now() - datetime.timedelta(days=1) 是接着在models.py中继续修改吗？同时出现两个class Question嘛？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 小饼干3681 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年6月10日 02:55</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2111">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.0.0.690.690.50/006XvVFIly8fm0guuii9bj30j60j6wl9.jpg?KID=imgbed,tva&amp;Expires=1591739605&amp;ssig=f6YqzPkTHh" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>看懂了谢谢</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 小饼干3681 &nbsp;&nbsp;回复&nbsp;&nbsp; 小饼干3681 </span> 
+      <em>2020年6月10日 03:03</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2112">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva1.sinaimg.cn/crop.0.0.1535.1535.50/005JE06Bjw8f3crml81dij316n16o0yg.jpg?KID=imgbed,tva&amp;Expires=1590514868&amp;ssig=pn4RV10QgN" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>老师还有就是我修改了question_text的值后，而且调用.save()后为什么还是没有变化</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; aslkjasldasdsa </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年6月7日 22:51</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2106">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva1.sinaimg.cn/crop.0.0.1535.1535.50/005JE06Bjw8f3crml81dij316n16o0yg.jpg?KID=imgbed,tva&amp;Expires=1590514868&amp;ssig=pn4RV10QgN" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>修改的问题，我知道了必须用双引号""，用单引号‘’就不行，我以为这两个应该和python中一样是等价的</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> aslkjasldasdsa &nbsp;&nbsp;回复&nbsp;&nbsp; aslkjasldasdsa </span> 
+      <em>2020年6月7日 23:08</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2107">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva1.sinaimg.cn/crop.0.0.1535.1535.50/005JE06Bjw8f3crml81dij316n16o0yg.jpg?KID=imgbed,tva&amp;Expires=1590514868&amp;ssig=pn4RV10QgN" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>老师请问一下，数据库里面的默认时区怎么去修改，我创建questions实例后，发现发布日期不是中国时间，这个怎么去修改？我项目中的setting.py文件里面的时区已经修改成上海时间了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; aslkjasldasdsa </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年6月7日 22:28</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2105">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax4.sinaimg.cn/crop.0.0.1080.1080.50/e6da0179ly8gbkopqz7eaj20u00u041f.jpg?KID=imgbed,tva&amp;Expires=1583169807&amp;ssig=KmchNMcNQM" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>执行python manage.py sqlmigrate polls 0001后出现django.db.migrations.exceptions.BadMigrationError: Migration record in app polls has no Migration class的报错，自动生成的文件中时存在Migration类的啊，求解惑，谢谢。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 金陵城外乡野民丶 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年3月11日 22:06</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1961">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax4.sinaimg.cn/crop.0.0.1080.1080.50/e6da0179ly8gbkopqz7eaj20u00u041f.jpg?KID=imgbed,tva&amp;Expires=1583169807&amp;ssig=KmchNMcNQM" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>原因已找到：我再migrations文件夹下建立了一个py文件，导致这个错误，但新的问题：为何在文件夹下建立文件后就会报错呢？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 金陵城外乡野民丶 &nbsp;&nbsp;回复&nbsp;&nbsp; 金陵城外乡野民丶 </span> 
+      <em>2020年3月11日 22:28</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1962">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax4.sinaimg.cn/crop.0.0.1002.1002.50/005zWpN0ly8fzrksbe9tzj30ru0ruwgn.jpg?KID=imgbed,tva&amp;Expires=1583106026&amp;ssig=Nt9Dd4Tmei" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>老师，按照学习流程正常输入admin和密码后，网页发生403错误？这是为什么呢？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 春丰夏盛秋收冬蛰 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年3月3日 02:47</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1936">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1583472635&amp;ssig=ZxtcMRQSIL" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>描述不清楚，不好回答。 403多半是csrf问题，但访问内置admin一般不会碰到csrf问题。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 春丰夏盛秋收冬蛰 </span> 
+      <em>2020年3月6日 10:34</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1944">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.0.0.664.664.50/006jd0K8ly8gefmxor0fnj30ig0igta0.jpg?KID=imgbed,tva&amp;Expires=1590472532&amp;ssig=r2QHORWz%2F9" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>这是我百度到的，我用第一种方法把问题解决了 有两种解决办法。 方法1：找到项目中的在settings配置文件中，把#'django.middleware.csrf.CsrfViewMiddleware’注释掉 方法2：在html的代码中，凡是遇到post提交表单，都在表单的标签下加上{% csrf_token %} ———————————————— 版权声明：本文为CSDN博主「程序-缘」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。 原文链接：https://blog.csdn.net/qq_41579555/article/details/89813607</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 楼重兰 &nbsp;&nbsp;回复&nbsp;&nbsp; 春丰夏盛秋收冬蛰 </span> 
+      <em>2020年5月26日 10:56</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2075">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax4.sinaimg.cn/crop.0.0.1002.1002.50/005zWpN0ly8fzrksbe9tzj30ru0ruwgn.jpg?KID=imgbed,tva&amp;Expires=1583106026&amp;ssig=Nt9Dd4Tmei" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>老师，我看视频时，你说有些新手很容易出错，是因为是数据库中django_migrations已经有了记录，所以新的操作都没办法纠正。那请问一下怎么清空django_migrations里面的记录呢？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 春丰夏盛秋收冬蛰 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年3月2日 23:31</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1935">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1583472635&amp;ssig=ZxtcMRQSIL" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>在视频里有讲解</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 春丰夏盛秋收冬蛰 </span> 
+      <em>2020年3月6日 10:33</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1943">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax4.sinaimg.cn/crop.0.0.1002.1002.50/005zWpN0ly8fzrksbe9tzj30ru0ruwgn.jpg?KID=imgbed,tva&amp;Expires=1583106026&amp;ssig=Nt9Dd4Tmei" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我买了视频，不过我看的还是第一部分，请问在哪一节讲了这个呢？？我做个标注</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 春丰夏盛秋收冬蛰 &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2020年3月7日 11:01</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1953">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 12em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1583472635&amp;ssig=ZxtcMRQSIL" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我也记不住，太细节了。核心是删除initxxx文件和数据库里django_migrations表中的内容</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 春丰夏盛秋收冬蛰 </span> 
+      <em>2020年3月7日 15:35</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1954">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax4.sinaimg.cn/crop.0.0.1002.1002.50/005zWpN0ly8fzrksbe9tzj30ru0ruwgn.jpg?KID=imgbed,tva&amp;Expires=1583106026&amp;ssig=Nt9Dd4Tmei" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>老师，我按照步骤来， 只有这两行 - Create model Question - Create model Choice 没有下面这行？百度很久，没有结果 Add field question to choice</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 春丰夏盛秋收冬蛰 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年3月2日 04:41</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1932">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_female_50.gif?KID=imgbed,tva&amp;Expires=1583207344&amp;ssig=mHxPOu6cDD" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>你的这个问题解决了没，我也遇到一样的问题</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 用户6735304498 &nbsp;&nbsp;回复&nbsp;&nbsp; 春丰夏盛秋收冬蛰 </span> 
+      <em>2020年3月3日 08:49</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1937">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif?KID=imgbed,tva&amp;Expires=1583211203&amp;ssig=2LMYZss%2FPE" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我也是这个问题，我的django 版本是 3.0 你的呢</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 用户6240680773 &nbsp;&nbsp;回复&nbsp;&nbsp; 春丰夏盛秋收冬蛰 </span> 
+      <em>2020年3月3日 09:53</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1939">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax4.sinaimg.cn/crop.0.0.1002.1002.50/005zWpN0ly8fzrksbe9tzj30ru0ruwgn.jpg?KID=imgbed,tva&amp;Expires=1583106026&amp;ssig=Nt9Dd4Tmei" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我也3.0这个版本。无解</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 春丰夏盛秋收冬蛰 &nbsp;&nbsp;回复&nbsp;&nbsp; 用户6240680773 </span> 
+      <em>2020年3月4日 22:00</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1940">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1583472635&amp;ssig=ZxtcMRQSIL" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>你是说第三行提示信息没有？ 如果不影响使用，可以忽略。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 春丰夏盛秋收冬蛰 </span> 
+      <em>2020年3月6日 10:32</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1942">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax3.sinaimg.cn/crop.0.0.896.896.50/005Ff0KPly8fz83xslfesj30ow0ow0uv.jpg?KID=imgbed,tva&amp;Expires=1587012461&amp;ssig=bh9REIQ3iG" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>没有这个提示影响后面的学习步骤吗？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> Icing67 &nbsp;&nbsp;回复&nbsp;&nbsp; 春丰夏盛秋收冬蛰 </span> 
+      <em>2020年4月16日 09:48</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2035">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax2.sinaimg.cn/crop.0.0.996.996.50/006TWW2Qly8g7h71wticsj30ro0ro41t.jpg?KID=imgbed,tva&amp;Expires=1581958211&amp;ssig=b%2FMN%2F7uGG0" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>老师，您好。 from polls.models import Question, Choice 报这个错误： RuntimeError: Model class polls.models.Question doesn't declare an explicit app_label and isn't in an application in INSTALLED_APPS.</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 崔斯坦叶 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年2月17日 21:51</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1907">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1581829799&amp;ssig=YezXiSXfSr" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>要在INSTALLED_APPS里注册app</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 崔斯坦叶 </span> 
+      <em>2020年2月18日 08:51</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1908">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax2.sinaimg.cn/crop.0.0.512.512.50/797c2af5ly8fwrvan4pa1j20e80e8dg4.jpg?KID=imgbed,tva&amp;Expires=1581774342&amp;ssig=FMHW2WqJZr" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我的是python3.7 和 django 3.0.3 的为什么在http://127.0.0.1:8000/admin 页面输入账号密码点击登陆后怎么也登不上啊？ 动不动就是无法连接localhost服务器什么的。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 牧羊人的和尚 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年2月15日 18:55</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1900">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1581829799&amp;ssig=YezXiSXfSr" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>这好像是个bug，往下翻评论</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 牧羊人的和尚 </span> 
+      <em>2020年2月16日 10:10</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1903">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax3.sinaimg.cn/crop.0.0.664.664.50/a2ca41d1ly8fwsk77uu49j20ig0igjsm.jpg?KID=imgbed,tva&amp;Expires=1581694505&amp;ssig=DpzVTGT%2BUh" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>OperationalError at /admin/polls/question/ no such table: polls_question Request Method: GET Request URL: http://127.0.0.1:8000/admin/polls/question/ Django Version: 2.1.15 Exception Type: OperationalError Exception Value: no such table: polls_question Exception Location: D:\Programs\Python\Python36\lib\site-packages\django-2.1.15-py3.6.egg\django\db\backends\sqlite3\base.py in execute, line 298 Python Executable: D:\Programs\Python\Python36\python.exe Python Version: 3.6.8 Python Path: ['E:\\web\\mysite', 博主，点Question进去发生错误怎么解决</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; Brian帆 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年2月14日 20:37</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1896">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1581829799&amp;ssig=YezXiSXfSr" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>你应该是没有创建数据表，migrate命令</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; Brian帆 </span> 
+      <em>2020年2月16日 10:10</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1902">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva3.sinaimg.cn/crop.80.73.222.222.50/a280e4dbjw8eyfz5ob1erj20b40b4q2y.jpg?KID=imgbed,tva&amp;Expires=1581532690&amp;ssig=Ycz%2FdlXBL3" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>博主， return self.pub_date &gt;= timezone.now() - datetime.timedelta(days=1)这行， pub_date 的类型和 timezone.now() - datetime.timedelta(days=1)的结果可以比较吗？ 我使用的python版本是3.7.3 Django版本2.2 ，会报错'&lt;' not supported between instances of 'datetime.datetime' and 'NoneType'</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 就是这么梁某人 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年2月13日 23:48</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1891">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1580535067&amp;ssig=MT2I5MRwQN" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>从错误提示来看，问题出在比较的两者中，有一个是空值。所以，查查看self.pub_date的具体值。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 就是这么梁某人 </span> 
+      <em>2020年2月14日 10:31</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1894">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva3.sinaimg.cn/crop.80.73.222.222.50/a280e4dbjw8eyfz5ob1erj20b40b4q2y.jpg?KID=imgbed,tva&amp;Expires=1581532690&amp;ssig=Ycz%2FdlXBL3" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>是的，之前pub_date字段没有赋值所以无法比较，赋值之后可以了！ 谢谢博主！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 就是这么梁某人 &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2020年2月14日 14:33</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1895">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 12em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax2.sinaimg.cn/crop.111.17.277.277.50/007LS0cTly8ggxdawnpafj30dw08pwee.jpg?KID=imgbed,tva&amp;Expires=1595233489&amp;ssig=O6ozN0pINc" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>怎么赋值呢？我也遇到这个问题</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> WBo0o0o &nbsp;&nbsp;回复&nbsp;&nbsp; 就是这么梁某人 </span> 
+      <em>2020年7月21日 19:09</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2146">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax2.sinaimg.cn/crop.111.17.277.277.50/007LS0cTly8ggxdawnpafj30dw08pwee.jpg?KID=imgbed,tva&amp;Expires=1595233489&amp;ssig=O6ozN0pINc" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>在admin中设置了发布时间，但是获取到的pub_date还是None</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> WBo0o0o &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2020年7月21日 23:06</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2147">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 12em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax2.sinaimg.cn/crop.111.17.277.277.50/007LS0cTly8ggxdawnpafj30dw08pwee.jpg?KID=imgbed,tva&amp;Expires=1595233489&amp;ssig=O6ozN0pINc" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>解决啦解决啦，是我获取question的方式有问题</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> WBo0o0o &nbsp;&nbsp;回复&nbsp;&nbsp; WBo0o0o </span> 
+      <em>2020年7月21日 23:15</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2148">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva2.sinaimg.cn/crop.0.0.512.512.50/e6a8edf5jw8ebc2eypbwlj20e80e8753.jpg?KID=imgbed,tva&amp;Expires=1578912345&amp;ssig=5vAmWZoJ28" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>非常棒的分享，感谢刘老师。讲解很详细，跟着博客学习收益颇多。django3.0.2是成功的。再次感谢！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 中国魂999 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年1月13日 15:49</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1842">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva1.sinaimg.cn/crop.0.0.150.150.50/6c1a9d05tw1e6ufc6zg92j2047047q2x.jpg?KID=imgbed,tva&amp;Expires=1578768456&amp;ssig=jfyopIyntJ" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>点赞</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> TheChange &nbsp;&nbsp;回复&nbsp;&nbsp; 中国魂999 </span> 
+      <em>2020年1月15日 21:16</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1847">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax2.sinaimg.cn/crop.0.0.996.996.50/006nYu7lly8fkiygvorosj30ro0ro76r.jpg?KID=imgbed,tva&amp;Expires=1578648103&amp;ssig=PcfpntXS16" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>刘老师，我有一个问题：choice_set是Django自动生成的么？我没看到自己在代码中有设置choice_set字段。如果是自动生成的是因为设置了“外键”的原因么？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; GardenBaby_ </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年1月10日 14:24</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1832">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1578666525&amp;ssig=ifTd84acig" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>是的。反向关联在类名后加下划线再加‘set’。往后继续学习有深入讲解。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; GardenBaby_ </span> 
+      <em>2020年1月11日 08:02</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1834">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva1.sinaimg.cn/crop.49.72.540.540.50/c488253bjw1e7mksfb0wtj20go0p1n26.jpg?KID=imgbed,tva&amp;Expires=1576497331&amp;ssig=xUVaviFZn9" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>刘老师，python 3.7.5和Django 2.2中， 我遇到一个问题：settings.py增加了如下： import pymysql # 一定要添加这两行！通过pip install pymysql！ pymysql.install_as_MySQLdb() 然后执行python manage.py shell 后报错： File "D:\Python\Python37\lib\site-packages\django\db\backends\mysql\base.py", line 36, in &lt;module&gt; raise ImproperlyConfigured('mysqlclient 1.3.13 or newer is required; you have %s.' % Database.__version__) django.core.exceptions.ImproperlyConfigured: mysqlclient 1.3.13 or newer is required; you have 0.9.3. 注释了下列两行： #if version &lt; (1, 3, 13): # raise ImproperlyConfigured('mysqlclient 1.3.13 or newer is required; you have %s.' % Database.__version__) 查了原因是：django2.2不支持pyMySQL,但2.2是LTS，但是MySQLDB又不支持python3</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 时光贝影 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年12月18日 12:48</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1768">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1577334347&amp;ssig=QyjwpbGyW9" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>这个问题赖我。一会我就去把那段内容删了。 Django官方已经不提倡使用pymysql库了，而是建议使用mysqlclient库。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 时光贝影 </span> 
+      <em>2019年12月26日 10:19</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1795">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva4.sinaimg.cn/crop.0.0.640.640.50/649972f9jw8fazgos7jg1j20hs0hswf1.jpg?KID=imgbed,tva&amp;Expires=1575787317&amp;ssig=CpkCkvS58W" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>老师您好，我在创建管理员后首次访问 http://127.0.0.1:8000/admin/ 时显示登陆界面，点击 login 后，服务器立即自动断开，之后在pycharm内启动服务器并访问该页面，会提示 Process finished with exit code -1并断开服务器，使用cmd启动服务器后访问该页面，无任何错误提示，服务器断开，请问是什么原因呢？（python 3.7， django 3.0）</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; yyiy </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年12月8日 11:48</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1753">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax4.sinaimg.cn/crop.63.45.261.261.50/a679a367ly8flvlnxt04kj20b40d3q46.jpg?KID=imgbed,tva&amp;Expires=1576083333&amp;ssig=PUzcR6no6X" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我也是這个问题，请问你解决了吗？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> Picco1o_ &nbsp;&nbsp;回复&nbsp;&nbsp; yyiy </span> 
+      <em>2019年12月11日 21:56</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1758">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif?KID=imgbed,tva&amp;Expires=1577684770&amp;ssig=4ny27fIrl1" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>这是由于Django3.0和python3.7.0版本的问题造成的。我搞了一天，升级到3.8.1后解决。参考：https://stackoverflow.com/questions/59491303/django-webserver-automatically-shuts-off-on-local-server-when-i-try-to-access-th</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 用户7673839672 &nbsp;&nbsp;回复&nbsp;&nbsp; Picco1o_ </span> 
+      <em>2019年12月30日 10:50</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1815">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax2.sinaimg.cn/crop.0.0.996.996.50/e09fff81ly8fzaochq4vaj20ro0rogpk.jpg?KID=imgbed,tva&amp;Expires=1576157634&amp;ssig=%2FqXEvX4vec" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>用2.2吧，3.0我也会有这个问题</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> Miracle_prder &nbsp;&nbsp;回复&nbsp;&nbsp; yyiy </span> 
+      <em>2019年12月12日 18:34</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1759">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva4.sinaimg.cn/crop.0.0.180.180.50/a3645f9djw1e8qgp5bmzyj2050050aa8.jpg?KID=imgbed,tva&amp;Expires=1576667272&amp;ssig=vguL7v6Fxq" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我的也是这个原因。。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 左尚亮 &nbsp;&nbsp;回复&nbsp;&nbsp; yyiy </span> 
+      <em>2019年12月18日 16:08</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1771">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif?KID=imgbed,tva&amp;Expires=1577684770&amp;ssig=4ny27fIrl1" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>这是由于Django3.0和python3.7.0版本的问题造成的。我搞了一天，升级到3.8.1后解决。参考：https://stackoverflow.com/questions/59491303/django-webserver-automatically-shuts-off-on-local-server-when-i-try-to-access-th</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 用户7673839672 &nbsp;&nbsp;回复&nbsp;&nbsp; 左尚亮 </span> 
+      <em>2019年12月30日 10:50</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1814">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1577334347&amp;ssig=QyjwpbGyW9" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>python 3.7 + django 3.0我用了很久了，从未碰到过这个问题。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; yyiy </span> 
+      <em>2019年12月26日 10:10</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1793">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif?KID=imgbed,tva&amp;Expires=1577684770&amp;ssig=4ny27fIrl1" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>这是由于Django3.0和python3.7.0版本的问题造成的。我搞了一天，升级到3.8.1后解决。参考：https://stackoverflow.com/questions/59491303/django-webserver-automatically-shuts-off-on-local-server-when-i-try-to-access-th</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 用户7673839672 &nbsp;&nbsp;回复&nbsp;&nbsp; yyiy </span> 
+      <em>2019年12月30日 10:49</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1813">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1577334347&amp;ssig=QyjwpbGyW9" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>这确实是个bug。Django在https://code.djangoproject.com/ticket/31067有讨论。 准确的说是Django3.0.1 + Python3.7.0会有这个问题。 解决办法：别让这两个小版本号凑一起。 我目前使用的是Django3.0.0 + Python3.7.3，还没有出过问题。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 用户7673839672 </span> 
+      <em>2019年12月30日 14:33</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1816">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 12em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax2.sinaimg.cn/crop.0.0.1002.1002.50/9ef9cca1ly8gayly3d5zdj20ru0rujut.jpg?KID=imgbed,tva&amp;Expires=1581763736&amp;ssig=SKX6SveIF1" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>博主你好，我用的是python3.7.0+django3.0.3,我也遇到这个问题了 请问怎么解决呢</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> -总是学不会 &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2020年2月15日 15:49</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1897">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 16em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax2.sinaimg.cn/crop.0.0.1002.1002.50/9ef9cca1ly8gayly3d5zdj20ru0rujut.jpg?KID=imgbed,tva&amp;Expires=1581763736&amp;ssig=SKX6SveIF1" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我在pycharm-&gt;file-&gt;setting 里面卸载了django3.0.3，然后在terminal指定了2.2版本安装，问题解决了，不需要从头开始这个工程了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> -总是学不会 &nbsp;&nbsp;回复&nbsp;&nbsp; -总是学不会 </span> 
+      <em>2020年2月15日 16:05</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1898">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax2.sinaimg.cn/crop.0.8.496.496.50/ce740468ly8fp2e1ftoe0j20ds0e8q3e.jpg?KID=imgbed,tva&amp;Expires=1570206191&amp;ssig=8Pmx5aCdV4" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>查看其它API时，运行 &gt;&gt;&gt; Question.objects.all()出现报错： Traceback (most recent call last): File "&lt;console&gt;", line 1, in &lt;module&gt; File "D:\python\Python36\lib\site-packages\django\db\models\query.py", line 247, in __repr__ return '&lt;%s %r&gt;' % (self.__class__.__name__, data) File "D:\python\Python36\lib\site-packages\django\db\models\base.py", line 503, in __repr__ return '&lt;%s: %s&gt;' % (self.__class__.__name__, self) File "E:\python项目\mysite\polls\models.py", line 9, in __str__ return self.question_text AttributeError: 'Question' object has no attribute 'question_text' 重新配置了一次还是这样，什么原因呢？愁</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 烫头的罗本 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年10月4日 21:24</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1649">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif?KID=imgbed,tva&amp;Expires=1567662376&amp;ssig=rYW0nJpqxk" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>在cmd运行Question.objects.all()这里报错：&gt;&gt;&gt; Question.objects.all() Traceback (most recent call last): File "&lt;console&gt;", line 1, in &lt;module&gt; File "C:\Python27\lib\site-packages\django\db\models\query.py", line 226, in __repr__ data = list(self[:REPR_OUTPUT_SIZE + 1]) File "C:\Python27\lib\site-packages\django\db\models\query.py", line 250, in __iter__ self._fetch_all() File "C:\Python27\lib\site-packages\django\db\models\query.py", line 1121, in _fetch_all self._result_cache = list(self._iterable_class(self)) File "C:\Python27\lib\site-packages\django\db\models\query.py", line 53, in __iter__ results = compiler.execute_sql(chunked_fetch=self.chunked_fetch) File "C:\Python27\lib\site-packages\django\db\models\sql\compiler.py", line 899, in execute_sql raise original_exception OperationalError: no such table: polls_question 但是我检查了一下创建数据库的命令行输出，没有发现什么问题： BEGIN; -- -- Create model Choice -- CREATE TABLE "polls_choice" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "choice_text" varchar(200) NOT NULL, "votes" integer NOT NULL); -- -- Create model Question -- CREATE TABLE "polls_question" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "question_text" varchar(200) NOT NULL, "pub_date" datetime NOT NULL); -- -- Add field question to choice -- ALTER TABLE "polls_choice" RENAME TO "polls_choice__old"; CREATE TABLE "polls_choice" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "choice_text" varchar(200) NOT NULL, "votes" integer NOT NULL, "question_id" integer NOT NULL REFERENCES "polls_question" ("id")); INSERT INTO "polls_choice" ("choice_text", "votes", "id", "question_id") SELECT "choice_text", "votes", "id", NULL FROM "polls_choice__old"; DROP TABLE "polls_choice__old"; CREATE INDEX "polls_choice_question_id_c5b4b260" ON "polls_choice" ("question_id"); COMMIT; 求博主帮忙！！！多谢。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 胖胖爱足球 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年9月5日 11:42</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1614">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif?KID=imgbed,tva&amp;Expires=1567662376&amp;ssig=rYW0nJpqxk" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>自己找到原因， 是没有run python manage.py migrate</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 胖胖爱足球 &nbsp;&nbsp;回复&nbsp;&nbsp; 胖胖爱足球 </span> 
+      <em>2019年9月5日 18:02</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1616">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/default/images/default_avatar_male_50.gif?Expires=1565781131&amp;ssig=jaEp9faKGJ&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我在自定义一个模型方法后的那一个步骤上，在cmd上运行 Question.objects.all()代码后,教程的结果时&lt;QuerySet [&lt;Question: What's up?&gt;]&gt;这样，我的结果是&lt;QuerySet [&lt;Question: Question object (1)&gt;]&gt;这样，我一开始没有注意，一直到教程运行Question.objects.filter(question_text__startswith='What')代码后，我就报错了，django.core.exceptions.FieldError: Cannot resolve keyword 'question_text' into field. Choices are: id 这个是原因，我现在应该怎么办</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 不在乎谁对谁错48322 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年8月14日 20:34</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1554">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?Expires=1566005137&amp;ssig=WT35MhxJ6H&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>这个教程开篇的例子，是一个相当基础全面又环环相扣的范例，非常适合新手学习。所以，在学习它的过程中建议不要加入自己的想法和内容，先一步步跟着做一遍，不要漏过每个细节，不要错过每一行代码和提示。从头开始吧，相信我，这不是浪费时间，更不是无用功。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 不在乎谁对谁错48322 </span> 
+      <em>2019年8月17日 09:00</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1564">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.0.0.996.996.50/007y0iR0ly8fysjv6wbcsj30ro0rotaa.jpg?Expires=1563161675&amp;ssig=WBCDKa4Aut&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>q.choice_set.create(choice_text='The sky', votes=0) Traceback (most recent call last): File "&lt;console&gt;", line 1, in &lt;module&gt; File "C:\Program Files\Python37\lib\site-packages\django\db\models\fields\related_descriptors.py", line 668, in create return super(RelatedManager, self.db_manager(db)).create(**kwargs) File "C:\Program Files\Python37\lib\site-packages\django\db\models\manager.py", line 82, in manager_method return getattr(self.get_queryset(), name)(*args, **kwargs) File "C:\Program Files\Python37\lib\site-packages\django\db\models\query.py", line 420, in create obj = self.model(**kwargs) File "C:\Program Files\Python37\lib\site-packages\django\db\models\base.py", line 501, in __init__ raise TypeError("%s() got an unexpected keyword argument '%s'" % (cls.__name__, kwarg)) TypeError: Choice() got an unexpected keyword argument 'votes' 哪错了呢，大大</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户6915397726 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年7月15日 10:34</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1454">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?Expires=1563275830&amp;ssig=bpp9YzPFp%2F&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>检查一下你的Choice模型，看看votes这个字段是不是名字写错了或者别的什么问题。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 用户6915397726 </span> 
+      <em>2019年7月16日 18:35</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1471">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.996.996.50/006EfgFDly8fs5c4esjmsj30ro0rodh0.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>66</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 陌上千流 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年5月31日 17:40</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1377">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.667.667.50/006y4zPMly8fudyj7x7gcj30ij0ij0ts.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>没权限登录后台管理页面，superuser创建成功的</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 清香夜凝 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年5月30日 19:15</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1373">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.0.0.996.996.50/005PSYZHly8fohhqe9f01j30ro0rogn0.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>想问老师，怎么让其他用户也可以进入到后台管理编辑数据界面</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 谈小二Ouroboros </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年4月23日 19:30</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1278">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>给他创建用户，然后登录后台页面</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 谈小二Ouroboros </span> 
+      <em>2019年4月23日 20:35</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1280">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.664.664.50/0075uynLly8ftz7gvzo59j30ig0igq3n.jpg?Expires=1563294077&amp;ssig=NQfR1FkZTg&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>直接告诉他用户名和密码</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 小鱼儿与花无缺_101 &nbsp;&nbsp;回复&nbsp;&nbsp; 谈小二Ouroboros </span> 
+      <em>2019年7月17日 10:00</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1476">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.0.180.180.50/8e4ae341jw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>进入shell后 q = Question(question_text="What's new?", pub_date=timezone.now()) 报错 File "/home/suns/mysite/mysite/venv/lib/python3.6/site-packages/django/db/models/base.py", line 485, in __init__ raise TypeError("'%s' is an invalid keyword argument for this function" ) TypeError: 'question_text' is an invalid keyword argument for this function 报错图片地址 https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxgetmsgimg?&amp;MsgID=1344292000516333038&amp;skey=%40crypt_e7e8bc16_a540d635966e361bbdce48db53d9e9d8</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 钟离_墨 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年3月15日 10:03</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1155">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.0.180.180.50/8e4ae341jw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>点击“Questions”，进入questions的修改列表页面后，没有见到“What’s up?界面 https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxgetmsgimg?&amp;MsgID=9048854977713096836&amp;skey=%40crypt_e7e8bc16_a540d635966e361bbdce48db53d9e9d8</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 钟离_墨 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年3月15日 09:31</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1154">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva4.sinaimg.cn/crop.0.0.180.180.50/7245239cjw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p># 看看我们自定义的方法用起来怎么样 &gt;&gt;&gt; q = Question.objects.get(pk=1) &gt;&gt;&gt; q.was_published_recently() True 执行&gt;&gt;&gt; q.was_published_recently()的时候报错：raceback (most recent call last): File "&lt;console&gt;", line 1, in &lt;module&gt; AttributeError: 'Question' object has no attribute 'was_published_recently' 是导入的包不对么</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 软件测试那些事儿 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年3月5日 16:16</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1111">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.9.0.493.493.50/005SIaFgly8fkdl3ovaaoj30e80dpt94.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>import datetime from django.db import models from django.utils import timezone class Question(models.Model): # ... def was_published_recently(self): return self.pub_date &gt;= timezone.now() - datetime.timedelta(days=1) 是你在定义前面那一段函数的时候出问题了吧，回去看看代码有没有错。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 一木岩一 &nbsp;&nbsp;回复&nbsp;&nbsp; 软件测试那些事儿 </span> 
+      <em>2019年3月5日 17:15</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1113">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.9.0.493.493.50/005SIaFgly8fkdl3ovaaoj30e80dpt94.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>统一解答一下修改question和Choice及 &lt;QuerySet [&lt;Question: Question object&gt;]&gt;的问题： 1. 博主文章中：返回polls/models.py文件，修改一下question和Choice这两个类，代码如下中的 #... 意思是省略之前的代码，而第二次修改是在之前的基础上再加 def __str__(self): return self.question_text ，包括后面的用于判断问卷是否最近时间段内发布度也是在最早的代码基础上添加即可，在相应的class中，并非将之前的删除再写。 2.__str__ 前后是两个下划线 不是一个，如果写成一个则会不显示原来数据。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 一木岩一 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年3月5日 15:36</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1109">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>赞一个！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 一木岩一 </span> 
+      <em>2019年3月6日 21:38</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1120">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva2.sinaimg.cn/crop.0.0.100.100.50/0063L9ktjw8er4u33l3k5j302s02sq2q.jpg?KID=imgbed,tva&amp;Expires=1585396827&amp;ssig=ri9kOejCCN" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>还有一个地方需要注意，写了__str__方法后需要退出重启python shell，，我就是踩了这个坑，</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 恋恋不忘0920 &nbsp;&nbsp;回复&nbsp;&nbsp; 一木岩一 </span> 
+      <em>2020年3月28日 17:01</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1982">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.180.180.50/939cc2b2jw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>'Question' object has no attribute 'question_text' 后台点击question报这个错误</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; hello地主家的傻儿子 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年1月7日 20:54</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1004">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.9.0.493.493.50/005SIaFgly8fkdl3ovaaoj30e80dpt94.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>question_text没有定义 检查你的models 有没有定义，或者是你是不是将之前的代码删除了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 一木岩一 &nbsp;&nbsp;回复&nbsp;&nbsp; hello地主家的傻儿子 </span> 
+      <em>2019年3月5日 15:39</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1110">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva4.sinaimg.cn/crop.0.0.200.200.50/005AlOayjw8eip48igv3oj305k05kglj.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>注意： 在使用非SQLite的数据库时，请务必预先在数据库管理系统的提示符交互模式下创建数据库，你可以使用命令：“CREATE DATABASE database_name;”。Django不会自动帮你做这一步工作。 确保你在settings文件中提供的数据库用户具有创建数据库表的权限，因为在接下来的教程中，我们需要自动创建一个test数据表。（在实际项目中也需要确认这一条要求。） 如果你使用的是SQLite，那么你无需做任何预先配置，直接使用就可以了。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 心欣驰骋 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年12月28日 16:06</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/985">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva4.sinaimg.cn/crop.0.0.200.200.50/005AlOayjw8eip48igv3oj305k05kglj.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>这个执行命令怎么报错了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 心欣驰骋 &nbsp;&nbsp;回复&nbsp;&nbsp; 心欣驰骋 </span> 
+      <em>2018年12月28日 16:07</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/986">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.664.664.50/006ecGofly8feh0bcd77jj30ig0ig0tn.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>添加polls到app列表的配置后，执行python manage.py makemigrations polls命令报错。如下： D:\study\project\mysite&gt;python manage.py makemigrations polls Traceback (most recent call last): File "manage.py", line 15, in &lt;module&gt; execute_from_command_line(sys.argv) File "C:\Users\gtb\AppData\Local\Programs\Python\Python37\lib\site-packages\django\core\management\__init__.py", line 381, in execute_from_command_line utility.execute() File "C:\Users\gtb\AppData\Local\Programs\Python\Python37\lib\site-packages\django\core\management\__init__.py", line 357, in execute django.setup() File "C:\Users\gtb\AppData\Local\Programs\Python\Python37\lib\site-packages\django\__init__.py", line 24, in setup apps.populate(settings.INSTALLED_APPS) File "C:\Users\gtb\AppData\Local\Programs\Python\Python37\lib\site-packages\django\apps\registry.py", line 89, in populate app_config = AppConfig.create(entry) File "C:\Users\gtb\AppData\Local\Programs\Python\Python37\lib\site-packages\django\apps\config.py", line 116, in create mod = import_module(mod_path) File "C:\Users\gtb\AppData\Local\Programs\Python\Python37\lib\importlib\__init__.py", line 127, in import_module return _bootstrap._gcd_import(name[level:], package, level) File "&lt;frozen importlib._bootstrap&gt;", line 1006, in _gcd_import File "&lt;frozen importlib._bootstrap&gt;", line 983, in _find_and_load File "&lt;frozen importlib._bootstrap&gt;", line 953, in _find_and_load_unlocked File "&lt;frozen importlib._bootstrap&gt;", line 219, in _call_with_frames_removed File "&lt;frozen importlib._bootstrap&gt;", line 1006, in _gcd_import File "&lt;frozen importlib._bootstrap&gt;", line 983, in _find_and_load File "&lt;frozen importlib._bootstrap&gt;", line 965, in _find_and_load_unlocked ModuleNotFoundError: No module named 'pollsdjango'</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 随性而为波波 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年12月17日 16:54</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/955">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.664.664.50/006ecGofly8feh0bcd77jj30ig0ig0tn.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>配置中少了一个一个逗号</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 随性而为波波 &nbsp;&nbsp;回复&nbsp;&nbsp; 随性而为波波 </span> 
+      <em>2018年12月17日 17:02</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/956">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.667.667.50/006y4zPMly8fudyj7x7gcj30ij0ij0ts.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我也遇到这个错误，哪里少了一个逗号</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 清香夜凝 &nbsp;&nbsp;回复&nbsp;&nbsp; 随性而为波波 </span> 
+      <em>2019年5月30日 17:13</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1372">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 12em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.0.0.480.480.50/005z3RVNly8g707ajbvn0j30dc0dc0w2.jpg?KID=imgbed,tva&amp;Expires=1570793436&amp;ssig=JQ5Ek15YTd" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>INSTALLED_APPS是一个列表，你输入polls.apps.PollsConfig这个元素之后忘记在这个元素后面加逗号了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 这条街最得意的鱼鱼 &nbsp;&nbsp;回复&nbsp;&nbsp; 清香夜凝 </span> 
+      <em>2019年10月11日 16:31</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1652">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.421.421.50/eb6b8b47gw1efpm0re30lj20bs0fp76w.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>由于Python3中不再支持`MySQL-python`和`mysqlclient`等模块，需要使用`pymysql`模块来连接mysql 在安装pymysql模块之后，执行 python manage.py migrate 报错。 此时需要在mysite/mysite/__init__.py中写入 import pymysql pymysql.install_as_MySQLdb() 这一段好像博主没有提到额</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 山鬼额Moe </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年12月13日 15:40</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/938">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.180.180.50/8855b67cjw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>使用mongodb数据库的要配置管理后台改如何配</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 活着到底为什么 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年11月29日 15:53</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/909">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.0.0.996.996.50/df838919ly8fvv0zlx80jj20ro0ro410.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>&gt;&gt;&gt; c = q.choice_set.filter(choice_text__startswith='Just hacking') FieldError: Unsupported lookup 'startwith' for CharField or join on the field not permitted. ### ### 发现使用Choice.objects.filter可以 ### c = Choice.objects.filter(choice_text__startswith='Just hacking')</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 廿三坊主 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年11月10日 19:50</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/842">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>提示得很清楚了，单词写错了，少了个s。 ‘startswith'</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 廿三坊主 </span> 
+      <em>2018年11月13日 11:02</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/854">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva4.sinaimg.cn/crop.0.0.180.180.50/a71a0a34jw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>报错提示为：1）ImportError at /admin/login/ 2）polls doesn't look like a module path 3）"GET /admin/login/?next=/admin/ HTTP/1.1" 500 106708</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 欧阳炎魂 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年10月9日 09:48</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/763">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva4.sinaimg.cn/crop.0.0.180.180.50/a71a0a34jw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>TEMPLATES = [ { 'BACKEND': 'django.template.backends.django.DjangoTemplates', 'DIRS': [os.path.join(BASE_DIR, 'templates')] , 'APP_DIRS': True, 'OPTIONS': { 'context_processors': [ 'django.template.context_processors.debug', 'django.template.context_processors.request', 'django.contrib.auth.context_processors.auth', 'django.contrib.messages.context_processors.messages', ], }, }, ] 此'context_processors'里面不能添加:'polls'</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 欧阳炎魂 &nbsp;&nbsp;回复&nbsp;&nbsp; 欧阳炎魂 </span> 
+      <em>2018年10月9日 13:31</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/764">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.1.4.149.149.50/bed2fad9jw1f9hitb66pjj204704a0su.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>“返回polls/models.py文件，修改一下question和Choice这两个类，代码如下：”下方的代码， # 在python2版本中使用的是__unique__ 是__unique__还是__unicode__？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; qdtich </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年8月9日 13:38</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/667">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.996.996.50/4ec4483dly8frapt55g8hj20ro0romy6.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>比如将“Django administrator”改成“后台管理系统”</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 数码蓝鲸 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年7月25日 01:09</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/636">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva4.sinaimg.cn/crop.0.0.720.720.50/6e0981cbjw8ed8wxcqiy8j20k00k0q3u.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>path('polls/', include('polls.urls')),跟着做下来到admin那，必须把这一行注释掉，admin页面才不报错</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 02车12B号 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年7月15日 16:39</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/585">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>此教程基于1.11.7，最好和我的环境一样。当然2.05也是没有问题的，请提前参看 http://www.liujiangblog.com/course/django/182</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 02车12B号 </span> 
+      <em>2018年7月18日 21:31</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/609">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/default/images/default_avatar_female_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我也遇到同样的问题，python版本是3.6.6，django版本是1.11.16，运行程序后在浏览器中输入http://127.0.0.1:8000报错Page not found，如下： Page not found (404) Request Method: GET Request URL: http://127.0.0.1:8000/ Using the URLconf defined in DjProDemo.urls, Django tried these URL patterns, in this order: ^polls ^my/set/ The empty path didn't match any of these. You're seeing this error because you have DEBUG = True in your Django settings file. Change that to False, and Django will display a standard 404 page.</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 不会变天鹅的小丑丫 &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2018年10月26日 10:41</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/800">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.0.639.639.50/b1d78f46jw8eovdb2c4xmj20hs0hr3zt.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>将出现 __init__() missing 1 required positional argument: 'on_delete'的行的参数里都加设置，on_delete=models.CASCADE</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; Veyron_Rui </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年7月7日 01:59</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/557">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.996.996.50/a8c9448djw8fa04c1oolnj20ro0ro0tz.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>&gt;&gt;&gt; q.choice_set.all() &gt;&gt;&gt; q.choice_set.count() 刘老师好。为什么 choice 是小写而不是大写呢，是笔误吗，模型定义中并没有单独用小写choice的地方啊。我看前面的Question都是大写的。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; xiaosf2013 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年5月29日 16:01</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/508">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>choice_set指的是q所关联的choice对象集合，用的是Choice这个模型的名字的小写。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; xiaosf2013 </span> 
+      <em>2018年5月29日 19:02</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/509">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.996.996.50/a8c9448djw8fa04c1oolnj20ro0ro0tz.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>那就是说这也是固定语法的一种吗，如果模型名字是大写，需要变成小写，才能用这个函数？……前面的Question都是大写，也是函数，所以有点迷惑。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> xiaosf2013 &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2018年5月29日 19:53</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/510">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 12em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>模型名首字母大写是Python的编码规范，实际上可以不大写。刚才那个模型名变成小写再加上set是Django的套路，你往后看就知道了。很多问题，其实可以先放一放，记到小本本上，随着学习的深入都能自然而然的解决，更有助于加深印象。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; xiaosf2013 </span> 
+      <em>2018年5月29日 21:21</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/511">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.56.500.500.50/edbfb464jw8erx6ueqvssj20dw0h1my2.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我是python2.7 按照要求导入了 pymysql也安装了 怎么报错这个 求指教 实在不知道怎么弄</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; kl-slience </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年5月2日 18:31</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/425">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>pymysql没有安装到 你Django运行 所使用的Python环境下</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 52-St &nbsp;&nbsp;回复&nbsp;&nbsp; kl-slience </span> 
+      <em>2018年5月13日 08:29</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/474">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.180.180.50/005XmALOjw8f3pdc32xnhj30500500sx.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>这个是什么原因啊，哪位大神能告诉我下，整了好久。。。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 贾睿71641 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年4月13日 18:11</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/379">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>使用 pip 安装一下mysql的pymysql插件</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 不想为生活而活的人 &nbsp;&nbsp;回复&nbsp;&nbsp; 贾睿71641 </span> 
+      <em>2018年5月2日 16:38</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/423">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>安装完成后记得在 __init__.py 文件导进去</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 不想为生活而活的人 &nbsp;&nbsp;回复&nbsp;&nbsp; 贾睿71641 </span> 
+      <em>2018年5月2日 16:38</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/424">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.1006.1006.50/005PGwNIly8foh8221e8ej30ry0rygnh.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>https://i.loli.net/2018/04/13/5ad0587a5a8ab.png</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 袅残烟喵 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年4月13日 15:13</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/378">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.750.750.50/a69ddc54jw8erej1tubbnj20ku0kun0o.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>按照教程的代码，在models中设置的 pub_date = models.DateTimeField('date published') 但是在damin后台就2个输入框，没有日期选择的图标。。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 超音速桂圆 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年4月9日 16:08</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/365">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.41.0.446.446.50/e2f9f9cdjw8f2xmhpvecpj20go0go0sw.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>被教程感动 学习的路上</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 海上有个树荫_hhh </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年3月13日 00:39</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/300">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva3.sinaimg.cn/crop.0.0.749.749.50/ba35eb75jw8f7cpn7eppgj20ku0ktmz6.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>江哥 我连接Mysql DATABASES = { 'default': { 'ENGINE': 'django.db.backends.mysql', 'NAME': 'mysite', 'HOST': '192.168.1.1', 'USER': 'root', 'PASSWORD': 'pwd', 'PORT': '3306', } } 用的也是这个代码 但是显示连接超时了.... 是什么情况...</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 二笔小聪聪 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年2月14日 12:45</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/216">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>不能死板的套用上面的信息，Host 要用你自己的主机地址，默认是 127.0.0.1或者'localhost'都可以，Name 是你自己的数据库名字，前提 首先有这个数据库。 User 和 password 就不解释了。port 3306 固定的</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 52-St &nbsp;&nbsp;回复&nbsp;&nbsp; 二笔小聪聪 </span> 
+      <em>2018年5月13日 08:33</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/475">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva4.sinaimg.cn/crop.0.0.664.664.50/dfedbde6jw8f9zzb6sxq0j20ig0igwfp.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>请问修改question和Choice这两个类的代码和用于判断问卷是否最近时间段内发布度的代码是在同一个文件里吗？？ 命令行始终是 &lt;QuerySet [&lt;Question: Question object&gt;]&gt;</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; _Lure </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年2月5日 15:45</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/192">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva4.sinaimg.cn/crop.0.0.664.664.50/dfedbde6jw8f9zzb6sxq0j20ig0igwfp.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>已经解决了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> _Lure &nbsp;&nbsp;回复&nbsp;&nbsp; _Lure </span> 
+      <em>2018年2月5日 17:26</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/193">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.1080.1080.50/d43c678ely8ffjr6bh733j20u00u0mzb.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>遇到了同样的问题，敢问朋友是如何解决的？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 蚁族之奋斗的90后 &nbsp;&nbsp;回复&nbsp;&nbsp; _Lure </span> 
+      <em>2018年8月30日 10:41</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/714">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva4.sinaimg.cn/crop.0.0.664.664.50/dfedbde6jw8f9zzb6sxq0j20ig0igwfp.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>博主你好： 为什么改了model.py ,改成了str方法，在命令行里打印出来还是 &lt;QuerySet [&lt;Question: Question object&gt;]&gt;</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; _Lure </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年2月1日 15:40</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/180">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>在python2版本中使用的是__unique__</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; _Lure </span> 
+      <em>2018年2月1日 21:48</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/181">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva4.sinaimg.cn/crop.0.0.664.664.50/dfedbde6jw8f9zzb6sxq0j20ig0igwfp.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>用的就是python3啊</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> _Lure &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2018年2月5日 15:32</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/191">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 12em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva4.sinaimg.cn/crop.0.0.996.996.50/6dd64443jw8fc9lpx2phjj20ro0rptbg.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>跟你一个问题，解决了么，谢谢</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 可乐a柠檬 &nbsp;&nbsp;回复&nbsp;&nbsp; _Lure </span> 
+      <em>2018年2月6日 10:03</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/196">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 16em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.180.180.50/955cdc9ajw8fcbw6xnadoj2050050t8o.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>求教解决方法</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 汽水骷髅 &nbsp;&nbsp;回复&nbsp;&nbsp; 可乐a柠檬 </span> 
+      <em>2018年6月11日 16:32</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/533">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 16em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.9.0.493.493.50/005SIaFgly8fkdl3ovaaoj30e80dpt94.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>__str__ 前后是两个下划线 不是一个</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 一木岩一 &nbsp;&nbsp;回复&nbsp;&nbsp; 可乐a柠檬 </span> 
+      <em>2019年3月5日 15:20</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1108">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.0.180.180.50/871fe6a5jw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>在同一个项目下创建不同的APP，在每个APP中都写入的不同的数据库模型，但后台为什么看不到呢，这是为什么？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; hello_南极 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年1月19日 20:39</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/144">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.0.180.180.50/871fe6a5jw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>好像是没有注册！！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> hello_南极 &nbsp;&nbsp;回复&nbsp;&nbsp; hello_南极 </span> 
+      <em>2018年1月19日 21:03</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/145">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.180.180.50/e329c853jw8e8ul3goqp0j2050050jr6.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>当我启动shell的时候，显示如下： Python 3.6.2 (v3.6.2:5fd33b5, Jul 8 2017, 04:57:36) [MSC v.1900 64 bit (AMD64)] on win32 &gt;&gt;&gt; Type "help", "copyright", "credits" or "license" for more information. (InteractiveConsole) 无法进行任何操作？请问这是为什么？网上没有找到答案。。。谢谢</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; __殇_傷 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年1月16日 15:48</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/129">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.0.180.180.50/871fe6a5jw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>admin里面的操作相当于是在数据库？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; hello_南极 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年1月15日 13:13</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/121">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>admin本质上就是个图形化的数据库访问接口</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; hello_南极 </span> 
+      <em>2018年1月15日 21:03</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/125">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.0.540.540.50/b5871ccbjw8ehdwklav4rj20f00f0q3k.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我们需要再运行下一个命令： $ python manage.py makemigrations polls 之后我的pycharm给的是一个warning WARNINGS: ?: (1_8.W001) The standalone TEMPLATE_* settings were deprecated in Django 1.8 and the TEMPLATES dictionary takes precedence. You must put the values of the following settings into your default TEMPLATES dict: TEMPLATE_DIRS. App 'polls' could not be found. Is it in INSTALLED_APPS? 是哪里出错了吗？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; daziduan-hard-reg </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年1月2日 07:02</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/105">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>将‘polls’添加到INSTALLED_APPS里面。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; daziduan-hard-reg </span> 
+      <em>2018年1月2日 09:31</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/106">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.720.720.50/6a65e919jw8eko1hrly1kj20k00k0759.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>通过运行makemigrations命令出现错误SyntaxError: invalid syntax。请问是什么情况？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 闹够L没有__ </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2017年12月12日 16:49</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/85">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>一切皆有可能....</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 闹够L没有__ </span> 
+      <em>2017年12月12日 19:54</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/86">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.0.0.664.664.50/006a9ofEly8fgarvqbvonj30ig0igmy0.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>新手，按照你的步骤没有看到question，是刷新的方式不对吗？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 兰若行迹 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2017年12月7日 12:18</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/73">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>问题都处在细节上...</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 兰若行迹 </span> 
+      <em>2017年12月7日 19:06</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/75">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.0.0.664.664.50/006a9ofEly8fgarvqbvonj30ig0igmy0.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>嗯，解决了，谢谢</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 兰若行迹 &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2017年12月10日 22:24</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/78">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva4.sinaimg.cn/crop.0.0.996.996.50/005u6NFRjw8fdcctpuu7qj30ro0rowgx.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>在polls/admin里面加上如下代码 from .models import Question admin.site.register(Question)</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> DOITMY &nbsp;&nbsp;回复&nbsp;&nbsp; 兰若行迹 </span> 
+      <em>2018年1月8日 13:05</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/115">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.79.114.313.313.50/a33d1690jw8eqgfhcx55fj20c80fogmy.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>admin的用户名密码忘了怎么办 才几天没登陆</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 氷湗de心 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2017年11月27日 11:51</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/65">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>python manage.py createsuperuser</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 氷湗de心 </span> 
+      <em>2017年11月27日 16:12</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/66">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

@@ -1,0 +1,715 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>6.新资产待审批区</h1> 
+ <small>阅读:&nbsp;26642&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：31 </small> 
+ <hr> 
+ <h2>一、启用admin</h2> 
+ <p>前面，我们已经完成了数据收集客户端的编写和测试，下面我们就可以在admin中展示和管理资产数据了。</p> 
+ <p>首先，通过<code>python manage.py createsuperuser</code>创建一个管理员账户。</p> 
+ <p>然后，进入<code>/assets/admin.py</code>文件，写入下面的代码：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.contrib</span> <span class="kn">import</span> <span class="n">admin</span>
+<span class="c1"># Register your models here.</span>
+<span class="kn">from</span> <span class="nn">assets</span> <span class="kn">import</span> <span class="n">models</span>
+
+
+<span class="k">class</span> <span class="nc">NewAssetAdmin</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">ModelAdmin</span><span class="p">):</span>
+    <span class="n">list_display</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'asset_type'</span><span class="p">,</span> <span class="s1">'sn'</span><span class="p">,</span> <span class="s1">'model'</span><span class="p">,</span> <span class="s1">'manufacturer'</span><span class="p">,</span> <span class="s1">'c_time'</span><span class="p">,</span> <span class="s1">'m_time'</span><span class="p">]</span>
+    <span class="n">list_filter</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'asset_type'</span><span class="p">,</span> <span class="s1">'manufacturer'</span><span class="p">,</span> <span class="s1">'c_time'</span><span class="p">]</span>
+    <span class="n">search_fields</span> <span class="o">=</span> <span class="p">(</span><span class="s1">'sn'</span><span class="p">,)</span>
+
+
+<span class="k">class</span> <span class="nc">AssetAdmin</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">ModelAdmin</span><span class="p">):</span>
+    <span class="n">list_display</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'asset_type'</span><span class="p">,</span> <span class="s1">'name'</span><span class="p">,</span> <span class="s1">'status'</span><span class="p">,</span> <span class="s1">'approved_by'</span><span class="p">,</span> <span class="s1">'c_time'</span><span class="p">,</span> <span class="s2">"m_time"</span><span class="p">]</span>
+
+
+<span class="n">admin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Asset</span><span class="p">,</span> <span class="n">AssetAdmin</span><span class="p">)</span>
+<span class="n">admin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Server</span><span class="p">)</span>
+<span class="n">admin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">StorageDevice</span><span class="p">)</span>
+<span class="n">admin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">SecurityDevice</span><span class="p">)</span>
+<span class="n">admin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">BusinessUnit</span><span class="p">)</span>
+<span class="n">admin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Contract</span><span class="p">)</span>
+<span class="n">admin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">CPU</span><span class="p">)</span>
+<span class="n">admin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Disk</span><span class="p">)</span>
+<span class="n">admin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">EventLog</span><span class="p">)</span>
+<span class="n">admin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">IDC</span><span class="p">)</span>
+<span class="n">admin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Manufacturer</span><span class="p">)</span>
+<span class="n">admin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">NetworkDevice</span><span class="p">)</span>
+<span class="n">admin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">NIC</span><span class="p">)</span>
+<span class="n">admin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">RAM</span><span class="p">)</span>
+<span class="n">admin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Software</span><span class="p">)</span>
+<span class="n">admin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Tag</span><span class="p">)</span>
+<span class="n">admin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">NewAssetApprovalZone</span><span class="p">,</span> <span class="n">NewAssetAdmin</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>利用刚才创建的管理员用户，登录admin站点：</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/122-1.png"></p> 
+ <p>这里略微对admin界面做了些简单地配置，但目前还没有数据。</p> 
+ <h2>二、创建新资产</h2> 
+ <p>前面我们只是在Pycharm中获取并打印数据，并没有将数据保存到数据库里。下面我们来实现这一功能。</p> 
+ <p>修改/assets/views.py文件，代码如下：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.shortcuts</span> <span class="kn">import</span> <span class="n">render</span>
+<span class="kn">from</span> <span class="nn">django.shortcuts</span> <span class="kn">import</span> <span class="n">HttpResponse</span>
+<span class="kn">from</span> <span class="nn">django.views.decorators.csrf</span> <span class="kn">import</span> <span class="n">csrf_exempt</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">from</span> <span class="nn">assets</span> <span class="kn">import</span> <span class="n">models</span>
+<span class="kn">from</span> <span class="nn">assets</span> <span class="kn">import</span> <span class="n">asset_handler</span>
+<span class="c1"># Create your views here.</span>
+
+<span class="nd">@csrf_exempt</span>
+<span class="k">def</span> <span class="nf">report</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    通过csrf_exempt装饰器，跳过Django的csrf安全机制，让post的数据能被接收，但这又会带来新的安全问题。</span>
+<span class="sd">    可以在客户端，使用自定义的认证token，进行身份验证。这部分工作，请根据实际情况，自己进行。</span>
+<span class="sd">    :param request:</span>
+<span class="sd">    :return:</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s2">"POST"</span><span class="p">:</span>
+        <span class="n">asset_data</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'asset_data'</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">asset_data</span><span class="p">)</span>
+        <span class="c1"># 各种数据检查，请自行添加和完善！</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">data</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="s2">"没有数据！"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">issubclass</span><span class="p">(</span><span class="nb">dict</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">data</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="s2">"数据必须为字典格式！"</span><span class="p">)</span>
+        <span class="c1"># 是否携带了关键的sn号</span>
+        <span class="n">sn</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'sn'</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">sn</span><span class="p">:</span>
+            <span class="c1"># 进入审批流程</span>
+            <span class="c1"># 首先判断是否在上线资产中存在该sn</span>
+            <span class="n">asset_obj</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">Asset</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">sn</span><span class="o">=</span><span class="n">sn</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">asset_obj</span><span class="p">:</span>
+                <span class="c1"># 进入已上线资产的数据更新流程</span>
+                <span class="k">pass</span>
+                <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="s2">"资产数据已经更新！"</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>   <span class="c1"># 如果已上线资产中没有，那么说明是未批准资产，进入新资产待审批区，更新或者创建资产。</span>
+                <span class="n">obj</span> <span class="o">=</span> <span class="n">asset_handler</span><span class="o">.</span><span class="n">NewAsset</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+                <span class="n">response</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">add_to_new_assets_zone</span><span class="p">()</span>
+                <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="s2">"没有资产sn序列号，请检查数据！"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="s1">'200 ok'</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>report视图的逻辑是这样的：</p> 
+ <ul> 
+  <li><strong>sn是标识一个资产的唯一字段，必须携带，不能重复！</strong></li> 
+  <li>从POST中获取发送过来的数据；</li> 
+  <li>使用json转换数据类型；</li> 
+  <li>进行各种数据检查（比如身份验证等等，请自行完善）；</li> 
+  <li>判断数据是否为空，空则返回错误信息，结束视图；</li> 
+  <li>判断data的类型是否字典类型，否则返回错误信息；</li> 
+  <li>之所以要对data的类型进行判断是因为后面要大量的使用字典的get方法和中括号操作；</li> 
+  <li>如果没有携带sn号，返回错误信息；</li> 
+ </ul> 
+ <p>当前面都没问题时，进入下面的流程：</p> 
+ <ul> 
+  <li>首先，利用sn值尝试在已上线的资产进行查找，如果有，则进入已上线资产的更新流程，具体实现，这里暂且跳过;</li> 
+  <li>如果没有，说明这是个新资产，需要添加到新资产区；</li> 
+  <li>这里又分两种情况，一种是彻底的新资产，那没得说，需要新增；另一种是新资产区已经有了，但是审批员还没来得及审批，资产数据的后续报告就已经到达了，那么需要更新数据。</li> 
+  <li>创建一个<code>asset_handler.NewAsset()</code>对象，然后调用它的<code>obj.add_to_new_assets_zone()</code>方法，进行数据保存，并接收返回结果；</li> 
+  <li>asset_handler是下面我们要新建的资产处理模块，NewAsset是其中的一个类。</li> 
+ </ul> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/122-2.png"></p> 
+ <p>为了不让<code>views.py</code>文件过于庞大，通常会建立新的py文件，专门处理一些核心业务。</p> 
+ <p>在assets下新建<code>asset_handler.py</code>文件，并写入下面的代码：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">from</span> <span class="nn">assets</span> <span class="kn">import</span> <span class="n">models</span>
+
+
+<span class="k">class</span> <span class="nc">NewAsset</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">request</span> <span class="o">=</span> <span class="n">request</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">data</span>
+
+    <span class="k">def</span> <span class="nf">add_to_new_assets_zone</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">defaults</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">'data'</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">),</span>
+            <span class="s1">'asset_type'</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'asset_type'</span><span class="p">),</span>
+            <span class="s1">'manufacturer'</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'manufacturer'</span><span class="p">),</span>
+            <span class="s1">'model'</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'model'</span><span class="p">),</span>
+            <span class="s1">'ram_size'</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'ram_size'</span><span class="p">),</span>
+            <span class="s1">'cpu_model'</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'cpu_model'</span><span class="p">),</span>
+            <span class="s1">'cpu_count'</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'cpu_count'</span><span class="p">),</span>
+            <span class="s1">'cpu_core_count'</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'cpu_core_count'</span><span class="p">),</span>
+            <span class="s1">'os_distribution'</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'os_distribution'</span><span class="p">),</span>
+            <span class="s1">'os_release'</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'os_release'</span><span class="p">),</span>
+            <span class="s1">'os_type'</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'os_type'</span><span class="p">),</span>
+
+        <span class="p">}</span>
+        <span class="n">models</span><span class="o">.</span><span class="n">NewAssetApprovalZone</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">update_or_create</span><span class="p">(</span><span class="n">sn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">'sn'</span><span class="p">],</span> <span class="n">defaults</span><span class="o">=</span><span class="n">defaults</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="s1">'资产已经加入或更新待审批区！'</span>
+</pre>
+ </div> 
+ <p>NewAsset类接收两个参数，request和data，分别封装了请求和资产数据，它的唯一方法<code>obj.add_to_new_assets_zone()</code>中，首先构造了一个defaults字典，分别将资产数据包的各种数据打包进去，然后利用Django中特别好用的<code>update_or_create()</code>方法，进行数据保存！</p> 
+ <p><code>update_or_create()</code>方法的机制：如果数据库内没有该数据，那么新增，如果有，则更新，这就大大减少了我们的代码量，不用写两个方法。该方法的参数必须为一些用于查询的指定字段（这里是sn），以及需要新增或者更新的defaults字典。而其返回值，则是一个查询对象和是否新建对象布尔值的二元元组。</p> 
+ <h2>三、测试数据</h2> 
+ <p>重启CMDB，在Client中使用<code>python main.py report_data</code>，发送一个资产数据给CMDB服务器，结果如下：</p> 
+ <div class="codehilite">
+  <pre><span></span>(venv) D:\work\2019\for_test\CMDB\Client\bin&gt;python main.py report_data
+正在将数据发送至： [http://192.168.0.100:8000/assets/report/]  ......
+?[31;1m发送完毕！?[0m
+返回结果：资产已经加入或更新待审批区！
+日志记录成功！
+</pre>
+ </div> 
+ <p>再进入admin后台，查看新资产待审批区，可以看到资产已经成功进入待审批区：</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/122-3.png"></p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/122-4.png"></p> 
+ <p>这里我们显示了资产的汇报和更新日期，过几分钟后，重新汇报该资产数据，然后刷新admin中的页面，可以看到，待审批区的资产数据也一并被更新了。</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/122-5.png"></p> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/121"> <i class="fa fa-arrow-left"></i>&nbsp;5.Linux下收集数据</a> 
+  <a class="float-right" href="/course/django/123"> 7.审批新资产&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 31</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/122">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.0.0.996.996.50/006WT2Zmly8g3dlymf97xj30ro0rotc9.jpg?KID=imgbed,tva&amp;Expires=1594360245&amp;ssig=s6uj%2B39vGo" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我遇到的问题，解决了蛮久的，分享一下，看看对大家有没有帮助 1.503错误，看看自己本地是不是设置了代理，把代理关闭即可 2.我也遇到了500错误 （1）我换成了用requests库请求，代码如下： ---&gt;handler.py import requests def report_data(): """ 收集硬件信息，然后发送到服务器。 :return: """ # 收集信息 info = info_collection.InfoCollection() asset_data = info.collect() # 将数据打包到一个字典内，并转换为json格式 data = json.dumps({"asset_data": asset_data}) # 根据settings中的配置，构造url url = "http://%s:%s%s" % (settings.Params['server'], settings.Params['port'], settings.Params['url']) print('正在将数据发送至： [%s] ......' % url) try: headers = {'content-type': 'application/json'} response = requests.post(url=url, data=data, headers=headers) message = response.text except Exception as e: message = "发送失败" + f" 错误原因：{e}" print(f"发送失败，错误原因：{e}") # 记录发送日志 with open(settings.PATH, 'ab') as f: log = f"发送时间：{time.strftime('%Y-%m-%d %H:%M:%S')} \t 服务器地址：{url} \t 返回结果：{message} \n" f.write(log.encode()) print("日志记录成功！") （2）views.py的代码也修改一下 @csrf_exempt def report(request): """ 通过csrf_exempt装饰器，跳过Django的csrf安全机制，让post的数据能被接收，但这又会带来新的安全问题。 可以在客户端，使用自定义的认证token，进行身份验证。这部分工作，请根据实际情况，自己进行。 :param request: :return: """ if request.method == "POST": request_body = json.loads(request.body.decode()) asset_data = request_body['asset_data'] if not asset_data: return HttpResponse("没有数据！") if not issubclass(dict, type(asset_data)): return HttpResponse("数据必须为字典格式！") # 是否携带了关键的sn号 sn = asset_data.get('sn', None) if sn: # 进入审批流程 # 首先判断是否在上线资产中存在该sn asset_obj = models.Asset.objects.filter(sn=sn) if asset_obj: # 进入已上线资产的数据更新流程 pass return HttpResponse("资产数据已经更新！") else: # 如果已上线资产中没有，那么说明是未批准资产，进入新资产待审批区，更新或者创建资产。 obj = asset_handler.NewAsset(request, asset_data) response = obj.add_to_new_assets_zone() return HttpResponse(response) else: return HttpResponse("没有资产sn序列号，请检查数据！") return HttpResponse('200 ok')</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; LeechenLove200207 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年7月10日 10:58</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2129">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.0.0.996.996.50/006WT2Zmly8g3dlymf97xj30ro0rotc9.jpg?KID=imgbed,tva&amp;Expires=1594360245&amp;ssig=s6uj%2B39vGo" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>（3）asset_handler.py代码把字典中的self.data删除 class NewAsset(object): def __init__(self, request, data): self.request = request self.data = data def add_to_new_assets_zone(self): defaults = { 'asset_type': self.data.get('asset_type'), 'manufacturer': self.data.get('manufacturer'), 'model': self.data.get('model'), 'ram_size': self.data.get('ram_size'), 'cpu_model': self.data.get('cpu_model'), 'cpu_count': self.data.get('cpu_count'), 'cpu_core_count': self.data.get('cpu_core_count'), 'os_distribution': self.data.get('os_distribution'), 'os_release': self.data.get('os_release'), 'os_type': self.data.get('os_type'), } models.NewAssetApprovalZone.objects.update_or_create(sn=self.data['sn'], defaults=defaults) return '资产已经加入或更新待审批区！'</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> LeechenLove200207 &nbsp;&nbsp;回复&nbsp;&nbsp; LeechenLove200207 </span> 
+      <em>2020年7月10日 10:58</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2130">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.0.0.996.996.50/006WT2Zmly8g3dlymf97xj30ro0rotc9.jpg?KID=imgbed,tva&amp;Expires=1594360245&amp;ssig=s6uj%2B39vGo" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>忽略我的评论吧QAQ，我发现后面是有坑的，不过能够解决</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> LeechenLove200207 &nbsp;&nbsp;回复&nbsp;&nbsp; LeechenLove200207 </span> 
+      <em>2020年7月13日 21:05</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2134">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax3.sinaimg.cn/crop.0.0.1008.1008.50/0061WLGjly8gdjgc05i9kj30s00s0goi.jpg?KID=imgbed,tva&amp;Expires=1591099837&amp;ssig=HZQwUgpVDC" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>Internal Server Error: /assets/report/ sqlite3.OperationalError: no such table: assets_asset 正在将数据发送至： [http://192.168.4.101:8000/assets/report/] ...... ?[31;1m发送失败，错误原因： HTTP Error 500: Internal Server Error?[0m 日志记录成功！ 这几个问题卡了好久了，请求指导下</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 程杰杰梦想环游全球 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年6月4日 15:37</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2092">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1590380527&amp;ssig=H6XfX69rRB" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>no such table: assets_asset 这么明白的错误提示.....</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 程杰杰梦想环游全球 </span> 
+      <em>2020年6月4日 16:58</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2093">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva2.sinaimg.cn/crop.66.3.150.150.50/005NhZF7gw1eu4low6qvsj306j04laac.jpg?KID=imgbed,tva&amp;Expires=1585857820&amp;ssig=8sGbFEbjGn" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>ok，还有人吗 - -</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 绿茶味lol </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年4月5日 17:08</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2008">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva3.sinaimg.cn/crop.80.73.222.222.50/a280e4dbjw8eyfz5ob1erj20b40b4q2y.jpg?KID=imgbed,tva&amp;Expires=1583053723&amp;ssig=a19%2FQ%2BIy%2FD" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>NewAsset.add_to_new_assets_zone()方法并没有对ram_size的数据进行提取，之前/Client/plugins/collect_windows_info.py中收集到的内存数据的值是list中嵌套了字典， 如果不处理的话会报错。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 就是这么梁某人 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年3月1日 14:12</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1929">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva4.sinaimg.cn/crop.0.0.640.640.50/7df9ec40jw8ej8un2zrvzj20hs0hsabe.jpg?KID=imgbed,tva&amp;Expires=1576840814&amp;ssig=NXcQ5b9www" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>请问为什么要 asset_data = request.POST.get('asset_data')？'asset_data'是怎么来的？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 纠不正的翘舌音 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年12月24日 17:04</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1780">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1577334347&amp;ssig=QyjwpbGyW9" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>'asset_data'是我们前面report_data方法中定义数据的键。 这个实战中，数据的格式，也就是数据结构是非常重要的，必须前后一致。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 纠不正的翘舌音 </span> 
+      <em>2019年12月26日 09:39</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1789">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/default/images/default_avatar_male_50.gif?Expires=1564995416&amp;ssig=qODbZfryGb&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>刘老师您好，我执行python3 main.py report_data时报：“发送失败，错误原因： HTTP Error 500: Internal Server Error?[0m 日志记录成功!”错误，最后发现asset_data = request.POST.get('asset_data')里的参数名只有为asset_data就不会报错，但是在hanler.py中请求response = urllib.request.urlopen(url=url, data=data_encode, timeout=settings.Params['request_timeout'])的参数名应该跟Post.get()的参数名一致才行吗</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; Noob5200 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年8月6日 10:17</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1539">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/default/images/default_avatar_male_50.gif?Expires=1564995416&amp;ssig=qODbZfryGb&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>正在将数据发送到[http://192.168.1.104:8000/assets/report/]..... ?[31;1m发送失败，错误原因： HTTP Error 500: Internal Server Error?[0m 日志记录成功! 有没有同学帮忙看看这个问题</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; Noob5200 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年8月5日 16:53</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1537">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax3.sinaimg.cn/crop.0.0.1008.1008.50/0061WLGjly8gdjgc05i9kj30s00s0goi.jpg?KID=imgbed,tva&amp;Expires=1591099837&amp;ssig=HZQwUgpVDC" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>同学这个问题你解决了吗，请教一下</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 程杰杰梦想环游全球 &nbsp;&nbsp;回复&nbsp;&nbsp; Noob5200 </span> 
+      <em>2020年6月4日 14:54</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2091">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/default/images/default_avatar_male_50.gif?Expires=1564995416&amp;ssig=qODbZfryGb&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>刘江老师您好，我是按照您的教程一步步来的。模型一共有17个，按理说数据库最后有17个模型对应的17张表，但是我的多了一张表，叫assets_asset_tags。有人回复是多对多关系表。不太理解呢</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; Noob5200 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年8月5日 16:00</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1534">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?Expires=1564021609&amp;ssig=sDnqEcPtge&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>多对多关系会额外生成一张中间关系表。请参考Django教程前面的章节多对多中间表详解。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; Noob5200 </span> 
+      <em>2019年8月5日 16:36</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1535">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva4.sinaimg.cn/crop.0.0.180.180.50/892ac731jw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>小白一枚，目前只跟着实战到这里，发现内存容量无法写入新资产数据。分析传递的数据data，发现ram获取到的信息格式为{'ram': [{内存1信息}，{内存2信息}，......]}。刘大大的add_to_new_asset_zone()方法中，defaults字典无法直接获取内存容量，于是尝试以下代码获取到了内存容量总和，居然成功了，好开心： ram_size = 0 # 内存大小默认为0 ram = self.data.get('ram') for i in range(len(ram)): ram_size += ram[i].get('capacity') print(ram_size)</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; guai-蜀黍 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年4月28日 17:09</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1300">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.996.996.50/006lsZAIjw8f3bpsculx1j30ro0rpadf.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>为什么我的显示和这个不一样，是不是那块配置错了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 凯风寒泉zk </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年4月23日 15:34</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1276">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva3.sinaimg.cn/crop.0.58.440.440.50/b8253f15jw8eayptqq27uj20c80fh755.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>AttributeError: module 'assets.models' has no attribute 'CPU'</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 衰老的粽子 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年1月23日 13:30</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1027">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva4.sinaimg.cn/crop.0.0.1342.1342.50/005NQBQ8jw8f5q3for1d6j311a11ak05.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我也是这个问题，不知道你解决了没有，我的确在数据库没有看到这个字段的表</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> SEE__终极 &nbsp;&nbsp;回复&nbsp;&nbsp; 衰老的粽子 </span> 
+      <em>2019年4月3日 16:07</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1215">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>内存这个字段博主可以取一下</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 爱吃老窝头 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年8月3日 10:34</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/659">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.0.180.180.50/8078015ajw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我自己瞎整了一下 1、在asset_handler.py文件中，先遍历一边“ram”这个key 即：在add_to_new_assets_zone(self):下面，直接 ram_size=0 for x in self.data.get('ram'): ram_size+=x.get("capacity") 然后在defaults里，取内存的时候就是 'ram_size': ram_size, 似乎也对。。。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> _Zane &nbsp;&nbsp;回复&nbsp;&nbsp; 爱吃老窝头 </span> 
+      <em>2018年9月20日 23:56</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/744">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>正在将数据发送至： [http://127.0.0.1:8000/assets/report/]...... 发送失败，HTTP Error 500: Internal Server Error 日志记录成功！ 好像是这句的问题 models.NewAssetApprovalZone.objects.update_or_create(sn=self.data['sn'], defaults=defaults)</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 一年一月一日一时_45749 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年7月16日 15:03</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/589">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>ok 解决了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 一年一月一日一时_45749 &nbsp;&nbsp;回复&nbsp;&nbsp; 一年一月一日一时_45749 </span> 
+      <em>2018年7月16日 17:45</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/591">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>请教下，500错误怎么解决呢</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 天之骄子02612 &nbsp;&nbsp;回复&nbsp;&nbsp; 一年一月一日一时_45749 </span> 
+      <em>2018年9月19日 11:31</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/737">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我的问题是数据库配置错误，刘大的是assets我的是asset，重新迁移数据库就ok了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 如来神坑 &nbsp;&nbsp;回复&nbsp;&nbsp; 天之骄子02612 </span> 
+      <em>2018年12月20日 09:30</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/964">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/default/images/default_avatar_male_50.gif?Expires=1564995416&amp;ssig=qODbZfryGb&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>你好，我也遇到这个问题了，你是怎么解决的</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> Noob5200 &nbsp;&nbsp;回复&nbsp;&nbsp; 一年一月一日一时_45749 </span> 
+      <em>2019年8月5日 16:50</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1536">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.0.180.180.50/8078015ajw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>您好，请教下，在这一步，我测试时，一直提示我：发送失败，&lt;urlopen error [WinError 10061] 由于目标计算机积极拒绝，无法连接。&lt;--这个错误该如何解决啊 - -搞了几天了还没搞明白，django=2.x的版本，win10系统。谢谢</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; _Zane </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年6月26日 21:08</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/543">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.0.180.180.50/8078015ajw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>怪我自己。。。方法名拼错了。。。 另外，为了方便观察错误，可以参考http://www.liujiangblog.com/course/django/120楼下回复这哥们的方法，用cmd运行client，然后再pycharm运行django。。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> _Zane &nbsp;&nbsp;回复&nbsp;&nbsp; _Zane </span> 
+      <em>2018年6月26日 23:04</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/544">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.996.996.50/006mbSp6ly8ffiwekd507j30ro0rp440.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>只是方法名拼错了？我也遇到了这个错误</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 爱他么谁谁的快意人生 &nbsp;&nbsp;回复&nbsp;&nbsp; _Zane </span> 
+      <em>2019年2月24日 17:57</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1077">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 12em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax3.sinaimg.cn/crop.0.0.1008.1008.50/0061WLGjly8gdjgc05i9kj30s00s0goi.jpg?KID=imgbed,tva&amp;Expires=1591013487&amp;ssig=DaCUdc8MWn" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>您好能再具体讲讲这个错误怎么解决吗</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 程杰杰梦想环游全球 &nbsp;&nbsp;回复&nbsp;&nbsp; 爱他么谁谁的快意人生 </span> 
+      <em>2020年6月1日 17:12</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2088">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.960.960.50/006xIWURly8fo9wxo24vzj30qo0qoaaz.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>完成</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 蔷薇-Nina </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年3月29日 00:04</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/340">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.996.996.50/c3d26465ly8fqqbaxwz4vj20ro0rodib.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>活跃的小仙女，好想认识一下，哈哈哈</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 海盗小船雷小瑶 &nbsp;&nbsp;回复&nbsp;&nbsp; 蔷薇-Nina </span> 
+      <em>2018年5月7日 17:22</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/460">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

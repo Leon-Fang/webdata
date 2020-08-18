@@ -1,0 +1,410 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>国际化和本地化</h1> 
+ <small>阅读:&nbsp;13105&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：5 </small> 
+ <hr> 
+ <p>所谓的国际化，是指使用不同语言的用户在访问同一个网站页面时能够看到符合其自身语言的文本页面。</p> 
+ <p>国际化的基本原理是：</p> 
+ <ul> 
+  <li>浏览器通过LANGUAGE_CODE在HTTP请求头中告诉网站后台服务器用户所需要的页面语言；</li> 
+  <li>网站服务器在渲染页面时，根据LANGUAGE_CODE查询每个需要翻译成对应语言的文本字符串，并将其替换到网页内，最后将网页返回给用户浏览器。</li> 
+ </ul> 
+ <p>Django对文本翻译、日期格式、时间格式、数字格式和时区具有很好的支持。这些内容是国际化的主要工作对象。</p> 
+ <p>从本质上，Django做了这么两件事：</p> 
+ <ul> 
+  <li>允许开发者和模板设计者指定在他们的app中哪些部分需要进行翻译或者格式化成当地的语言、习惯、用法和习俗；</li> 
+  <li>根据用户的偏好习惯，使用钩子，进行Web本地化。</li> 
+ </ul> 
+ <p>下面我们看一下Django是如何国际化的：</p> 
+ <h2>一、在视图中标识需要翻译的文本</h2> 
+ <p>在视图中和HTML模板中都可以标识要翻译的文本。在视图中，通过<code>_()</code>或<code>ugettext()</code>函数，指定某个变量需要翻译，如下所示：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.utils.translation</span> <span class="kn">import</span> <span class="n">ugettext</span> <span class="k">as</span> <span class="n">_</span>
+<span class="kn">from</span> <span class="nn">django.http</span> <span class="kn">import</span> <span class="n">HttpResponse</span>
+
+<span class="k">def</span> <span class="nf">my_view</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="n">_</span><span class="p">(</span><span class="s2">"Welcome to my site."</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>这等同于：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.utils.translation</span> <span class="kn">import</span> <span class="n">ugettext</span>
+<span class="kn">from</span> <span class="nn">django.http</span> <span class="kn">import</span> <span class="n">HttpResponse</span>
+
+<span class="k">def</span> <span class="nf">my_view</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="n">ugettext</span><span class="p">(</span><span class="s2">"Welcome to my site."</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>也等同于：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="k">def</span> <span class="nf">my_view</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="n">sentence</span> <span class="o">=</span> <span class="s1">'Welcome to my site.'</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="n">_</span><span class="p">(</span><span class="n">sentence</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>还可以这么用：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="k">def</span> <span class="nf">my_view</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">d</span><span class="p">):</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="n">_</span><span class="p">(</span><span class="s1">'Today is </span><span class="si">%(month)s</span><span class="s1"> </span><span class="si">%(day)s</span><span class="s1">.'</span><span class="p">)</span> <span class="o">%</span> <span class="p">{</span><span class="s1">'month'</span><span class="p">:</span> <span class="n">m</span><span class="p">,</span> <span class="s1">'day'</span><span class="p">:</span> <span class="n">d</span><span class="p">}</span>
+    <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>如果你想给翻译人员一些提示，可以添加一个以Translators为前缀的注释，例如：</p> 
+ <div class="codehilite">
+  <pre><span></span>def my_view(request):
+    # Translators: This message appears on the home page only
+    output = ugettext("Welcome to my site.")
+</pre>
+ </div> 
+ <h2>二、在模板中表示需要翻译的文本</h2> 
+ <p>在模版文件中，要标识一个待翻译的文本，需要使用<code>{% trans %}</code>模板标签，但首先你要在模版的顶部加载<code>{% load i18n %}</code>。比如：</p> 
+ <div class="codehilite">
+  <pre><span></span>{% load i18n %}
+<span class="nt">&lt;title&gt;</span>{% trans "This is the title." %}<span class="nt">&lt;/title&gt;</span>
+<span class="nt">&lt;title&gt;</span>{% trans myvar %}<span class="nt">&lt;/title&gt;</span>
+</pre>
+ </div> 
+ <p>要注意的是trans标签内部不可以有内嵌的模板变量</p> 
+ <p>如果你想提前翻译字符串但是不显示出来，可以使用下面的方法：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{%</span> <span class="k">trans</span> <span class="s2">"This is the title"</span> <span class="k">as</span> <span class="nv">the_title</span> <span class="cp">%}</span>
+
+<span class="nt">&lt;title&gt;</span><span class="cp">{{</span> <span class="nv">the_title</span> <span class="cp">}}</span><span class="nt">&lt;/title&gt;</span>
+<span class="nt">&lt;meta</span> <span class="na">name=</span><span class="s">"description"</span> <span class="na">content=</span><span class="s">"</span><span class="cp">{{</span> <span class="nv">the_title</span> <span class="cp">}}</span><span class="s">"</span><span class="nt">&gt;</span>
+</pre>
+ </div> 
+ <p>上面的做法实际上相当于定义了几个模板变量，下面则是更加复杂的用法：</p> 
+ <div class="codehilite">
+  <pre><span></span>% trans "starting point" as start %}
+<span class="cp">{%</span> <span class="k">trans</span> <span class="s2">"end point"</span> <span class="k">as</span> <span class="nv">end</span> <span class="cp">%}</span>
+<span class="cp">{%</span> <span class="k">trans</span> <span class="s2">"La Grande Boucle"</span> <span class="k">as</span> <span class="nv">race</span> <span class="cp">%}</span>
+
+<span class="nt">&lt;h1&gt;</span>
+  <span class="nt">&lt;a</span> <span class="na">href=</span><span class="s">"/"</span> <span class="na">title=</span><span class="s">"</span><span class="cp">{%</span> <span class="k">blocktrans</span> <span class="cp">%}</span><span class="s">Back to '</span><span class="cp">{{</span> <span class="nv">race</span> <span class="cp">}}</span><span class="s">' homepage</span><span class="cp">{%</span> <span class="k">endblocktrans</span> <span class="cp">%}</span><span class="s">"</span><span class="nt">&gt;</span><span class="cp">{{</span> <span class="nv">race</span> <span class="cp">}}</span><span class="nt">&lt;/a&gt;</span>
+<span class="nt">&lt;/h1&gt;</span>
+<span class="nt">&lt;p&gt;</span>
+<span class="cp">{%</span> <span class="k">for</span> <span class="nv">stage</span> <span class="k">in</span> <span class="nv">tour_stages</span> <span class="cp">%}</span>
+    <span class="cp">{%</span> <span class="k">cycle</span> <span class="nv">start</span> <span class="nv">end</span> <span class="cp">%}</span>: <span class="cp">{{</span> <span class="nv">stage</span> <span class="cp">}}{%</span> <span class="k">if</span> <span class="nb">forloop</span><span class="nv">.counter</span><span class="o">|</span><span class="nf">divisibleby</span><span class="o">:</span><span class="m">2</span> <span class="cp">%}</span><span class="nt">&lt;br</span> <span class="nt">/&gt;</span><span class="cp">{%</span> <span class="k">else</span> <span class="cp">%}</span>, <span class="cp">{%</span> <span class="k">endif</span> <span class="cp">%}</span>
+<span class="cp">{%</span> <span class="k">endfor</span> <span class="cp">%}</span>
+<span class="nt">&lt;/p&gt;</span>
+</pre>
+ </div> 
+ <h2>三、blocktrans模板标签</h2> 
+ <p>与<code>{% trans %}</code>模板标签不同，blocktrans标签允许你通过使用占位符来标记由文字和可变内容组成的复杂句子进行翻译，如下例所示：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{%</span> <span class="k">blocktrans</span> <span class="cp">%}</span><span class="x">This string will have </span><span class="cp">{{</span> <span class="nv">value</span> <span class="cp">}}</span><span class="x"> inside.</span><span class="cp">{%</span> <span class="k">endblocktrans</span> <span class="cp">%}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>还可以像下面一样使用：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{%</span> <span class="k">blocktrans</span> <span class="k">with</span> <span class="nv">amount</span><span class="o">=</span><span class="nv">article.price</span> <span class="cp">%}</span><span class="x"></span>
+<span class="x">That will cost $ </span><span class="cp">{{</span> <span class="nv">amount</span> <span class="cp">}}</span><span class="x">.</span>
+<span class="cp">{%</span> <span class="k">endblocktrans</span> <span class="cp">%}</span><span class="x"></span>
+
+<span class="cp">{%</span> <span class="k">blocktrans</span> <span class="k">with</span> <span class="nv">myvar</span><span class="o">=</span><span class="nv">value</span><span class="o">|</span><span class="nf">filter</span> <span class="cp">%}</span><span class="x"></span>
+<span class="x">This will have </span><span class="cp">{{</span> <span class="nv">myvar</span> <span class="cp">}}</span><span class="x"> inside.</span>
+<span class="cp">{%</span> <span class="k">endblocktrans</span> <span class="cp">%}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>甚至在一个blocktrans标签内内使用多个表达式：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{%</span> <span class="k">blocktrans</span> <span class="k">with</span> <span class="nv">book_t</span><span class="o">=</span><span class="nv">book</span><span class="o">|</span><span class="nf">title</span> <span class="nv">author_t</span><span class="o">=</span><span class="nv">author</span><span class="o">|</span><span class="nf">title</span> <span class="cp">%}</span><span class="x"></span>
+<span class="x">This is </span><span class="cp">{{</span> <span class="nv">book_t</span> <span class="cp">}}</span><span class="x"> by </span><span class="cp">{{</span> <span class="nv">author_t</span> <span class="cp">}}</span><span class="x"></span>
+<span class="cp">{%</span> <span class="k">endblocktrans</span> <span class="cp">%}</span><span class="x"></span>
+</pre>
+ </div> 
+ <h2>四、本地化</h2> 
+ <p>一旦标记好需要翻译的文本（也就是国际化）后，就需要进行本地化，也就是创建翻译用的语言文件。</p> 
+ <p>语言文件（Language File）是Django用于保存翻译关系的文件，你的网站应该为每种支持的语言建立一个语言文件。</p> 
+ <p>建立语言文件是通过<code>django-admin makemessages</code>命令完成的。</p> 
+ <p>在项目的根目录下，也就是包含manage.py的目录下，运行下面的命令：</p> 
+ <div class="codehilite">
+  <pre><span></span>django-admin makemessages -l de
+</pre>
+ </div> 
+ <p>其中的<code>de</code>表示你要本地化的国家，例如<code>pt_BR</code>表示巴西葡萄牙语，奥地利德语为<code>de_AT</code>，印尼语为id。</p> 
+ <p>或者使用下面的方式：</p> 
+ <div class="codehilite">
+  <pre><span></span>python manage.py makemessages -l zh-cn  //中文简体
+python manage.py makemessages -l en    //英文
+</pre>
+ </div> 
+ <p>执行命令后，Django会在根目录及其子目录下搜集所有需要翻译的字符串，默认情况下它会搜索.html、.txt和.py文件，然后在根目录的<code>locale/LANG/LC_MESSAGES</code>目录下创建一个<code>django.po</code>文件。对于上面的例子，目录就是<code>locale/de/LC_MESSAGES/</code>，文件就是<code>locale/de/LC_MESSAGES/django.po</code>。</p> 
+ <h3>注意：在Windows下，需要提前安装GNU gettext工具！</h3> 
+ <p>否则会弹出下面的错误：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="n">CommandError</span><span class="o">:</span> <span class="n">Can</span><span class="err">'</span><span class="n">t</span> <span class="n">find</span> <span class="n">msguniq</span><span class="o">.</span> <span class="n">Make</span> <span class="n">sure</span> <span class="n">you</span> <span class="n">have</span> <span class="n">GNU</span> <span class="n">gettext</span> <span class="n">tools</span> <span class="mf">0.15</span> <span class="n">or</span> <span class="n">newer</span> <span class="n">installed</span><span class="o">.</span>
+</pre>
+ </div> 
+ <p><code>.po</code>文件的格式非常简单！</p> 
+ <p>每个<code>.po</code>文件首先包含一小部分元数据，例如翻译维护者的联系信息，但文件的大部分是翻译对照：被翻译字符串和特定语言的实际翻译文本之间的简单映射。</p> 
+ <p>例如，有一个像下面这样的待翻译字符串：</p> 
+ <div class="codehilite">
+  <pre><span></span>_("Welcome to my site.")
+</pre>
+ </div> 
+ <p>在<code>.po</code>文件中将包含一条下面样子的条目：</p> 
+ <div class="codehilite">
+  <pre><span></span>#: path/to/python/module.py:23
+msgid "Welcome to my site."
+msgstr ""
+</pre>
+ </div> 
+ <p>这三行内容各自代表下面的意思：</p> 
+ <ul> 
+  <li>第一行通过注释表达该条要翻译的字符串在视图或模版中的位置；</li> 
+  <li>msgid：要翻译的字符串。不要修改它。</li> 
+  <li>msgstr：翻译后的文本。一开始它是空的，需要翻译人员逐条填写。</li> 
+ </ul> 
+ <p>这是一个文本文件，需要专业的翻译人员将所有的msgstr空白‘填写’齐全。如果你的项目比较大，这可能是个磨人的事。</p> 
+ <h2>五、编译语言文件</h2> 
+ <p>当完成语言文件的创建和翻译工作后，或者对语言文件修改后，需要将其编译成对应的<code>*.mo</code>文件，Django在运行时将使用<code>*.mo</code>文件对网站进行国际化翻译。</p> 
+ <p>进入项目根目录，运行下面的命令，进行语言文件编译：</p> 
+ <div class="codehilite">
+  <pre><span></span>django-admin compilemessages
+</pre>
+ </div> 
+ <p>Django将自动搜索所有的<code>.po</code>文件，将它们都翻译成<code>.mo</code>文件。</p> 
+ <p>至此，国际化和本地化就完成了。你的网站页面将根据访问者使用语言的不同，展示为不同的语言版本，比如中文、英文、法文、德文之类。</p> 
+ <h2>六、附件</h2> 
+ <p>下面列出了所有可用于各种系统设置的语言代码对照表：</p> 
+ <ul> 
+  <li>af 南非荷兰语</li> 
+  <li>sq 阿尔巴尼亚语</li> 
+  <li>ar-sa 阿拉伯语(沙特阿拉伯) </li> 
+  <li>ar-iq 阿拉伯语(伊拉克)</li> 
+  <li>ar-eg 阿拉伯语(埃及) </li> 
+  <li>ar-ly 阿拉伯语(利比亚)</li> 
+  <li>ar-dz 阿拉伯语(阿尔及利亚)</li> 
+  <li>ar-ma 阿拉伯语(摩洛哥)</li> 
+  <li>ar-tn 阿拉伯语(突尼斯)</li> 
+  <li>ar-om 阿拉伯语(阿曼)</li> 
+  <li>ar-ye 阿拉伯语(也门) </li> 
+  <li>ar-sy 阿拉伯语(叙利亚)</li> 
+  <li>ar-jo 阿拉伯语(约旦)</li> 
+  <li>ar-lb 阿拉伯语(黎巴嫩)</li> 
+  <li>ar-kw 阿拉伯语(科威特)</li> 
+  <li>ar-ae 阿拉伯语(阿拉伯联合酋长国)</li> 
+  <li>ar-bh 阿拉伯语(巴林)</li> 
+  <li>ar-qa 阿拉伯语(卡塔尔)</li> 
+  <li>eu 巴斯克语</li> 
+  <li>bg 保加利亚语</li> 
+  <li>be 贝劳语</li> 
+  <li>ca 加泰罗尼亚语</li> 
+  <li>zh-tw 中文(中国台湾)</li> 
+  <li>zh-cn 中文(中华人民共和国)</li> 
+  <li>zh-hk 中文(中国香港特别行政区)</li> 
+  <li>zh-sg 中文(新加坡)</li> 
+  <li>hr 克罗地亚语</li> 
+  <li>cs 捷克语</li> 
+  <li>da 丹麦语</li> 
+  <li>nl 荷兰语(标准)</li> 
+  <li>nl-be 荷兰语(比利时)</li> 
+  <li>en 英语</li> 
+  <li>en-us 英语(美国)</li> 
+  <li>en-gb 英语(英国)</li> 
+  <li>en-au 英语(澳大利亚)</li> 
+  <li>en-ca 英语(加拿大)</li> 
+  <li>en-nz 英语(新西兰)</li> 
+  <li>en-ie 英语(爱尔兰)</li> 
+  <li>en-za 英语(南非)</li> 
+  <li>en-jm 英语(牙买加)</li> 
+  <li>en 英语(加勒比)</li> 
+  <li>en-bz 英语(伯利兹)</li> 
+  <li>en-tt 英语(特立尼达)</li> 
+  <li>et 爱沙尼亚语</li> 
+  <li>fo 法罗语 </li> 
+  <li>fa 波斯语</li> 
+  <li>fi 芬兰语 </li> 
+  <li>fr 法语(标准)</li> 
+  <li>fr-be 法语(比利时)</li> 
+  <li>fr-ca 法语(加拿大)</li> 
+  <li>fr-ch 法语(瑞士)</li> 
+  <li>fr-lu 法语(卢森堡)</li> 
+  <li>gd 盖尔语(苏格兰)</li> 
+  <li>gd-ie 盖尔语(爱尔兰)</li> 
+  <li>de 德语(标准)</li> 
+  <li>de-ch 德语(瑞士)</li> 
+  <li>de-at 德语(奥地利)</li> 
+  <li>de-lu 德语(卢森堡)</li> 
+  <li>de-li 德语(列支敦士登)</li> 
+  <li>el 希腊语</li> 
+  <li>he 希伯来语</li> 
+  <li>hi 北印度语</li> 
+  <li>hu 匈牙利语</li> 
+  <li>is 冰岛语</li> 
+  <li>in 印度尼西亚语</li> 
+  <li>it 意大利语(标准)</li> 
+  <li>it-ch 意大利语(瑞士)</li> 
+  <li>ja 日语</li> 
+  <li>ko 朝鲜语 </li> 
+  <li>ko 朝鲜语(韩国)</li> 
+  <li>lv 拉脱维亚语</li> 
+  <li>lt 立陶宛语</li> 
+  <li>mk FYRO 马其顿语</li> 
+  <li>ms 马来西亚语</li> 
+  <li>mt 马耳他语</li> 
+  <li>no 挪威语(博克马尔)</li> 
+  <li>no 挪威语(尼诺斯克)</li> 
+  <li>pl 波兰语</li> 
+  <li>pt-br 葡萄牙语(巴西)</li> 
+  <li>pt 葡萄牙语(葡萄牙)</li> 
+  <li>rm 拉丁语系</li> 
+  <li>ro 罗马尼亚语</li> 
+  <li>ro-mo 罗马尼亚语(摩尔达维亚)</li> 
+  <li>ru 俄语</li> 
+  <li>ru-mo 俄语(摩尔达维亚)</li> 
+  <li>sz 萨摩斯语(拉普兰)</li> 
+  <li>sr 塞尔维亚语(西里尔) </li> 
+  <li>sr 塞尔维亚语(拉丁)</li> 
+  <li>sk 斯洛伐克语 </li> 
+  <li>sl 斯洛文尼亚语</li> 
+  <li>sb 索布语</li> 
+  <li>es 西班牙语(西班牙传统)</li> 
+  <li>es-mx 西班牙语(墨西哥)</li> 
+  <li>es 西班牙语(西班牙现代)</li> 
+  <li>es-gt 西班牙语(危地马拉)</li> 
+  <li>es-cr 西班牙语(哥斯达黎加)</li> 
+  <li>es-pa 西班牙语(巴拿马)</li> 
+  <li>es-do 西班牙语(多米尼加共和国)</li> 
+  <li>es-ve 西班牙语(委内瑞拉)</li> 
+  <li>es-co 西班牙语(哥伦比亚)</li> 
+  <li>es-pe 西班牙语(秘鲁)</li> 
+  <li>es-ar 西班牙语(阿根廷)</li> 
+  <li>es-ec 西班牙语(厄瓜多尔)</li> 
+  <li>es-cl 西班牙语(智利)</li> 
+  <li>es-uy 西班牙语(乌拉圭)</li> 
+  <li>es-py 西班牙语(巴拉圭)</li> 
+  <li>es-bo 西班牙语(玻利维亚)</li> 
+  <li>es-sv 西班牙语(萨尔瓦多)</li> 
+  <li>es-hn 西班牙语(洪都拉斯)</li> 
+  <li>es-ni 西班牙语(尼加拉瓜)</li> 
+  <li>es-pr 西班牙语(波多黎各)</li> 
+  <li>sx 苏图语</li> 
+  <li>sv 瑞典语 </li> 
+  <li>sv-fi 瑞典语(芬兰)</li> 
+  <li>th 泰语</li> 
+  <li>ts 汤加语</li> 
+  <li>tn 瓦纳语 </li> 
+  <li>tr 土耳其语</li> 
+  <li>uk 乌克兰语</li> 
+  <li>ur 乌尔都语</li> 
+  <li>ve 文达语</li> 
+  <li>vi 越南语</li> 
+  <li>xh 科萨语</li> 
+  <li>ji 依地语</li> 
+  <li>zu 祖鲁语</li> 
+ </ul> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/179"> <i class="fa fa-arrow-left"></i>&nbsp;CSRF与AJAX</a> 
+  <a class="float-right" href="/course/django/181"> 部署 Django&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 5</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/180">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif?KID=imgbed,tva&amp;Expires=1585760285&amp;ssig=DWpv1EI7ly" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>博主，有个问题，如果一个正在开发中的项目，生成过相应的po文件，但是又更改了，行号变了，需要重新生成吗？重新生成，之前写好的翻译文件还能重用吗？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户5301375999 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年4月1日 22:00</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1993">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif?KID=imgbed,tva&amp;Expires=1577262138&amp;ssig=89RvBHjmOT" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>有个坑是makemessages -l zh-cn 时应该用下划线既是-l zh_cn。然后settings.py的LANGUAGES应该是 ('zh-cn','简体中文') 这样设置，但是一定要用短横线 - ，而不是下划线 _ ，可谓巨坑无比。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户5617139709 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年12月25日 13:40</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1783">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.0.996.996.50/6efe5eb3jw8f65fdwnuu4j20ro0rodij.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>当初看到 for _, item in xxx 不要在国际化相关场景下使用 完全一头雾水 今天拨开云雾 非常感谢</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 月夜KIDL </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年4月28日 15:51</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1297">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.664.664.50/8ea3178bjw8f0qgc5x05qj20ig0iggmf.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>unbelievable and pretty good</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; jekoie </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年7月12日 15:23</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/570">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.664.664.50/8ea3178bjw8f0qgc5x05qj20ig0iggmf.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>HAO</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> jekoie &nbsp;&nbsp;回复&nbsp;&nbsp; jekoie </span> 
+      <em>2018年7月12日 15:23</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/571">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

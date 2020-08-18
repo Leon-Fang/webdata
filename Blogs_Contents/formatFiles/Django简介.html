@@ -1,0 +1,265 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>Django简介</h1> 
+ <small>阅读:&nbsp;161613&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：9 </small> 
+ <hr> 
+ <h2>引言</h2> 
+ <p>我们都知道，Django是一种基于Python的Web开发框架。</p> 
+ <p>那么，什么是Web开发？Web开发指的是开发基于B/S架构，通过前后端的配合，将后台服务器的数据在浏览器上展现给前台用户的应用。比如将电子购物网站的商品数据在浏览器上展示给客户，在基于浏览器的学校系统管理平台上管理学生的数据，监控机房服务器的状态并将结果以图形化的形式展现出来等等。</p> 
+ <p>使用Python开发Web应用，最简单、原始和直接的办法是使用CGI标准，在二十年前这种方式很流行。它是如何做的呢？ 以使用Python CGI脚本显示数据库中最新添加的10件商品为例：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">import</span> <span class="nn">pymysql</span>
+
+<span class="k">print</span><span class="p">(</span><span class="s2">"Content-Type: text/html</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="s2">"&lt;html&gt;&lt;head&gt;&lt;title&gt;products&lt;/title&gt;&lt;/head&gt;"</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="s2">"&lt;body&gt;"</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="s2">"&lt;h1&gt;products&lt;/h1&gt;"</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="s2">"&lt;ul&gt;"</span><span class="p">)</span>
+
+<span class="n">connection</span> <span class="o">=</span> <span class="n">pymysql</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">user</span><span class="o">=</span><span class="s1">'user'</span><span class="p">,</span> <span class="n">passwd</span><span class="o">=</span><span class="s1">'pwd'</span><span class="p">,</span> <span class="n">db</span><span class="o">=</span><span class="s1">'product_db'</span><span class="p">)</span>
+<span class="n">cursor</span> <span class="o">=</span> <span class="n">connection</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+<span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"SELECT name FROM products ORDER BY create_date DESC LIMIT 10"</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">cursor</span><span class="o">.</span><span class="n">fetchall</span><span class="p">():</span>
+    <span class="k">print</span><span class="p">(</span><span class="s2">"&lt;li&gt;</span><span class="si">%s</span><span class="s2">&lt;/li&gt;"</span> <span class="o">%</span> <span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+<span class="k">print</span><span class="p">(</span><span class="s2">"&lt;/ul&gt;"</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="s2">"&lt;/body&gt;&lt;/html&gt;"</span><span class="p">)</span>
+
+<span class="n">connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre>
+ </div> 
+ <p>服务过程是这样的：首先，用户请求CGI，脚本代码打印<code>Content-Type</code>行等一些HTML的起始标签，然后连接数据库并执行一些查询操作，获取最新的十件商品的相关数据。在遍历这些商品的同时，生成一个商品的HTML列表项，然后输出HTML的结束标签并且关闭数据库连接。将生成的HTML代码保存到一个<code>.cgi</code>文件中，然后上传到网络服务器上，用户通过浏览器即可访问。</p> 
+ <p>这个流程看起来不错，简单易懂，实际有很多问题和不方便的地方，比如：</p> 
+ <ul> 
+  <li>如果应用中有多处需要连接数据库会怎样呢？每个独立的CGI脚本，不应该重复编写数据库连接相关的代码。 </li> 
+  <li>前端、后端工程师以及数据库管理员集于一身，无法分工配合。设想一个前端设计师，完全没有Python开发经验，但是又需要编写SQL语句的话，会发生什么呢？（我有一句话不知当讲不当讲？）</li> 
+  <li>如果代码被重用到一个复合的环境中会发生什么？</li> 
+  <li>直接将数据库的密码写在代码里吗？</li> 
+  <li>今天是取十个商品，明天我要删除十个商品怎么办？</li> 
+ </ul> 
+ <p>以上的问题是显而易见的，聪明的程序员在不断的碰到问题和解决问题，探索方案和实践方案中，重复了下面的过程：</p> 
+ <ol> 
+  <li>开始编写一个新的Web应用</li> 
+  <li>开始编写另一个Web应用</li> 
+  <li>从第一步中总结经验（找出其中通用的代码），并运用在第二步中</li> 
+  <li>重构代码使得能在第二个应用中使用第一个程序中的通用代码</li> 
+  <li>重复2-4步若干次</li> 
+  <li>发明了一个Web框架。</li> 
+ </ol> 
+ <p>最初的Web开发框架就是这么来的！</p> 
+ <p>Web框架致力于解决一些共同的问题，为Web应用提供通用的架构，让用户专注于网站应用业务逻辑的开发，而无须处理网络应用底层的协议、线程、进程等方面的问题。这样能大大提高开发者的效率和Web应用程序的质量。</p> 
+ <p>一般Web框架的架构是这样的：</p> 
+ <p><img alt="84-1.png" src="http://liujiangblog.com/static/images/course/84-1.png"></p> 
+ <p>大多数基于Python的web框架，如Django、tornado、flask、webpy都是在这个范围内进行增删裁剪的。例如Tornado用的是自己的异步非阻塞“WSGI”网关接口，Flask则只提供了最精简和基本的框架，Django则是直接使用了现成的WSGI，并实现了大部分功能，提供了大量的应用工具。</p> 
+ <h2>Django</h2> 
+ <p><img alt="84-2.png" src="http://liujiangblog.com/static/images/course/84-2.png"></p> 
+ <p>Django是一个由Python编写的具有完整架站能力的开源Web框架。使用Django，只要很少的代码，Python的程序开发人员就可以轻松地完成一个正式网站所需要的大部分内容，并进一步开发出全功能的Web服务。</p> 
+ <p>Django本身基于MVC模型，即Model（模型）+View（视图）+ Controller（控制器）设计模式，因此天然具有MVC的出色基因：开发快捷、部署方便、可重用性高、维护成本低等。Python加Django是快速开发、设计、部署网站的最佳组合。</p> 
+ <p>Django诞生于2003年，2006年加入了BSD许可证，成为开源的Web框架。Django这一词语是根据比利时的爵士音乐家<code>Django Reinhardt</code>命名的，有希望Django能够优雅地演奏（开发）各种乐曲（Web应用）的美好含义。</p> 
+ <p>Django是由美国堪萨斯（Kansas）州Lawrence城中的一个新闻开发小组开发出来的。当时<code>Lawrence Journal-World</code>报纸的程序员<code>Adrian Holovaty</code>和<code>Simon Willison</code>用 Python 编写Web新闻应用，他们的 <code>World Online</code>小组制作并维护了当地的几个新闻站点。新闻界独有的特点是快速迭代，从开发到上线，通常只有几天或几个小时的时间。为了能在截止时间前完成工作，Adrian和Simon打算开发一种通用的高效的网络应用开发框架，也就是Django。</p> 
+ <p>2005年的夏天，当这个框架开发完成时，它已经用来制作了很多个<code>World Online</code>的站点。不久，小组中的<code>Jacob Kaplan-Moss</code>决定把这个框架发布为一个开源软件，于是短短数年，Django项目就有着数以万计的用户和贡献者，在世界范围内广泛传播。 原来的<code>World Online</code>的两个开发者（Adrian and Jacob）仍然掌握着Django，但是其发展方向受社区团队的影响更大。</p> 
+ <p><strong>Django具有以下特点：</strong></p> 
+ <ul> 
+  <li>功能完善、要素齐全：该有的、可以没有的都有，常用的、不常用的工具都用。Django提供了大量的特性和工具，无须你自己定义、组合、增删及修改。但是，在有些人眼里这被认为是‘臃肿’不够灵活，发挥不了程序员的主动能力。（一体机和DIY你更喜欢哪个？^-^）</li> 
+  <li>完善的文档：经过十多年的发展和完善，Django有广泛的实践经验和完善的在线文档（可惜大多数为英文）。开发者遇到问题时可以搜索在线文档寻求解决方案。</li> 
+  <li>强大的数据库访问组件：Django的Model层自带数据库ORM组件，使得开发者无须学习其他数据库访问技术（SQL、pymysql、SQLALchemy等）。当然你也可以不用Django自带的ORM，而是使用其它访问技术，比如SQLALchemy。</li> 
+  <li>灵活的URL映射：Django使用正则表达式管理URL映射，灵活性高。</li> 
+  <li>丰富的Template模板语言：类似jinjia模板语言，不但原生功能丰富，还可以自定义模板标签。</li> 
+  <li>自带免费的后台管理系统：只需要通过简单的几行配置和代码就可以实现一个完整的后台数据管理控制平台。</li> 
+  <li>完整的错误信息提示：在开发调试过程中如果出现运行错误或者异常，Django可以提供非常完整的错误信息帮助定位问题。</li> 
+ </ul> 
+ <h2>MVC及MTV设计模式：</h2> 
+ <p>在目前基于Python语言的几十个Web开发框架中，几乎所有的全栈框架都强制或引导开发者使用MVC设计模式。所谓全栈框架，是指除了封装网络和线程操作，还提供HTTP、数据库读写管理、HTML模板引擎等一系列功能的Web框架，比如Django、Tornado和Flask。</p> 
+ <p><strong>MVC设计模式：</strong></p> 
+ <p>最早由<code>Trygve Teenskaug</code>在1978年提出，上世纪80年代是程序语言Smalltalk的一种内部架构。后来MVC被其他领域借鉴，成为了软件工程中的一种软件架构模式。MVC把Web框架分为3个基础部分：</p> 
+ <p><strong>模型(Model)</strong>：用于封装与应用程序的业务逻辑相关的数据及对数据的处理方法，是Web应用程序中用于处理应用程序的数据逻辑的部分，Model只提供功能性的接口，通过这些接口可以获取Model的所有功能。白话说，这个模块就是Web框架和数据库的交互层。</p> 
+ <p><strong>视图(View)</strong>：负责数据的显示和呈现，是对用户的直接输出。</p> 
+ <p><strong>控制器(Controller)</strong>：负责从用户端收集用户的输入，可以看成提供View的反向功能。</p> 
+ <p>这三个部分互相独立，但又相互联系，使得改进和升级界面及用户交互流程，在Web开发过程任务分配时，不需要重写业务逻辑及数据访问代码。</p> 
+ <p>MVC在Python之外的语言中也有广泛应用，例如VC++的MFC，Java的Structs及Spring、C#的.NET开发框架，都非常有名。</p> 
+ <p><strong>MTV设计模式：</strong></p> 
+ <p>Django对传统的MVC设计模式进行了修改，将视图分成View模块和Template模块两部分，将动态的逻辑处理与静态的页面展现分离开。而Model采用了ORM技术，将关系型数据库表抽象成面向对象的Python类，将表操作转换成类操作，避免了复杂的SQL语句编写。MTV和MVC本质上是一样的。</p> 
+ <p><strong>模型(Model)</strong>：和MVC中的定义一样</p> 
+ <p><strong>模板(Template)</strong>：将数据与HTML语言结合起来的引擎</p> 
+ <p><strong>视图(View)</strong>：负责实际的业务逻辑实现</p> 
+ <p>Django的MTV模型组织可参考下图所示：</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/84-3.png"></p> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/2"> <i class="fa fa-arrow-left"></i>&nbsp;Django2.2教程</a> 
+  <a class="float-right" href="/course/django/85"> Django环境安装&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 9</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/84">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.664.664.50/0075uynLly8ftz7gvzo59j30ig0igq3n.jpg?Expires=1563269341&amp;ssig=MlmhO5O0cu&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>这是我找到一篇最详细的教程了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 小鱼儿与花无缺_101 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年7月16日 16:49</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1460">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/default/images/default_avatar_female_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>博主这个博客用的什么框架？还是自己写的？左边这个目录看上去比较炫</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; hordechief </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年7月29日 00:43</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/642">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>加上Bootstrap</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; hordechief </span> 
+      <em>2018年7月29日 21:23</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/643">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva2.sinaimg.cn/crop.0.70.549.549.50/7cb3b2bagw1eqh7nybgn5j20fc0jg79a.jpg?KID=imgbed,tva&amp;Expires=1569128453&amp;ssig=foDA56wtrC" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>博主，建议左边目录不要跟随右边正文滚动，看着太碍眼了。来阅读只想静静地看的，但左边一滚动，注意力都在左边了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> Stodden &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2019年9月22日 10:01</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1632">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 12em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1569430444&amp;ssig=vl6QIV2PbU" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>好吧，跟着滚动是你们说的，不滚也是你们说的。宝宝也好难啊。 不过，我内心也是偏向固定形式的，哈哈。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; Stodden </span> 
+      <em>2019年9月25日 22:01</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1641">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.960.960.50/006xIWURly8fymbr91qcaj30qo0qo40k.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>教程是真好，但左边目录是真不炫，目录不应该随页面滚动。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 蔷薇-Nina &nbsp;&nbsp;回复&nbsp;&nbsp; hordechief </span> 
+      <em>2019年5月24日 16:52</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1352">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva3.sinaimg.cn/crop.312.0.1137.1137.50/687873d5jw8f46eudjs07j21kw11xqf7.jpg?Expires=1563027427&amp;ssig=UABdPjjFax&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>同意</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> Ejoy的摄影日志 &nbsp;&nbsp;回复&nbsp;&nbsp; 蔷薇-Nina </span> 
+      <em>2019年7月13日 21:17</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1451">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.18.375.375.50/006WUN9ngy1fjmcr4doi8j30ai0aywem.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>django　2.0　已经不需要该死的 正则表达式了　鼓掌</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; jingwangnet </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年4月24日 16:31</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/406">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.960.960.50/006xIWURly8fo9wxo24vzj30qo0qoaaz.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>有些时候还是正则表达式用起来更符合需求。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 蔷薇-Nina &nbsp;&nbsp;回复&nbsp;&nbsp; jingwangnet </span> 
+      <em>2018年6月5日 09:42</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/522">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

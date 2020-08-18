@@ -1,0 +1,198 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>聚合内容 RSS/Atom</h1> 
+ <small>阅读:&nbsp;13864&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：4 </small> 
+ <hr> 
+ <p>Django提供了一个高层次的聚合内容框架，让我们创建RSS/Atom变得简单，你需要做的只是编写一个简单的Python类。</p> 
+ <h2>一、范例</h2> 
+ <p>要创建一个feed，只需要编写一个Feed类，然后设置一条指向Feed实例的URLconf就可以了，非常简单，下面是一个示例，演示了某站点的最近五条新闻记录：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.contrib.syndication.views</span> <span class="kn">import</span> <span class="n">Feed</span>
+<span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">reverse</span>
+<span class="kn">from</span> <span class="nn">policebeat.models</span> <span class="kn">import</span> <span class="n">NewsItem</span>
+
+<span class="k">class</span> <span class="nc">LatestEntriesFeed</span><span class="p">(</span><span class="n">Feed</span><span class="p">):</span>
+    <span class="n">title</span> <span class="o">=</span> <span class="s2">"Police beat site news"</span>
+    <span class="n">link</span> <span class="o">=</span> <span class="s2">"/sitenews/"</span>
+    <span class="n">description</span> <span class="o">=</span> <span class="s2">"Updates on changes and additions to police beat central."</span>
+
+    <span class="k">def</span> <span class="nf">items</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">NewsItem</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s1">'-pub_date'</span><span class="p">)[:</span><span class="mi">5</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">item_title</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">item</span><span class="o">.</span><span class="n">title</span>
+
+    <span class="k">def</span> <span class="nf">item_description</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">item</span><span class="o">.</span><span class="n">description</span>
+
+    <span class="c1"># item_link is only needed if NewsItem has no get_absolute_url method.</span>
+    <span class="k">def</span> <span class="nf">item_link</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">reverse</span><span class="p">(</span><span class="s1">'news-item'</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">[</span><span class="n">item</span><span class="o">.</span><span class="n">pk</span><span class="p">])</span>
+</pre>
+ </div> 
+ <p>要设置链接这个feed的URL，只需要将这个Feed类的实例，作为参数，加入URLconf，如下所示：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.conf.urls</span> <span class="kn">import</span> <span class="n">url</span>
+<span class="kn">from</span> <span class="nn">myproject.feeds</span> <span class="kn">import</span> <span class="n">LatestEntriesFeed</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="c1"># ...</span>
+    <span class="n">url</span><span class="p">(</span><span class="sa">r</span><span class="s1">'^latest/feed/$'</span><span class="p">,</span> <span class="n">LatestEntriesFeed</span><span class="p">()),</span>
+    <span class="c1"># ...</span>
+<span class="p">]</span>
+</pre>
+ </div> 
+ <p><strong>注意:</strong></p> 
+ <ul> 
+  <li>新建的Feed类继承于django.contrib.syndication.views.Feed。</li> 
+  <li>title、link和description属性分别对应标准RSS的<code>&lt;title&gt;</code>、<code>&lt;link&gt;</code>和<code>&lt;description&gt;</code>元素。</li> 
+  <li>items()方法简单地返回此Feed需要包含的对象，列表形式。 </li> 
+  <li>如果你要创建一个Atom feed，而不是RSS feed，使用subtitle属性替代description。 </li> 
+ </ul> 
+ <p>还有一件事要做。在一个 RSS feed中，每一个<code>&lt;item&gt;</code>都有一个<code>&lt;title&gt;</code>, <code>&lt;link&gt;</code> 和<code>&lt;description&gt;</code>， 我们需要告诉框架往这些对象里放入哪些数据。</p> 
+ <ul> 
+  <li> <p>对于<code>&lt;title&gt;</code>和<code>&lt;description&gt;</code>，Django将尝试调用Feed类中的<code>item_title()</code>和<code>item_description()</code>方法。 这两个方法都会被传入一个参数：item，也就是对象自己。 </p> </li> 
+  <li> <p>对于<code>&lt;link&gt;</code>，Django首先会尝试调用<code>item_link()</code>方法，如果该方法不存在，则使用对象的ORM模型中定义的<code>get_absolute_url()</code>方法。</p> </li> 
+ </ul> 
+ <h2>二、指定feed类型</h2> 
+ <p>默认情况下，使用RSS 2.0类型，如果要指定类型，在Feed类中添加feed_type属性，如下所示：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.utils.feedgenerator</span> <span class="kn">import</span> <span class="n">Atom1Feed</span>
+
+<span class="k">class</span> <span class="nc">MyFeed</span><span class="p">(</span><span class="n">Feed</span><span class="p">):</span>
+    <span class="n">feed_type</span> <span class="o">=</span> <span class="n">Atom1Feed</span>
+</pre>
+ </div> 
+ <p>目前可用的类型有下面三种：</p> 
+ <ul> 
+  <li>django.utils.feedgenerator.Rss201rev2Feed (RSS 2.01. Default.)</li> 
+  <li>django.utils.feedgenerator.RssUserland091Feed (RSS 0.91.)</li> 
+  <li>django.utils.feedgenerator.Atom1Feed (Atom 1.0.)</li> 
+ </ul> 
+ <h2>三、同时发布Atom和RSS feeds</h2> 
+ <p>要同时发布这两者，很简单，为你的Feed类创建一个子类，并且将其feed_type设置为你需要的类型，最后添加一条URLconf就可以了，如下所示：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.contrib.syndication.views</span> <span class="kn">import</span> <span class="n">Feed</span>
+<span class="kn">from</span> <span class="nn">policebeat.models</span> <span class="kn">import</span> <span class="n">NewsItem</span>
+<span class="kn">from</span> <span class="nn">django.utils.feedgenerator</span> <span class="kn">import</span> <span class="n">Atom1Feed</span>
+
+<span class="k">class</span> <span class="nc">RssSiteNewsFeed</span><span class="p">(</span><span class="n">Feed</span><span class="p">):</span>
+    <span class="n">title</span> <span class="o">=</span> <span class="s2">"Police beat site news"</span>
+    <span class="n">link</span> <span class="o">=</span> <span class="s2">"/sitenews/"</span>
+    <span class="n">description</span> <span class="o">=</span> <span class="s2">"Updates on changes and additions to police beat central."</span>
+
+    <span class="k">def</span> <span class="nf">items</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">NewsItem</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s1">'-pub_date'</span><span class="p">)[:</span><span class="mi">5</span><span class="p">]</span>
+
+<span class="c1"># 增加下面的子类</span>
+<span class="k">class</span> <span class="nc">AtomSiteNewsFeed</span><span class="p">(</span><span class="n">RssSiteNewsFeed</span><span class="p">):</span>
+    <span class="n">feed_type</span> <span class="o">=</span> <span class="n">Atom1Feed</span> <span class="c1"># 修改类型</span>
+    <span class="n">subtitle</span> <span class="o">=</span> <span class="n">RssSiteNewsFeed</span><span class="o">.</span><span class="n">description</span>
+</pre>
+ </div> 
+ <p>增加路由：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.conf.urls</span> <span class="kn">import</span> <span class="n">url</span>
+<span class="kn">from</span> <span class="nn">myproject.feeds</span> <span class="kn">import</span> <span class="n">RssSiteNewsFeed</span><span class="p">,</span> <span class="n">AtomSiteNewsFeed</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="c1"># ...</span>
+    <span class="n">url</span><span class="p">(</span><span class="sa">r</span><span class="s1">'^sitenews/rss/$'</span><span class="p">,</span> <span class="n">RssSiteNewsFeed</span><span class="p">()),</span>
+    <span class="n">url</span><span class="p">(</span><span class="sa">r</span><span class="s1">'^sitenews/atom/$'</span><span class="p">,</span> <span class="n">AtomSiteNewsFeed</span><span class="p">()),</span>
+    <span class="c1"># ...</span>
+<span class="p">]</span>
+</pre>
+ </div> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/173"> <i class="fa fa-arrow-left"></i>&nbsp;分页 Paginator</a> 
+  <a class="float-right" href="/course/django/175"> 发送邮件&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 4</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/174">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.0.0.132.132.50/0076EBbjly8fplqjspd9ij303o03o3ya.jpg?KID=imgbed,tva&amp;Expires=1578745554&amp;ssig=vUWGU0RdiI" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我觉得博主有必要讲一下这是干嘛用的</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; BigPao咩 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年1月11日 17:27</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1835">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/default/images/default_avatar_male_50.gif?Expires=1565604483&amp;ssig=D2sCFKU%2BOM&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>博主讲得很通俗易懂，排版也很好看，但是博主能在开头讲解一下这些的应用场景就更好了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户5534500230 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年8月15日 10:43</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1556">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.180.180.50/67179639jw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>感觉是呢~?</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 孤竹孙 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年5月6日 16:29</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/455">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.960.960.50/006xIWURly8fo9wxo24vzj30qo0qoaaz.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>博主应该在此详细介绍一下RSS、Atom和Feed概念和用途。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 蔷薇-Nina </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年3月1日 21:11</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/234">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

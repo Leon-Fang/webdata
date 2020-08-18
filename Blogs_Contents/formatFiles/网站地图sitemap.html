@@ -1,0 +1,327 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>网站地图sitemap</h1> 
+ <small>阅读:&nbsp;16726&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：7 </small> 
+ <hr> 
+ <p>网站地图是根据网站的结构、框架、内容，生成的导航网页，是一个网站所有链接的容器。很多网站的连接层次比较深，蜘蛛很难抓取到，网站地图可以方便搜索引擎或者网络蜘蛛抓取网站页面，了解网站的架构，为网络蜘蛛指路，增加网站内容页面的收录概率。网站地图一般存放在域名根目录下并命名为sitemap，比如<code>http://www.liujiangblog.com/sitemap.xml</code>。</p> 
+ <p>一个典型的sitemap，其内容片段如下：</p> 
+ <div class="codehilite">
+  <pre><span></span>This XML file does not appear to have any style information associated with it. The document tree is shown below.
+<span class="nt">&lt;urlset</span> <span class="na">xmlns=</span><span class="s">"http://www.sitemaps.org/schemas/sitemap/0.9"</span><span class="nt">&gt;</span>
+<span class="nt">&lt;url&gt;</span>
+<span class="nt">&lt;loc&gt;</span>http://www.liujiangblog.com/blog/9/<span class="nt">&lt;/loc&gt;</span>
+<span class="nt">&lt;lastmod&gt;</span>2017-12-08<span class="nt">&lt;/lastmod&gt;</span>
+<span class="nt">&lt;priority&gt;</span>0.4<span class="nt">&lt;/priority&gt;</span>
+<span class="nt">&lt;/url&gt;</span>
+<span class="nt">&lt;url&gt;</span>
+<span class="nt">&lt;loc&gt;</span>http://www.liujiangblog.com/blog/8/<span class="nt">&lt;/loc&gt;</span>
+<span class="nt">&lt;lastmod&gt;</span>2017-12-05<span class="nt">&lt;/lastmod&gt;</span>
+<span class="nt">&lt;priority&gt;</span>0.4<span class="nt">&lt;/priority&gt;</span>
+<span class="nt">&lt;/url&gt;</span>
+<span class="nt">&lt;url&gt;</span>
+<span class="nt">&lt;loc&gt;</span>http://www.liujiangblog.com/blog/7/<span class="nt">&lt;/loc&gt;</span>
+<span class="nt">&lt;lastmod&gt;</span>2017-11-19<span class="nt">&lt;/lastmod&gt;</span>
+<span class="nt">&lt;priority&gt;</span>0.4<span class="nt">&lt;/priority&gt;</span>
+<span class="nt">&lt;/url&gt;</span>
+# 更多内容未列出
+</pre>
+ </div> 
+ <p>Django自带了一个高级的生成网站地图的框架，我们可以很容易地创建出XML格式的网站地图。创建网站地图，只需编写一个Sitemap类，并在URLconf中编写对应的访问路由。</p> 
+ <h2>一、安装</h2> 
+ <p>安装sitemap框架的步骤如下：</p> 
+ <ol> 
+  <li>在INSTALLED_APPS设置中添加'django.contrib.sitemaps' .</li> 
+  <li>确认settings.py中的<code>TEMPLATES</code>设置包含<code>DjangoTemplates</code>后端，并将<code>APP_DIRS</code>选项设置为True。其实，默认配置就是这样的，只有当你曾经修改过这些设置，才需要调整过来。</li> 
+  <li>确认你已经安装sites框架. (注意: 网站地图APP并不需要在数据库中建立任何数据库表。修改<code>INSTALLED_APPS</code>的唯一原因是，以便<code>Loader()</code>模板加载器可以找到默认模板。）</li> 
+ </ol> 
+ <h2>二、初始化</h2> 
+ <p>为了在网站上激活站点地图生成功能，请把以下代码添加到URLconf中:</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.contrib.sitemaps.views</span> <span class="kn">import</span> <span class="n">sitemap</span>
+
+<span class="n">url</span><span class="p">(</span><span class="sa">r</span><span class="s1">'^sitemap\.xml$'</span><span class="p">,</span> <span class="n">sitemap</span><span class="p">,</span> <span class="p">{</span><span class="s1">'sitemaps'</span><span class="p">:</span> <span class="n">sitemaps</span><span class="p">},</span>
+    <span class="n">name</span><span class="o">=</span><span class="s1">'django.contrib.sitemaps.views.sitemap'</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>当用户访问<code>/sitemap.xml</code>时，Django将生成并返回一个网站地图。</p> 
+ <p>网站地图的文件名并不重要，重要的是文件的位置。搜索引擎只会索引网站的当前URL层级及下属层级。例如，如果<code>sitemap.xml</code>位于根目录中，它会引用网站中的任何URL。 但是如果站点地图位于<code>/content/sitemap.xml</code>，则它只能引用以<code>/content/</code>开头的网址。</p> 
+ <p>sitemap视图需要一个额外的必需参数： <code>{'sitemaps': sitemaps}</code>。<code>sitemaps</code>应是一个字典，将部门的标签（例如news或blog）映射到其 Sitemap类（例如，NewsSitemap或BlogSitemap）。也可以映射到Sitemap类的实例（例如，BlogSitemap(some_var)）。</p> 
+ <h2>三、范例</h2> 
+ <p>假设你有一个博客系统，拥有Entry模型，并且你希望站点地图包含指向每篇博客文章的所有链接。 以下是Sitemap类的写法：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.contrib.sitemaps</span> <span class="kn">import</span> <span class="n">Sitemap</span>
+<span class="kn">from</span> <span class="nn">blog.models</span> <span class="kn">import</span> <span class="n">Entry</span>
+
+<span class="k">class</span> <span class="nc">BlogSitemap</span><span class="p">(</span><span class="n">Sitemap</span><span class="p">):</span>
+    <span class="n">changefreq</span> <span class="o">=</span> <span class="s2">"never"</span>
+    <span class="n">priority</span> <span class="o">=</span> <span class="mf">0.5</span>
+
+    <span class="k">def</span> <span class="nf">items</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">Entry</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">is_draft</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">lastmod</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">obj</span><span class="o">.</span><span class="n">pub_date</span>
+</pre>
+ </div> 
+ <p>注意：</p> 
+ <ul> 
+  <li>changefreq和priority分别对应于HTML页面中的<code>&lt;changefreq&gt;</code>和<code>&lt;priority&gt;</code>标签。</li> 
+  <li>items()只是一个返回对象列表的方法。</li> 
+  <li>lastmod方法应该返回一个datetime时间对象。</li> 
+  <li>在此示例中没有编写location方法，但你可以自己增加此方法来指定对象的URL。默认情况下，location()在每个对象上调用<code>get_absolute_url()</code>并将返回结果作为对象的url。也就是说，使用站点地图的模型，比如Entry，需要在模型内部实现<code>get_absolute_url()</code>方法。</li> 
+ </ul> 
+ <h2>四、Sitemap类详解</h2> 
+ <p>class Sitemap[source]</p> 
+ <p>Sitemap类可以定义以下方法/属性：</p> 
+ <h3>1. items[source]</h3> 
+ <p>必须定义。返回对象列表的方法。</p> 
+ <p>框架不关心对象的类型，重要的是这些对象将被传递给location()，lastmod()，changefreq()和priority()方法。</p> 
+ <h3>2. location[source]</h3> 
+ <p>可选。 其值可以是一个方法或属性。</p> 
+ <p>如果是一个方法, 它应该为items()返回的对象的绝对路径.</p> 
+ <p>如果它是一个属性，它的值应该是一个字符串，表示items()返回的每个对象的绝对路径。</p> 
+ <p>上面所说的“绝对路径”表示不包含协议和域名的URL。 例子：</p> 
+ <div class="codehilite">
+  <pre><span></span>正确：'/foo/bar/'
+错误：'example.com/foo/bar/'
+错误：'https://example.com/foo/bar/'
+</pre>
+ </div> 
+ <p>如果未提供location，框架将调用items()返回的每个对象上的<code>get_absolute_url()</code>方法。</p> 
+ <p>该属性最终反映到HTML页面上的<code>&lt;loc&gt;&lt;/loc&gt;</code>标签。</p> 
+ <h3>3. lastmod</h3> 
+ <p>可选。 一个方法或属性。表示当前条目最后的修改时间。</p> 
+ <h3>4. changefreq</h3> 
+ <p>可选。 一个方法或属性。表示当前条目修改的频率。</p> 
+ <p>changefreq的允许值为：</p> 
+ <div class="codehilite">
+  <pre><span></span>'always'
+'hourly'
+'daily'
+'weekly'
+'monthly'
+'yearly'
+'never'
+</pre>
+ </div> 
+ <h3>5. priority</h3> 
+ <p>可选。表示当前条目在网站中的权重系数，优先级。</p> 
+ <p>示例值：0.4，1.0。 页面的默认优先级为0.5，最高为1.0。 </p> 
+ <h3>6. protocol</h3> 
+ <p>可选的。定义网站地图中的网址的协议（'http'或'https'）。 </p> 
+ <h3>7. limit</h3> 
+ <p>可选的。定义网站地图的每个网页上包含的最大超级链接数。</p> 
+ <h3>8. i18n</h3> 
+ <p>可选的。一个boolean属性，定义是否应使用所有语言生成此网站地图。默认值为False。</p> 
+ <h2>五、快捷方式</h2> 
+ <p>sitemap框架提供了一个快捷类，帮助我们迅速生成网站地图：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kr">class</span> <span class="nx">GenericSitemap</span><span class="p">[</span><span class="nx">source</span><span class="p">]</span>
+</pre>
+ </div> 
+ <p>通过它，我们无需为sitemap编写单独的视图模块，直接在URLCONF中，获取对象，获取参数，传递参数，设置url，如下所示，一条龙服务：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.conf.urls</span> <span class="kn">import</span> <span class="n">url</span>
+<span class="kn">from</span> <span class="nn">django.contrib.sitemaps</span> <span class="kn">import</span> <span class="n">GenericSitemap</span>
+<span class="kn">from</span> <span class="nn">django.contrib.sitemaps.views</span> <span class="kn">import</span> <span class="n">sitemap</span>
+<span class="kn">from</span> <span class="nn">blog.models</span> <span class="kn">import</span> <span class="n">Entry</span>
+
+<span class="n">info_dict</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">'queryset'</span><span class="p">:</span> <span class="n">Entry</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">(),</span>
+    <span class="s1">'date_field'</span><span class="p">:</span> <span class="s1">'pub_date'</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="c1"># some generic view using info_dict</span>
+    <span class="c1"># ...</span>
+
+    <span class="c1"># the sitemap</span>
+    <span class="n">url</span><span class="p">(</span><span class="sa">r</span><span class="s1">'^sitemap\.xml$'</span><span class="p">,</span> <span class="n">sitemap</span><span class="p">,</span>
+        <span class="p">{</span><span class="s1">'sitemaps'</span><span class="p">:</span> <span class="p">{</span><span class="s1">'blog'</span><span class="p">:</span> <span class="n">GenericSitemap</span><span class="p">(</span><span class="n">info_dict</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="mf">0.6</span><span class="p">)}},</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">'django.contrib.sitemaps.views.sitemap'</span><span class="p">),</span>
+<span class="p">]</span>
+</pre>
+ </div> 
+ <h2>六、静态视图的Sitemap</h2> 
+ <p>有时候，我们不希望在站点地图中出现一些静态页面，比如商品的详细信息页面。要怎么做呢？解决方案是在items中显式列出这些页面的网址名称，并在网站地图的location方法中调用reverse()。 像下面这样：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="c1"># sitemaps.py</span>
+<span class="kn">from</span> <span class="nn">django.contrib</span> <span class="kn">import</span> <span class="n">sitemaps</span>
+<span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">reverse</span>
+
+<span class="k">class</span> <span class="nc">StaticViewSitemap</span><span class="p">(</span><span class="n">sitemaps</span><span class="o">.</span><span class="n">Sitemap</span><span class="p">):</span>
+    <span class="n">priority</span> <span class="o">=</span> <span class="mf">0.5</span>
+    <span class="n">changefreq</span> <span class="o">=</span> <span class="s1">'daily'</span>
+
+    <span class="k">def</span> <span class="nf">items</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="s1">'main'</span><span class="p">,</span> <span class="s1">'about'</span><span class="p">,</span> <span class="s1">'license'</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">location</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">reverse</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+
+<span class="c1"># urls.py</span>
+<span class="kn">from</span> <span class="nn">django.conf.urls</span> <span class="kn">import</span> <span class="n">url</span>
+<span class="kn">from</span> <span class="nn">django.contrib.sitemaps.views</span> <span class="kn">import</span> <span class="n">sitemap</span>
+
+<span class="kn">from</span> <span class="nn">.sitemaps</span> <span class="kn">import</span> <span class="n">StaticViewSitemap</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">views</span>
+
+<span class="n">sitemaps</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">'static'</span><span class="p">:</span> <span class="n">StaticViewSitemap</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">url</span><span class="p">(</span><span class="sa">r</span><span class="s1">'^$'</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">main</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">'main'</span><span class="p">),</span>
+    <span class="n">url</span><span class="p">(</span><span class="sa">r</span><span class="s1">'^about/$'</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">about</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">'about'</span><span class="p">),</span>
+    <span class="n">url</span><span class="p">(</span><span class="sa">r</span><span class="s1">'^license/$'</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">license</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">'license'</span><span class="p">),</span>
+    <span class="c1"># ...</span>
+    <span class="n">url</span><span class="p">(</span><span class="sa">r</span><span class="s1">'^sitemap\.xml$'</span><span class="p">,</span> <span class="n">sitemap</span><span class="p">,</span> <span class="p">{</span><span class="s1">'sitemaps'</span><span class="p">:</span> <span class="n">sitemaps</span><span class="p">},</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">'django.contrib.sitemaps.views.sitemap'</span><span class="p">)</span>
+<span class="p">]</span>
+</pre>
+ </div> 
+ <p>上面做法的本质，是我先找出不想展示的页面，然后反向选择一下，获取想生成站点条目的对象，最后展示到站点地图中。你可以简单的理解为‘反选’。</p> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/168"> <i class="fa fa-arrow-left"></i>&nbsp;会话session</a> 
+  <a class="float-right" href="/course/django/170"> 信号 signal&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 7</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/169">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif?KID=imgbed,tva&amp;Expires=1578995866&amp;ssig=azsfmiG7NB" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p># urls.py polls_dict = { 'queryset':Question.objects.all(), 'date_field':'pub_date', } sitemaps = {'BlogSitemap':BlogSitemap,'polls': GenericSitemap(polls_dict, priority=0.6)} urlpatterns = [ ... path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='django.contrib.sitemaps.views.sitemap'), ... ] 站点地图的模型和自己写的sitemap视图都能放到sitemaps 字典中</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户5617139709 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年1月14日 15:01</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1845">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.1080.1080.50/006xIWURly8g3w3jk5kmcj30u00u03zs.jpg?Expires=1563710067&amp;ssig=8SX01aUgvV&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>！！注意：使用站点地图的模型，必须在模型内部实现"get_absolute_url()"方法。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 蔷薇-Nina </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年7月28日 13:05</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1527">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.1080.1080.50/006xIWURly8g3w3jk5kmcj30u00u03zs.jpg?Expires=1563710067&amp;ssig=8SX01aUgvV&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>或者编写location方法</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 蔷薇-Nina &nbsp;&nbsp;回复&nbsp;&nbsp; 蔷薇-Nina </span> 
+      <em>2019年7月28日 14:25</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1528">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva3.sinaimg.cn/crop.0.0.180.180.50/56d50a4ejw1e8qgp5bmzyj2050050aa8.jpg?Expires=1563499616&amp;ssig=Aop3mPE9xa&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>老师，我按照你的方法写，打开网站地图，提示页面找不到。。。我用的是djanog2.0 的版本</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; Hope重生 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年7月25日 17:03</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1518">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.0.996.996.50/006gm2SLjw8f3kuapfb68j30ro0rpdja.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>学习了~</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; Winchoo </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年4月5日 21:13</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1224">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.1002.1002.50/006m9Evply8fwyc9hfghsj30ru0rujsi.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>This XML file does not appear to have any style information associated with it. The document tree is shown below. 如何自定义网站地图的样式？像是这样 http://www.weixianmanbu.com/sitemap.xml https://laod.cn/sitemap.xml</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; heroLinH </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年1月27日 15:18</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1041">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.18.375.375.50/006WUN9ngy1fjmcr4doi8j30ai0aywem.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>sitemap 显示的　域名都是 localhost 尴尬无比。。。。 http://jingwangnet.com/sitemap.xml 请问　大佬　怎么解决</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; jingwangnet </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年5月22日 09:29</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/494">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

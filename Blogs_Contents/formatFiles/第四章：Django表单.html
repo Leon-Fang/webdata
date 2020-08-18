@@ -1,0 +1,92 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>第四章：Django表单</h1> 
+ <small>阅读:&nbsp;17757&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：1 </small> 
+ <hr> 
+ <h2>一、HTML表单概述</h2> 
+ <p>Django开发的是动态Web服务，而非单纯提供静态页面。动态服务的本质在于和用户进行互动，接收用户的输入，根据输入的不同，返回不同的内容给用户。返回数据是我们服务器后端做的，而接收用户输入就需要靠HTML表单。表单<code>&lt;form&gt;...&lt;/form&gt;</code>可以收集其内部标签中的用户输入，然后将数据发送到服务端。</p> 
+ <p>一个HTML表单必须指定两样东西：</p> 
+ <ul> 
+  <li>目的地：用户数据发送的目的URL</li> 
+  <li>方式：发送数据所使用的HTTP方法</li> 
+ </ul> 
+ <p>例如，Django Admin站点的登录表单包含几个<code>&lt;input&gt;</code>元素：<code>type="text"</code>用于用户名，<code>type="password"</code>用于密码，<code>type="submit"</code>用于“登录"按钮。它还包含一些用户看不到的隐藏的文本字段，Django 使用它们来提高安全性和决定下一步的行为。它还告诉浏览器表单数据应该发往<code>&lt;form&gt;</code>的action属性指定的URL:<code>/admin/</code>，而且应该使用method属性指定的HTTP post方法发送数据。当点击<code>&lt;input type="submit" value="Log in"&gt;</code>元素时，数据将发送给<code>/admin/</code>。</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/151-1.png"></p> 
+ <p>其HTML源码如下：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="p">&lt;</span><span class="nt">form</span> <span class="na">action</span><span class="o">=</span><span class="s">"/admin/login/?next=/admin/"</span> <span class="na">method</span><span class="o">=</span><span class="s">"post"</span> <span class="na">id</span><span class="o">=</span><span class="s">"login-form"</span><span class="p">&gt;</span>
+
+    <span class="p">&lt;</span><span class="nt">input</span> <span class="na">type</span><span class="o">=</span><span class="s">'hidden'</span> <span class="na">name</span><span class="o">=</span><span class="s">'csrfmiddlewaretoken'</span>              <span class="na">value</span><span class="o">=</span><span class="s">'NNHZaDVJGduajNMECXygKZkAt8vyEcw9HS2qm2Vdf7brDZrA0qK1R0I7M2p3TKcs'</span> <span class="p">/&gt;</span>
+
+    <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"form-row"</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">label</span> <span class="na">class</span><span class="o">=</span><span class="s">"required"</span> <span class="na">for</span><span class="o">=</span><span class="s">"id_username"</span><span class="p">&gt;</span>用户名:<span class="p">&lt;/</span><span class="nt">label</span><span class="p">&gt;</span> 
+        <span class="p">&lt;</span><span class="nt">input</span> <span class="na">type</span><span class="o">=</span><span class="s">"text"</span> <span class="na">name</span><span class="o">=</span><span class="s">"username"</span> <span class="na">autofocus</span> <span class="na">maxlength</span><span class="o">=</span><span class="s">"254"</span> <span class="na">required</span> <span class="na">id</span><span class="o">=</span><span class="s">"id_username"</span> <span class="p">/&gt;</span>
+    <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+
+    <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"form-row"</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">label</span> <span class="na">class</span><span class="o">=</span><span class="s">"required"</span> <span class="na">for</span><span class="o">=</span><span class="s">"id_password"</span><span class="p">&gt;</span>密码:<span class="p">&lt;/</span><span class="nt">label</span><span class="p">&gt;</span> 
+        <span class="p">&lt;</span><span class="nt">input</span> <span class="na">type</span><span class="o">=</span><span class="s">"password"</span> <span class="na">name</span><span class="o">=</span><span class="s">"password"</span> <span class="na">required</span> <span class="na">id</span><span class="o">=</span><span class="s">"id_password"</span> <span class="p">/&gt;</span>
+        <span class="p">&lt;</span><span class="nt">input</span> <span class="na">type</span><span class="o">=</span><span class="s">"hidden"</span> <span class="na">name</span><span class="o">=</span><span class="s">"next"</span> <span class="na">value</span><span class="o">=</span><span class="s">"/admin/"</span> <span class="p">/&gt;</span>
+    <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+
+    <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"submit-row"</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">label</span><span class="p">&gt;</span><span class="ni">&amp;nbsp;</span><span class="p">&lt;/</span><span class="nt">label</span><span class="p">&gt;&lt;</span><span class="nt">input</span> <span class="na">type</span><span class="o">=</span><span class="s">"submit"</span> <span class="na">value</span><span class="o">=</span><span class="s">"登录"</span> <span class="p">/&gt;</span>
+    <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">form</span><span class="p">&gt;</span>
+</pre>
+ </div> 
+ <p><strong>GET和POST</strong> ：</p> 
+ <p>处理表单时候只会用到POST和GET方法。</p> 
+ <p>GET方法将用户数据以<code>键=值</code>的形式，以‘&amp;’符号组合在一起成为一个整体字符串，最后添加前缀“？”，将字符串拼接到url内，生成一个类似<code>https://docs.djangoproject.com/search/?q=forms&amp;release=1</code>的URL。</p> 
+ <p>而对于POST方法，浏览器会组合表单数据、对它们进行编码，然后打包将它们发送到服务器，数据不会出现在url中。</p> 
+ <p>GET方法通常用来请求数据，不适合密码表单这一类保密信息的发送，也不适合数据量大的表单和二进制数据。对于这些类型的数据，应该使用POST方法。但是，GET特别适合网页搜索的表单，因为这种表示一个GET请求的URL可以很容易地设置书签、分享和重新提交。</p> 
+ <h2>二、 Django的form表单</h2> 
+ <p>通常情况下，我们需要自己手动在HTML页面中，编写form标签和其内的其它元素。但这费时费力，而且有可能写得不太恰当，数据验证也比较麻烦。有鉴于此，Django在内部集成了一个表单模块，专门帮助我们快速处理表单相关的内容。Django的表单模块给我们提供了下面三个主要功能：</p> 
+ <ul> 
+  <li>准备和重构数据用于页面渲染</li> 
+  <li>为数据创建HTML表单元素</li> 
+  <li>接收和处理用户从表单发送过来的数据</li> 
+ </ul> 
+ <p>编写Django的form表单，非常类似我们在模型系统里编写一个模型。在模型中，一个字段代表数据表的一列，而form表单中的一个字段代表<code>&lt;form&gt;</code>中的一个<code>&lt;input&gt;</code>元素。</p> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/150"> <i class="fa fa-arrow-left"></i>&nbsp;自定义标签和过滤器</a> 
+  <a class="float-right" href="/course/django/152"> 使用表单&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 1</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/151">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.178.0.293.293.50/006AaVVsly8fw7tz0rufaj30ho085qbx.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>感谢博主教程！期中作业就用Django连接API做一个WebGIS了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 为了给笛子点赞才找回密码 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年11月11日 21:13</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/846">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

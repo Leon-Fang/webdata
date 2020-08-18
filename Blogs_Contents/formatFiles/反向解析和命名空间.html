@@ -1,0 +1,373 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>反向解析和命名空间</h1> 
+ <small>阅读:&nbsp;31894&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：11 </small> 
+ <hr> 
+ <h2>一、反向解析URL</h2> 
+ <p>在实际的Django项目中，经常需要获取某条URL，为生成的内容配置URL链接。</p> 
+ <p>比如，我要在页面上展示一列文章列表，每个条目都是个超级链接，点击就进入该文章的详细页面。</p> 
+ <p>现在我们的urlconf是这么配置的：</p> 
+ <div class="codehilite">
+  <pre><span></span>path('post/&lt;int:pk&gt;/'，views.some_view),
+</pre>
+ </div> 
+ <p>在前端中，这就需要为HTML的<code>&lt;a&gt;</code>标签的href属性提供一个诸如<code>http://www.xxx.com/post/3/</code>的值。其中的域名部分，Django会帮你自动添加无须关心，我们关注的是<code>post/3/</code>。</p> 
+ <p>此时，一定不能硬编码URL为<code>post/3/</code>，那样费时、不可伸缩，而且容易出错。试想，如果哪天，因为某种原因，需要将urlconf中的表达式改成<code>entry/&lt;int:pk&gt;/</code>，为了让链接正常工作，必须修改对应的herf属性值，于是你去项目里将所有的<code>post/3/</code>都改成<code>entry/3/</code>吗？显然这是不现实的！</p> 
+ <p>我们需要一种安全、可靠、自适应的机制，当修改URLconf中的代码后，无需在项目源码中大范围搜索、替换失效的硬编码URL。</p> 
+ <p>为了解决这个问题，Django提供了一种解决方案，只需在URL中提供一个name参数，并赋值一个你自定义的、好记的、直观的字符串。</p> 
+ <p>通过这个name参数，可以反向解析URL、反向URL匹配、反向URL查询或者简单的URL反查。</p> 
+ <p>在需要解析URL的地方，对于不同层级，Django提供了不同的工具用于URL反查：</p> 
+ <ul> 
+  <li> <p>在模板语言中：使用<code>url</code>模板标签。(也就是写前端网页时）</p> </li> 
+  <li> <p>在Python代码中：使用<code>reverse()</code>函数。（也就是写视图函数等情况时）</p> </li> 
+  <li> <p>在更高层的与处理Django模型实例相关的代码中：使用<code>get_absolute_url()</code>方法。(也就是在模型model中)</p> </li> 
+ </ul> 
+ <p><strong>范例：</strong></p> 
+ <p>考虑下面的URLconf：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">path</span>
+
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">views</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="c1">#...</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'articles/&lt;int:year&gt;/'</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">year_archive</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">'news-year-archive'</span><span class="p">),</span>
+    <span class="c1">#...</span>
+<span class="p">]</span>
+</pre>
+ </div> 
+ <p>2019年对应的归档URL是<code>/articles/2019/</code>。</p> 
+ <p>可以在模板的代码中使用下面的方法获得它们：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="p">&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">"{% url 'news-year-archive' 2012 %}"</span><span class="p">&gt;</span>2012 Archive<span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;</span>
+{# Or with the year in a template context variable: #}
+<span class="p">&lt;</span><span class="nt">ul</span><span class="p">&gt;</span>
+{% for yearvar in year_list %}
+<span class="p">&lt;</span><span class="nt">li</span><span class="p">&gt;&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">"{% url 'news-year-archive' yearvar %}"</span><span class="p">&gt;</span>{{ yearvar }} Archive<span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+{% endfor %}
+<span class="p">&lt;/</span><span class="nt">ul</span><span class="p">&gt;</span>
+</pre>
+ </div> 
+ <p>在Python代码中，这样使用：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.http</span> <span class="kn">import</span> <span class="n">HttpResponseRedirect</span>
+<span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">reverse</span>
+
+<span class="k">def</span> <span class="nf">redirect_to_year</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="c1"># ...</span>
+    <span class="n">year</span> <span class="o">=</span> <span class="mi">2019</span>
+    <span class="c1"># ...</span>
+    <span class="k">return</span> <span class="n">HttpResponseRedirect</span><span class="p">(</span><span class="n">reverse</span><span class="p">(</span><span class="s1">'news-year-archive'</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">year</span><span class="p">,)))</span>
+</pre>
+ </div> 
+ <p>其中，起到核心作用的是我们通过<code>name='news-year-archive'</code>为那条url起了一个可以被引用的名称。</p> 
+ <p>URL名称name使用的字符串可以包含任何你喜欢的字符，但是过度的放纵有可能带来重名的冲突，比如两个不同的app，在各自的urlconf中为某一条url取了相同的name，这就会带来麻烦。为了解决这个问题，又引出了下面的命名空间。</p> 
+ <h2>二、URL命名空间</h2> 
+ <p>URL命名空间可以保证反查到唯一的URL，即使不同的app使用相同的URL名称。</p> 
+ <p>第三方应用始终使用带命名空间的URL是一个很好的做法。</p> 
+ <p>类似地，它还允许你在一个应用有多个实例部署的情况下反查URL。 换句话讲，因为一个应用的多个实例共享相同的命名URL，命名空间提供了一种区分这些命名URL 的方法。</p> 
+ <p>实现命名空间的做法很简单，在urlconf文件中添加<code>app_name = 'polls'</code>和<code>namespace='author-polls'</code>这种类似的定义。</p> 
+ <p><strong>范例</strong>：</p> 
+ <p>以前面的polls应用的两个实例为例子：'publisher-polls' 和'author-polls'。 </p> 
+ <p>假设我们已经在创建和显示投票时考虑了实例命名空间的问题，代码如下：</p> 
+ <p><code>urls.py</code></p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">include</span><span class="p">,</span> <span class="n">path</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'author-polls/'</span><span class="p">,</span> <span class="n">include</span><span class="p">(</span><span class="s1">'polls.urls'</span><span class="p">,</span> <span class="n">namespace</span><span class="o">=</span><span class="s1">'author-polls'</span><span class="p">)),</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'publisher-polls/'</span><span class="p">,</span> <span class="n">include</span><span class="p">(</span><span class="s1">'polls.urls'</span><span class="p">,</span> <span class="n">namespace</span><span class="o">=</span><span class="s1">'publisher-polls'</span><span class="p">)),</span>
+<span class="p">]</span>
+</pre>
+ </div> 
+ <p><code>polls/urls.py</code></p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">path</span>
+
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">views</span>
+
+<span class="n">app_name</span> <span class="o">=</span> <span class="s1">'polls'</span>
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">''</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">IndexView</span><span class="o">.</span><span class="n">as_view</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">'index'</span><span class="p">),</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'&lt;int:pk&gt;/'</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">DetailView</span><span class="o">.</span><span class="n">as_view</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">'detail'</span><span class="p">),</span>
+    <span class="o">...</span>
+<span class="p">]</span>
+</pre>
+ </div> 
+ <p>如果当前的app实例是其中的一个，例如我们正在渲染实例'author-polls'中的detail视图，'polls:index'将解析到'author-polls'实例的index视图。</p> 
+ <p>根据以上设置，可以使用下面的查询：</p> 
+ <p>在基于类的视图的方法中：</p> 
+ <div class="codehilite">
+  <pre><span></span>reverse('polls:index', current_app=self.request.resolver_match.namespace)
+</pre>
+ </div> 
+ <p>和在模板中：</p> 
+ <div class="codehilite">
+  <pre><span></span>{% url 'polls:index' %}
+</pre>
+ </div> 
+ <p>如果没有当前app实例，例如如果我们在站点的其它地方渲染一个页面，'polls:index'将解析到polls注册的最后一个app实例空间。 因为没有默认的实例（命名空间为'polls'的实例），将使用注册的polls 的最后一个实例。 这将是'publisher-polls'，因为它是在urlpatterns中最后一个声明的。</p> 
+ <h2>三、URL命名空间和include的URLconf</h2> 
+ <p>可以通过两种方式指定include的URLconf的应用名称空间。</p> 
+ <p><strong>第一种</strong></p> 
+ <p>在include的URLconf模块中设置与urlpatterns属性相同级别的<code>app_name</code>属性。必须将实际模块或模块的字符串引用传递到include()，而不是urlpatterns本身的列表。</p> 
+ <p><code>polls/urls.py</code>：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">path</span>
+
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">views</span>
+
+<span class="n">app_name</span> <span class="o">=</span> <span class="s1">'polls'</span>
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">''</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">IndexView</span><span class="o">.</span><span class="n">as_view</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">'index'</span><span class="p">),</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'&lt;int:pk&gt;/'</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">DetailView</span><span class="o">.</span><span class="n">as_view</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">'detail'</span><span class="p">),</span>
+    <span class="o">...</span>
+<span class="p">]</span>
+</pre>
+ </div> 
+ <p><code>urls.py</code>:</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">include</span><span class="p">,</span> <span class="n">path</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'polls/'</span><span class="p">,</span> <span class="n">include</span><span class="p">(</span><span class="s1">'polls.urls'</span><span class="p">)),</span>
+<span class="p">]</span>
+</pre>
+ </div> 
+ <p>此时，polls.urls中定义的URL将具有应用名称空间polls。</p> 
+ <p><strong>第二种</strong></p> 
+ <p>include一个包含嵌套命名空间数据的对象，格式如下：</p> 
+ <div class="codehilite">
+  <pre><span></span>(&lt;list of path()/re_path() instances&gt;, &lt;application namespace&gt;)
+</pre>
+ </div> 
+ <p>下面是个例子：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">include</span><span class="p">,</span> <span class="n">path</span>
+
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">views</span>
+
+<span class="n">polls_patterns</span> <span class="o">=</span> <span class="p">([</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">''</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">IndexView</span><span class="o">.</span><span class="n">as_view</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">'index'</span><span class="p">),</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'&lt;int:pk&gt;/'</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">DetailView</span><span class="o">.</span><span class="n">as_view</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">'detail'</span><span class="p">),</span>
+<span class="p">],</span> <span class="s1">'polls'</span><span class="p">)</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'polls/'</span><span class="p">,</span> <span class="n">include</span><span class="p">(</span><span class="n">polls_patterns</span><span class="p">)),</span>
+<span class="p">]</span>
+</pre>
+ </div> 
+ <p>这将include指定的URL模式到给定的app命名空间。</p> 
+ <p>可以使用include()的namespace参数指定app实例命名空间。如果未指定，则app实例命名空间默认为URLconf的app命名空间。</p> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/135"> <i class="fa fa-arrow-left"></i>&nbsp;路由转发</a> 
+  <a class="float-right" href="/course/django/137"> 视图函数及快捷方式&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 11</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/136">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax4.sinaimg.cn/crop.0.0.996.996.50/0064OPcTly8fihxzog41xj30ro0rojtg.jpg?KID=imgbed,tva&amp;Expires=1591286801&amp;ssig=jMzap3o1f2" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>这章给我看蒙了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 蹦巴拉蹦巴拉蹦 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年6月4日 21:07</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2094">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.0.0.996.996.50/006xIWURly8gehjmghiqfj30ro0roq53.jpg?KID=imgbed,tva&amp;Expires=1591289035&amp;ssig=NX%2BU5OBrH%2F" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>确实，这节教程漏洞较多，比如namespace如何使用，没有说清除，没有较好的例子说明。不过瑕不掩瑜吧。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 蔷薇-Nina &nbsp;&nbsp;回复&nbsp;&nbsp; 蹦巴拉蹦巴拉蹦 </span> 
+      <em>2020年6月8日 21:26</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2109">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva2.sinaimg.cn/crop.0.0.180.180.50/a6adf22djw1e8qgp5bmzyj2050050aa8.jpg?KID=imgbed,tva&amp;Expires=1587286724&amp;ssig=dPpLx873mO" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>这章翻译的遗漏好多，revserse()函数整个都没，勉强能看懂吧</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 吉了个继 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年4月19日 14:00</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2045">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax2.sinaimg.cn/crop.0.0.996.996.50/006nYu7lly8fkiygvorosj30ro0ro76r.jpg?KID=imgbed,tva&amp;Expires=1578648103&amp;ssig=PcfpntXS16" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>一脸懵逼，感觉很乱，没说清楚。其实建议博主可以在文章中间加一些图解，帮助理解，django感觉很多东西，容易混淆，有图的话就清晰很多。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; GardenBaby_ </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年1月11日 21:43</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1837">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.1080.1080.50/006xIWURly8g3w3jk5kmcj30u00u03zs.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>说实在的，Django2.x中，namespace真没啥用，有用的是app_name。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 蔷薇-Nina </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年7月1日 22:17</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1425">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tp1.sinaimg.cn/3975881956/50/5692559610/0" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>适合有django开发基础的，查漏补缺</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 木比白1997 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年5月8日 18:06</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1319">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.0.180.180.50/59bd64d7jw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我也是，看的好懵，看细节真的好难懂啊</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 定期换名字啦啦 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年3月21日 04:57</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1169">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.2.750.750.50/d1c0b262ly8fdvalnngs4j20ku0kyt9s.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>Django有一点基础，前面内容都没问题，这个真心没理解</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 这就尴尬了吧_ </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年10月20日 00:10</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/782">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.0.996.996.50/005NS0Mgjw8f4wevheyokj30ro0ro78k.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>这一节我也看得蒙蒙的</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> macro的小微博 &nbsp;&nbsp;回复&nbsp;&nbsp; 这就尴尬了吧_ </span> 
+      <em>2018年12月9日 22:51</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/932">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.0.996.996.50/005NS0Mgjw8f4wevheyokj30ro0ro78k.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> macro的小微博 &nbsp;&nbsp;回复&nbsp;&nbsp; 这就尴尬了吧_ </span> 
+      <em>2018年12月9日 22:53</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/933">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.0.0.1002.1002.50/006fkdMwly8g1nlbmr81ej30ru0ru753.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>同上</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> Henry_C-3 &nbsp;&nbsp;回复&nbsp;&nbsp; 这就尴尬了吧_ </span> 
+      <em>2019年4月12日 18:35</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1247">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

@@ -1,0 +1,608 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>模型表单ModelForm</h1> 
+ <small>阅读:&nbsp;27058&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：13 </small> 
+ <hr> 
+ <p>如果你正在构建一个数据库驱动的应用，那么你可能会有与Django的模型紧密映射的表单。比如，你有个BlogComment模型，并且你还想创建一个表单让大家提交评论到这个模型中。在这种情况下，写一个forms.Form类，然后在表单类中定义字段，这种一般创建表单的做法是冗余的，因为你已经在ORM模型model中定义了字段的属性和功能，完全没必要重新写一遍字段。</p> 
+ <h2>一、核心用法</h2> 
+ <p>基于这个原因，Django提供一个辅助类帮助我们利用Django的ORM模型model创建Form。</p> 
+ <p>像下面这样：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">django.forms</span> <span class="kn">import</span> <span class="n">ModelForm</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">myapp.models</span> <span class="kn">import</span> <span class="n">Article</span>
+
+<span class="c1"># 创建表单类</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="k">class</span> <span class="nc">ArticleForm</span><span class="p">(</span><span class="n">ModelForm</span><span class="p">):</span>
+<span class="o">...</span>     <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+<span class="o">...</span>         <span class="n">model</span> <span class="o">=</span> <span class="n">Article</span>
+<span class="o">...</span>         <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'pub_date'</span><span class="p">,</span> <span class="s1">'headline'</span><span class="p">,</span> <span class="s1">'content'</span><span class="p">,</span> <span class="s1">'reporter'</span><span class="p">]</span>
+
+<span class="c1"># 创建一个表单，用于添加文章</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">form</span> <span class="o">=</span> <span class="n">ArticleForm</span><span class="p">()</span>
+
+<span class="c1"># 创建表单修改已有的文章</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">article</span> <span class="o">=</span> <span class="n">Article</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">form</span> <span class="o">=</span> <span class="n">ArticleForm</span><span class="p">(</span><span class="n">instance</span><span class="o">=</span><span class="n">article</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>用法的核心是：</p> 
+ <ol> 
+  <li>首先从django.forms导入ModelForm；</li> 
+  <li>编写一个自己的类，继承ModelForm；</li> 
+  <li>在新类里，设置元类Meta；</li> 
+  <li>在Meta中，设置model属性为你要关联的ORM模型，这里是Article；</li> 
+  <li>在Meta中，设置fields属性为你要在表单中使用的字段列表；</li> 
+  <li>列表里的值，应该是ORM模型model中的字段名。</li> 
+ </ol> 
+ <p>上面的例子中，因为model和form比较简单，字段数量少，看不出这么做的威力和效率。但如果是那种大型项目，每个模型的字段数量几十上百，这么做的收益将非常巨大，而且后面还有一招提高效率的大杀器，也就是一步保存数据的操作。</p> 
+ <h2>二、 字段类型</h2> 
+ <p>生成的Form类中将具有和指定的模型字段对应的表单字段，顺序为fields属性列表中指定的顺序。</p> 
+ <p>每个模型字段有一个对应的默认表单字段。比如，模型中的CharField表现成表单中的CharField。模型中的ManyToManyField字段会表现成MultipleChoiceField字段。下面是完整的映射列表：</p> 
+ <table> 
+  <thead> 
+   <tr> 
+    <th>模型字段</th> 
+    <th>表单字段</th> 
+   </tr> 
+  </thead> 
+  <tbody> 
+   <tr> 
+    <td>AutoField</td> 
+    <td>在Form类中无法使用</td> 
+   </tr> 
+   <tr> 
+    <td>BigAutoField</td> 
+    <td>在Form类中无法使用</td> 
+   </tr> 
+   <tr> 
+    <td>BigIntegerField</td> 
+    <td>IntegerField，最小-9223372036854775808，最大9223372036854775807.</td> 
+   </tr> 
+   <tr> 
+    <td>BooleanField</td> 
+    <td>BooleanField</td> 
+   </tr> 
+   <tr> 
+    <td>CharField</td> 
+    <td>CharField，同样的最大长度限制。如果model设置了null=True，Form将使用empty_value</td> 
+   </tr> 
+   <tr> 
+    <td>CommaSeparatedIntegerField</td> 
+    <td>CharField</td> 
+   </tr> 
+   <tr> 
+    <td>DateField</td> 
+    <td>DateField</td> 
+   </tr> 
+   <tr> 
+    <td>DateTimeField</td> 
+    <td>DateTimeField</td> 
+   </tr> 
+   <tr> 
+    <td>DecimalField</td> 
+    <td>DecimalField</td> 
+   </tr> 
+   <tr> 
+    <td>EmailField</td> 
+    <td>EmailField</td> 
+   </tr> 
+   <tr> 
+    <td>FileField</td> 
+    <td>FileField</td> 
+   </tr> 
+   <tr> 
+    <td>FilePathField</td> 
+    <td>FilePathField</td> 
+   </tr> 
+   <tr> 
+    <td>FloatField</td> 
+    <td>FloatField</td> 
+   </tr> 
+   <tr> 
+    <td><strong>ForeignKey</strong></td> 
+    <td><strong>ModelChoiceField</strong></td> 
+   </tr> 
+   <tr> 
+    <td>ImageField</td> 
+    <td>ImageField</td> 
+   </tr> 
+   <tr> 
+    <td>IntegerField</td> 
+    <td>IntegerField</td> 
+   </tr> 
+   <tr> 
+    <td>IPAddressField</td> 
+    <td>IPAddressField</td> 
+   </tr> 
+   <tr> 
+    <td>GenericIPAddressField</td> 
+    <td>GenericIPAddressField</td> 
+   </tr> 
+   <tr> 
+    <td><strong>ManyToManyField</strong></td> 
+    <td><strong>ModelMultipleChoiceField</strong></td> 
+   </tr> 
+   <tr> 
+    <td>NullBooleanField</td> 
+    <td>NullBooleanField</td> 
+   </tr> 
+   <tr> 
+    <td>PositiveIntegerField</td> 
+    <td>IntegerField</td> 
+   </tr> 
+   <tr> 
+    <td>PositiveSmallIntegerField</td> 
+    <td>IntegerField</td> 
+   </tr> 
+   <tr> 
+    <td>SlugField</td> 
+    <td>SlugField</td> 
+   </tr> 
+   <tr> 
+    <td>SmallIntegerField</td> 
+    <td>IntegerField</td> 
+   </tr> 
+   <tr> 
+    <td>TextField</td> 
+    <td>CharField，并带有widget=forms.Textarea参数</td> 
+   </tr> 
+   <tr> 
+    <td>TimeField</td> 
+    <td>TimeField</td> 
+   </tr> 
+   <tr> 
+    <td>URLField</td> 
+    <td>URLField</td> 
+   </tr> 
+  </tbody> 
+ </table> 
+ <p>可以看出，Django在设计model字段和表单字段时存在大量的相似和重复之处。</p> 
+ <p>ManyToManyField和 ForeignKey字段类型属于特殊情况：</p> 
+ <ul> 
+  <li> <p>ForeignKey被映射成为表单类的django.forms.ModelChoiceField，它的选项是一个模型的QuerySet，也就是可以选择的对象的列表，但是只能选择一个。</p> </li> 
+  <li> <p>ManyToManyField被映射成为表单类的django.forms.ModelMultipleChoiceField，它的选项也是一个模型的QuerySet，也就是可以选择的对象的列表，但是可以同时选择多个，多对多嘛。</p> </li> 
+ </ul> 
+ <p>同时，在表单属性设置上，还有下面的映射关系：</p> 
+ <ul> 
+  <li>如果模型字段设置blank=True，那么表单字段的required设置为False。 否则，required=True。</li> 
+  <li>表单字段的label属性根据模型字段的verbose_name属性设置，并将第一个字母大写。</li> 
+  <li>如果模型的某个字段设置了editable=False属性，那么它表单类中将不会出现该字段。道理很简单，都不能编辑了，还放在表单里提交什么？</li> 
+  <li>表单字段的<code>help_text</code>设置为模型字段的<code>help_text</code>。</li> 
+  <li>如果模型字段设置了choices参数，那么表单字段的widget属性将设置成Select框，其选项来自模型字段的choices。选单中通常会包含一个空选项，并且作为默认选择。如果该字段是必选的，它会强制用户选择一个选项。 如果模型字段具有default参数，则不会添加空选项到选单中。</li> 
+ </ul> 
+ <h2>三、完整示例</h2> 
+ <p>模型：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
+<span class="kn">from</span> <span class="nn">django.forms</span> <span class="kn">import</span> <span class="n">ModelForm</span>
+
+<span class="n">TITLE_CHOICES</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="p">(</span><span class="s1">'MR'</span><span class="p">,</span> <span class="s1">'Mr.'</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">'MRS'</span><span class="p">,</span> <span class="s1">'Mrs.'</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">'MS'</span><span class="p">,</span> <span class="s1">'Ms.'</span><span class="p">),</span>
+<span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">Author</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+    <span class="n">title</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="n">TITLE_CHOICES</span><span class="p">)</span>
+    <span class="n">birth_date</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateField</span><span class="p">(</span><span class="n">blank</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>              <span class="c1"># __unicode__ on Python 2</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
+
+<span class="k">class</span> <span class="nc">Book</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+    <span class="n">authors</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span><span class="n">Author</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">AuthorForm</span><span class="p">(</span><span class="n">ModelForm</span><span class="p">):</span>
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">Author</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'name'</span><span class="p">,</span> <span class="s1">'title'</span><span class="p">,</span> <span class="s1">'birth_date'</span><span class="p">]</span>
+
+<span class="k">class</span> <span class="nc">BookForm</span><span class="p">(</span><span class="n">ModelForm</span><span class="p">):</span>
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">Book</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'name'</span><span class="p">,</span> <span class="s1">'authors'</span><span class="p">]</span>
+</pre>
+ </div> 
+ <p>上面的ModelForm子类基本等同于下面的定义方式（唯一的区别是save()方法）：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django</span> <span class="kn">import</span> <span class="n">forms</span>
+
+<span class="k">class</span> <span class="nc">AuthorForm</span><span class="p">(</span><span class="n">forms</span><span class="o">.</span><span class="n">Form</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+    <span class="n">title</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
+        <span class="n">max_length</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+        <span class="n">widget</span><span class="o">=</span><span class="n">forms</span><span class="o">.</span><span class="n">Select</span><span class="p">(</span><span class="n">choices</span><span class="o">=</span><span class="n">TITLE_CHOICES</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">birth_date</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">DateField</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">BookForm</span><span class="p">(</span><span class="n">forms</span><span class="o">.</span><span class="n">Form</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+    <span class="n">authors</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">ModelMultipleChoiceField</span><span class="p">(</span><span class="n">queryset</span><span class="o">=</span><span class="n">Author</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">())</span>
+</pre>
+ </div> 
+ <h2>四、ModelForm的验证</h2> 
+ <p>验证ModelForm主要分两步：</p> 
+ <ul> 
+  <li>验证表单</li> 
+  <li>验证模型实例</li> 
+ </ul> 
+ <p>与普通的表单验证类似，模型表单的验证也是调用<code>is_valid()</code>方法或访问errors属性。模型的验证（Model.full_clean()）紧跟在表单的clean()方法调用之后。通常情况下，我们使用Django内置的验证器就好了。如果需要，可以重写模型表单的clean()来提供额外的验证，方法和普通的表单一样。</p> 
+ <h2>五、ModelForm的字段选择</h2> 
+ <p>强烈建议使用ModelForm的fields属性，在赋值的列表内，一个一个将要使用的字段添加进去。这样做的好处是，安全可靠。</p> 
+ <p>然而，有时候，字段太多，或者我们想偷懒，不愿意一个一个输入，也有简单的方法：</p> 
+ <p><strong><code>__all__</code></strong>:</p> 
+ <p>将fields属性的值设为<code>__all__</code>，表示将映射的模型中的全部字段都添加到表单类中来。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.forms</span> <span class="kn">import</span> <span class="n">ModelForm</span>
+
+<span class="k">class</span> <span class="nc">AuthorForm</span><span class="p">(</span><span class="n">ModelForm</span><span class="p">):</span>
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">Author</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="s1">'__all__'</span>
+</pre>
+ </div> 
+ <p><strong>exclude属性</strong>:</p> 
+ <p>表示将model中，除了exclude属性中列出的字段之外的所有字段，添加到表单类中作为表单字段。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="k">class</span> <span class="nc">PartialAuthorForm</span><span class="p">(</span><span class="n">ModelForm</span><span class="p">):</span>
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">Author</span>
+        <span class="n">exclude</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'title'</span><span class="p">]</span>
+</pre>
+ </div> 
+ <p>因为Author模型有3个字段name、<code>birth_date</code>和title，上面的例子会让<code>birth_date</code>和name出现在表单中。</p> 
+ <h2>六、自定义ModelForm字段</h2> 
+ <p>在前面，我们有个表格，展示了从模型到模型表单在字段上的映射关系。通常，这是没有什么问题，直接使用，按默认的来就行了。但是，有时候可能这种默认映射关系不是我们想要的，或者想进行一些更加灵活的定制，那怎么办呢？</p> 
+ <p><strong>使用Meta类内部的widgets属性！</strong></p> 
+ <p>widgets属性接收一个数据字典。其中每个元素的键必须是模型中的字段名之一，键值就是我们要自定义的内容了，具体格式和写法，参考下面的例子。</p> 
+ <p>例如，如果你想要让Author模型中的name字段的类型从CharField更改为<code>&lt;textarea&gt;</code>，而不是默认的<code>&lt;input type="text"&gt;</code>，可以如下重写字段的Widget：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.forms</span> <span class="kn">import</span> <span class="n">ModelForm</span><span class="p">,</span> <span class="n">Textarea</span>
+<span class="kn">from</span> <span class="nn">myapp.models</span> <span class="kn">import</span> <span class="n">Author</span>
+
+<span class="k">class</span> <span class="nc">AuthorForm</span><span class="p">(</span><span class="n">ModelForm</span><span class="p">):</span>
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">Author</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="p">(</span><span class="s1">'name'</span><span class="p">,</span> <span class="s1">'title'</span><span class="p">,</span> <span class="s1">'birth_date'</span><span class="p">)</span>
+        <span class="n">widgets</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">'name'</span><span class="p">:</span> <span class="n">Textarea</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s1">'cols'</span><span class="p">:</span> <span class="mi">80</span><span class="p">,</span> <span class="s1">'rows'</span><span class="p">:</span> <span class="mi">20</span><span class="p">}),</span> <span class="c1"># 关键是这一行</span>
+        <span class="p">}</span>
+</pre>
+ </div> 
+ <p>上面还展示了添加样式参数的格式。</p> 
+ <p>如果你希望进一步自定义字段，还可以指定Meta类内部的<code>error_messages</code>、<code>help_texts</code>和<code>labels</code>属性，比如：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.utils.translation</span> <span class="kn">import</span> <span class="n">ugettext_lazy</span> <span class="k">as</span> <span class="n">_</span>
+
+<span class="k">class</span> <span class="nc">AuthorForm</span><span class="p">(</span><span class="n">ModelForm</span><span class="p">):</span>
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">Author</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="p">(</span><span class="s1">'name'</span><span class="p">,</span> <span class="s1">'title'</span><span class="p">,</span> <span class="s1">'birth_date'</span><span class="p">)</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">'name'</span><span class="p">:</span> <span class="n">_</span><span class="p">(</span><span class="s1">'Writer'</span><span class="p">),</span>
+        <span class="p">}</span>
+        <span class="n">help_texts</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">'name'</span><span class="p">:</span> <span class="n">_</span><span class="p">(</span><span class="s1">'Some useful help text.'</span><span class="p">),</span>
+        <span class="p">}</span>
+        <span class="n">error_messages</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">'name'</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s1">'max_length'</span><span class="p">:</span> <span class="n">_</span><span class="p">(</span><span class="s2">"This writer's name is too long."</span><span class="p">),</span>
+            <span class="p">},</span>
+        <span class="p">}</span>
+</pre>
+ </div> 
+ <p>还可以指定<code>field_classes</code>属性将字段类型设置为你自己写的表单字段类型。</p> 
+ <p>例如，如果你想为slug字段使用MySlugFormField，可以像下面这样：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.forms</span> <span class="kn">import</span> <span class="n">ModelForm</span>
+<span class="kn">from</span> <span class="nn">myapp.models</span> <span class="kn">import</span> <span class="n">Article</span>
+
+<span class="k">class</span> <span class="nc">ArticleForm</span><span class="p">(</span><span class="n">ModelForm</span><span class="p">):</span>
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">Article</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'pub_date'</span><span class="p">,</span> <span class="s1">'headline'</span><span class="p">,</span> <span class="s1">'content'</span><span class="p">,</span> <span class="s1">'reporter'</span><span class="p">,</span> <span class="s1">'slug'</span><span class="p">]</span>
+        <span class="n">field_classes</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">'slug'</span><span class="p">:</span> <span class="n">MySlugFormField</span><span class="p">,</span>
+        <span class="p">}</span>
+</pre>
+ </div> 
+ <p>最后，如果你想完全控制一个字段,包括它的类型，验证器，是否必填等等。可以显式地声明或指定这些性质，就像在普通表单中一样。比如，如果想要指定某个字段的验证器，可以显式定义字段并设置它的validators参数：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.forms</span> <span class="kn">import</span> <span class="n">ModelForm</span><span class="p">,</span> <span class="n">CharField</span>
+<span class="kn">from</span> <span class="nn">myapp.models</span> <span class="kn">import</span> <span class="n">Article</span>
+
+<span class="k">class</span> <span class="nc">ArticleForm</span><span class="p">(</span><span class="n">ModelForm</span><span class="p">):</span>
+    <span class="n">slug</span> <span class="o">=</span> <span class="n">CharField</span><span class="p">(</span><span class="n">validators</span><span class="o">=</span><span class="p">[</span><span class="n">validate_slug</span><span class="p">])</span>
+
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">Article</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'pub_date'</span><span class="p">,</span> <span class="s1">'headline'</span><span class="p">,</span> <span class="s1">'content'</span><span class="p">,</span> <span class="s1">'reporter'</span><span class="p">,</span> <span class="s1">'slug'</span><span class="p">]</span>
+</pre>
+ </div> 
+ <h2>七、启用字段本地化</h2> 
+ <p>默认情况下，ModelForm中的字段不会本地化它们的数据。可以使用Meta类的<code>localized_fields</code>属性来启用字段的本地化功能。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">django.forms</span> <span class="kn">import</span> <span class="n">ModelForm</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">myapp.models</span> <span class="kn">import</span> <span class="n">Author</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="k">class</span> <span class="nc">AuthorForm</span><span class="p">(</span><span class="n">ModelForm</span><span class="p">):</span>
+<span class="o">...</span>     <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+<span class="o">...</span>         <span class="n">model</span> <span class="o">=</span> <span class="n">Author</span>
+<span class="o">...</span>         <span class="n">localized_fields</span> <span class="o">=</span> <span class="p">(</span><span class="s1">'birth_date'</span><span class="p">,)</span>
+</pre>
+ </div> 
+ <p>如果<code>localized_fields</code>设置为<code>__all__</code>这个特殊的值，所有的字段都将本地化。</p> 
+ <h2>八、表单的继承</h2> 
+ <p>ModelForms是可以被继承的。子模型表单可以添加额外的方法和属性，比如下面的例子：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; class EnhancedArticleForm(ArticleForm):
+...     def clean_pub_date(self):
+...         ...
+</pre>
+ </div> 
+ <p>以上创建了一个ArticleForm的子类EnhancedArticleForm，并增加了一个<code>clean_pub_date</code>方法。</p> 
+ <p>还可以修改<code>Meta.fields</code>或<code>Meta.exclude</code>列表，只要继承父类的Meta类，如下所示：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; class RestrictedArticleForm(EnhancedArticleForm):
+...     class Meta(ArticleForm.Meta):
+...         exclude = ('body',)
+</pre>
+ </div> 
+ <h2>九、提供初始值</h2> 
+ <p>可以在实例化一个表单时通过指定initial参数来提供表单中数据的初始值。</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; article = Article.objects.get(pk=1)
+&gt;&gt;&gt; article.headline
+'My headline'
+&gt;&gt;&gt; form = ArticleForm(initial={'headline': 'Initial headline'}, instance=article)
+&gt;&gt;&gt; form['headline'].value()
+'Initial headline'
+</pre>
+ </div> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/155"> <i class="fa fa-arrow-left"></i>&nbsp;表单的Widgets</a> 
+  <a class="float-right" href="/course/django/157"> 第五章：Admin管理后台&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 13</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/156">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.0.0.996.996.50/006xIWURly8gehjmghiqfj30ro0roq53.jpg?KID=imgbed,tva&amp;Expires=1591289035&amp;ssig=NX%2BU5OBrH%2F" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>想问一下，ModelForm中Meta类中的model可以是多个model吗？还是只能是一个model？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 蔷薇-Nina </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年6月13日 21:58</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2115">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva4.sinaimg.cn/crop.0.0.180.180.50/a164520cjw1e8qgp5bmzyj2050050aa8.jpg?KID=imgbed,tva&amp;Expires=1596775087&amp;ssig=Fw6bmSX4ik" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>只能是一个，多个的话万一模型字段有一样的，不就冲突了吗？而且也没必要呀，可以在视图里面实现多个的需求。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 中华坚果 &nbsp;&nbsp;回复&nbsp;&nbsp; 蔷薇-Nina </span> 
+      <em>2020年8月7日 09:40</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2170">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax2.sinaimg.cn/crop.0.0.512.512.50/006KXUS2ly8fgkhl2m85ej30e80e80sy.jpg?KID=imgbed,tva&amp;Expires=1585598260&amp;ssig=eP9ijZXSEA" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>棒</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 橙橙橙橙仔 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年3月31日 00:57</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1990">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.1080.1080.50/006xIWURly8g3w3jk5kmcj30u00u03zs.jpg?Expires=1563709215&amp;ssig=MIXtogsGXj&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>如果有效果截图展示是不是更直观？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 蔷薇-Nina </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年7月21日 19:27</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1507">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax2.sinaimg.cn/crop.0.0.996.996.50/006nYu7lly8fkiygvorosj30ro0ro76r.jpg?KID=imgbed,tva&amp;Expires=1578648103&amp;ssig=PcfpntXS16" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>赞同</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> GardenBaby_ &nbsp;&nbsp;回复&nbsp;&nbsp; 蔷薇-Nina </span> 
+      <em>2020年1月13日 18:37</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1843">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva1.sinaimg.cn/crop.0.0.180.180.50/59bd64d7jw1e8qgp5bmzyj2050050aa8.jpg?KID=imgbed,tva&amp;Expires=1584225549&amp;ssig=O86c6IWBUo" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我也这样觉得，这样写有点枯燥了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 定期换名字啦啦 &nbsp;&nbsp;回复&nbsp;&nbsp; 蔷薇-Nina </span> 
+      <em>2020年3月15日 05:31</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1964">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva4.sinaimg.cn/crop.196.38.983.983.50/62a21376gw1f6re6dvtmej20zk0sgjys.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>模态框中好像不能使用Modelform的{{ form.as_p }}的方法啊？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 恠往逺方 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年1月9日 22:01</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1011">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.0.180.180.50/80d415eejw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>是不是应该表述下面的意思： 因为 Author 模型有 3 个字段 name、title 和 birth_date，上面的例子会让 name 和 birth_date 出现在表单中。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; devalone </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年12月26日 11:47</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/980">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.0.180.180.50/80d415eejw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>因为Author模型有3个字段name、birth_date和birth_date，上面的例子会让title和name出现在表单中。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> devalone &nbsp;&nbsp;回复&nbsp;&nbsp; devalone </span> 
+      <em>2018年12月26日 11:49</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/981">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我想说是笔误，大家会不会喷我？害羞...</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; devalone </span> 
+      <em>2019年1月1日 11:30</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/996">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.2.750.750.50/d1c0b262ly8fdvalnngs4j20ku0kyt9s.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>ModelForm.save(commit=True)</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 这就尴尬了吧_ </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年11月5日 12:55</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/824">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.512.512.50/9e792b8fly8foltsg6o5rj20e80e80t4.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>1.我想知道如果model没定义的字段a, modelform扩展了字段a,那form.save()对字段a生效? 2. 感觉form直接用model里的null=true,blank=true等验证方式, 好像没自己的灵活?譬如我要追加一个验证, model里没null,要在form里追加,怎么弄?</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 往事随风散吧莫追忆 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年6月11日 22:08</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/534">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.180.180.50/67179639jw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>刘大大,很厉害,深受启发.</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 孤竹孙 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年5月5日 21:31</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/447">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

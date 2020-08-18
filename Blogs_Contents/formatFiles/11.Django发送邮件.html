@@ -1,0 +1,565 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>11.Django发送邮件</h1> 
+ <small>阅读:&nbsp;40239&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：27 </small> 
+ <hr> 
+ <p>通常而言，我们在用户注册成功，实际登陆之前，会发送一封电子邮件到对方的注册邮箱中，表示欢迎。进一步的还可能要求用户点击邮件中的链接，进行注册确认。</p> 
+ <p>下面就让我们先看看如何在Django中发送邮件吧。</p> 
+ <h2>一、在Django中发送邮件</h2> 
+ <p>其实在Python中已经内置了一个smtp邮件发送模块，Django在此基础上进行了简单地封装。</p> 
+ <p>首先，我们需要在项目的settings文件中配置邮件发送参数，分别如下：</p> 
+ <div class="codehilite">
+  <pre><span></span>EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.sina.com'
+EMAIL_PORT = 25
+EMAIL_HOST_USER = 'xxx@sina.com'
+EMAIL_HOST_PASSWORD = 'xxxxxxxxxxx'
+</pre>
+ </div> 
+ <ul> 
+  <li>第一行指定发送邮件的后端模块，大多数情况下照抄！</li> 
+  <li>第二行，不用说，发送方的smtp服务器地址，建议使用新浪家的；</li> 
+  <li>第三行，smtp服务端口，默认为25；</li> 
+  <li>第四行，你在发送服务器的用户名；</li> 
+  <li>第五行，对应用户的密码。</li> 
+ </ul> 
+ <p>特别说明：</p> 
+ <ul> 
+  <li>某些邮件公司可能不开放smtp服务</li> 
+  <li>某些公司要求使用ssl安全机制</li> 
+  <li>某些smtp服务对主机名格式有要求</li> 
+ </ul> 
+ <p>这些都是前人踩过的坑。如果你在测试中出现了问题，请不要找Django的麻烦，99%的原因和你的邮件服务有关。</p> 
+ <p>配置好了参数，就可以先测试一下邮件功能了。</p> 
+ <p>在项目根目录下新建一个<code>send_mail.py</code>文件，然后写入下面的内容：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">django.core.mail</span> <span class="kn">import</span> <span class="n">send_mail</span>
+
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">'DJANGO_SETTINGS_MODULE'</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'mysite.settings'</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">'__main__'</span><span class="p">:</span>   
+
+    <span class="n">send_mail</span><span class="p">(</span>
+        <span class="s1">'来自www.liujiangblog.com的测试邮件'</span><span class="p">,</span>
+        <span class="s1">'欢迎访问www.liujiangblog.com，这里是刘江的博客和教程站点，本站专注于Python、Django和机器学习技术的分享！'</span><span class="p">,</span>
+        <span class="s1">'xxx@sina.com'</span><span class="p">,</span>
+        <span class="p">[</span><span class="s1">'xxx@qq.com'</span><span class="p">],</span>
+    <span class="p">)</span>
+</pre>
+ </div> 
+ <p>对于send_mail方法，第一个参数是邮件主题subject；第二个参数是邮件具体内容；第三个参数是邮件发送方，需要和你settings中的一致；第四个参数是接受方的邮件地址列表。请按你自己实际情况修改发送方和接收方的邮箱地址。</p> 
+ <p>另外，由于我们当前是单独运行<code>send_mail.py</code>文件，无法自动链接Django环境，需要通过os模块对环境变量进行设置，也就是：</p> 
+ <div class="codehilite">
+  <pre><span></span>os.environ['DJANGO_SETTINGS_MODULE'] = 'mysite.settings'
+</pre>
+ </div> 
+ <p>运行<code>send_mail.py</code>文件，注意不是运行Django服务器。然后到你的目的地邮箱查看邮件是否收到。</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/113-1.png"></p> 
+ <h2>二、发送HTML格式的邮件</h2> 
+ <p>通常情况下，我们发送的邮件内容都是纯文本格式。但是很多情况下，我们需要发送带有HTML格式的内容，比如说超级链接。一般情况下，为了安全考虑，很多邮件服务提供商都会禁止使用HTML内容，幸运的是对于以<code>http</code>和<code>https</code>开头的链接还是可以点击的。</p> 
+ <p>下面是发送HTML格式的邮件例子。删除<code>send_mail.py</code>原来的所有内容，添加下面的代码：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">django.core.mail</span> <span class="kn">import</span> <span class="n">EmailMultiAlternatives</span>
+
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">'DJANGO_SETTINGS_MODULE'</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'mysite.settings'</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">'__main__'</span><span class="p">:</span>
+
+    <span class="n">subject</span><span class="p">,</span> <span class="n">from_email</span><span class="p">,</span> <span class="n">to</span> <span class="o">=</span> <span class="s1">'来自www.liujiangblog.com的测试邮件'</span><span class="p">,</span> <span class="s1">'xxx@sina.com'</span><span class="p">,</span> <span class="s1">'xxx@qq.com'</span>
+    <span class="n">text_content</span> <span class="o">=</span> <span class="s1">'欢迎访问www.liujiangblog.com，这里是刘江的博客和教程站点，专注于Python和Django技术的分享！'</span>
+    <span class="n">html_content</span> <span class="o">=</span> <span class="s1">'&lt;p&gt;欢迎访问&lt;a href="http://www.liujiangblog.com" target=blank&gt;www.liujiangblog.com&lt;/a&gt;，这里是刘江的博客和教程站点，本站专注于Python、Django和机器学习技术的分享！&lt;/p&gt;'</span>
+    <span class="n">msg</span> <span class="o">=</span> <span class="n">EmailMultiAlternatives</span><span class="p">(</span><span class="n">subject</span><span class="p">,</span> <span class="n">text_content</span><span class="p">,</span> <span class="n">from_email</span><span class="p">,</span> <span class="p">[</span><span class="n">to</span><span class="p">])</span>
+    <span class="n">msg</span><span class="o">.</span><span class="n">attach_alternative</span><span class="p">(</span><span class="n">html_content</span><span class="p">,</span> <span class="s2">"text/html"</span><span class="p">)</span>
+    <span class="n">msg</span><span class="o">.</span><span class="n">send</span><span class="p">()</span>
+</pre>
+ </div> 
+ <p>其中的<code>text_content</code>是用于当HTML内容无效时的替代txt文本。</p> 
+ <p>打开测试用的接收邮箱，可以看到链接能够正常点击，如下图所示：</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/113-2.png"></p> 
+ <p>这个<code>send_mail.py</code>文件只是一个测试脚本，使用完毕后可以从项目里删除。</p> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/112"> <i class="fa fa-arrow-left"></i>&nbsp;10. 注册视图</a> 
+  <a class="float-right" href="/course/django/114"> 12. 邮件注册确认&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 27</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/113">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax3.sinaimg.cn/crop.0.0.132.132.50/008aK8Jrly4ghfo0o8kpoj303o03o0si.jpg?KID=imgbed,tva&amp;Expires=1596600822&amp;ssig=MGbG9RAdjd" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>报错:ModuleNotFoundError: No module named 'django_afx' 我的projectname是django_afx 我设置os.environ["DJANGO_SETTINGS_MODULE"]='django_afx.settings'</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户7487822673 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年8月5日 09:16</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2167">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax3.sinaimg.cn/crop.0.0.132.132.50/008aK8Jrly4ghfo0o8kpoj303o03o0si.jpg?KID=imgbed,tva&amp;Expires=1596600822&amp;ssig=MGbG9RAdjd" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>已经解决,拖到manage.py同层级可行,假如我放在某个app里,试了很多没法引用到settings</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 用户7487822673 &nbsp;&nbsp;回复&nbsp;&nbsp; 用户7487822673 </span> 
+      <em>2020年8月5日 09:24</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2168">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva2.sinaimg.cn/crop.66.3.150.150.50/005NhZF7gw1eu4low6qvsj306j04laac.jpg?KID=imgbed,tva&amp;Expires=1585857820&amp;ssig=8sGbFEbjGn" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>您好，我想问下，如何将超级管理员加入到User表里，不需要手动加？实际使用应该是超级管理员拥有这些权限的</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 绿茶味lol </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年4月3日 01:05</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2001">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva4.sinaimg.cn/crop.0.0.996.996.50/be147247jw8f8lqvrqgmuj20ro0rowg8.jpg?KID=imgbed,tva&amp;Expires=1584289716&amp;ssig=hHuuxVQpB2" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>出现“smtplib.SMTPAuthenticationError: (535, b'5.7.12 SMTP access disabled')”错误的话，是授权码问题。在步骤一中的EMAIL_HOST_PASSWORD = 'xxxxxxxxxxx' 里的'xxxxxxxxxxx'换成你对应的授权码即可。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 洛依旑 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年3月15日 21:31</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1965">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax4.sinaimg.cn/crop.0.0.1006.1006.50/9276e51dly8fwg6ssjvfgj20ry0rymzk.jpg?KID=imgbed,tva&amp;Expires=1575714136&amp;ssig=pG%2BVk5hHno" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>请问出现socket.gaierror: [Errno 11001] getaddrinfo failed怎么解决，邮箱用的QQ，开启了SMTP了也写了HOSTPASSWORD了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; Lee跳跳如也 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年12月7日 15:26</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1749">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax4.sinaimg.cn/crop.0.0.1006.1006.50/9276e51dly8fwg6ssjvfgj20ry0rymzk.jpg?KID=imgbed,tva&amp;Expires=1575714136&amp;ssig=pG%2BVk5hHno" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>填入授权码了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> Lee跳跳如也 &nbsp;&nbsp;回复&nbsp;&nbsp; Lee跳跳如也 </span> 
+      <em>2019年12月7日 15:26</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1750">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax4.sinaimg.cn/crop.0.0.1006.1006.50/9276e51dly8fwg6ssjvfgj20ry0rymzk.jpg?KID=imgbed,tva&amp;Expires=1575714136&amp;ssig=pG%2BVk5hHno" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>解决了，就因为多打了空格</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> Lee跳跳如也 &nbsp;&nbsp;回复&nbsp;&nbsp; Lee跳跳如也 </span> 
+      <em>2019年12月7日 15:35</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1751">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax4.sinaimg.cn/crop.0.0.996.996.50/78f68a95ly8g861mzjjmcj20ro0rowfr.jpg?KID=imgbed,tva&amp;Expires=1575108870&amp;ssig=fa5js2Ar7B" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>请问如何单独运行这个py文件，</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 俊儿往高走 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年11月30日 15:14</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1736">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1574349926&amp;ssig=jfGSd%2FDixS" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>在pycharm里，右键直接run。或者在命令行中，python send_mail.py</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 俊儿往高走 </span> 
+      <em>2019年11月30日 19:15</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1738">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.720.720.50/c1b446bbjw8eh3ipz350ej20k00k0acc.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>EMAIL_HOST_PASSWORD不是密码，而是qq邮箱的授权码</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; who抢了我的昵称 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年12月26日 18:08</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/983">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>只能发英文的邮件，头部加了# -*- coding: utf-8 -*-</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 真司仪 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年12月20日 18:36</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/967">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>这个应该是你本身环境造成的</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 真司仪 </span> 
+      <em>2019年1月1日 11:20</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/995">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.960.960.50/006xIWURly8fo9wxo24vzj30qo0qoaaz.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>发送HTML邮件时，参数text_content没起作用吧？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 蔷薇-Nina </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年3月12日 21:27</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/297">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.960.960.50/006xIWURly8fo9wxo24vzj30qo0qoaaz.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>为了避免有些浏览器或邮箱不识别HTML邮件，就需要顺便发送纯文本邮件。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 蔷薇-Nina &nbsp;&nbsp;回复&nbsp;&nbsp; 蔷薇-Nina </span> 
+      <em>2018年3月12日 21:32</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/298">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.960.960.50/006xIWURly8fo9wxo24vzj30qo0qoaaz.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>发送HTML邮件时，参数text_content没起作用吧？？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 蔷薇-Nina </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年3月12日 21:26</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/296">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.664.664.50/006XuMcxly8fkbv84zbcij30ig0igt95.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>smtplib.SMTPAuthenticationError: (502, b'unimplemented (#5.5.1)')。。。。这怎么搞</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; GoodMorningYY </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年3月4日 19:36</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/238">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.664.664.50/006XuMcxly8fkbv84zbcij30ig0igt95.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>不报错了，但是没收到邮件</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> GoodMorningYY &nbsp;&nbsp;回复&nbsp;&nbsp; GoodMorningYY </span> 
+      <em>2018年3月4日 19:55</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/239">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.664.664.50/006XuMcxly8fkbv84zbcij30ig0igt95.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>居然被腾讯拦截当成垃圾邮件了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> GoodMorningYY &nbsp;&nbsp;回复&nbsp;&nbsp; GoodMorningYY </span> 
+      <em>2018年3月4日 19:56</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/240">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.29.72.151.151.50/c345a2c6jw1egex1o75ogj205c071mx9.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>```py #!/usr/bin/env python # -*- coding: utf-8 -*- # Created by TaoYuan on 2018/1/23 0023. # @Link : http://blog.csdn.net/lftaoyuan # Github : https://github.com/seeways import os from django.core.mail import send_mail, EmailMultiAlternatives os.environ['DJANGO_SETTINGS_MODULE'] = 'MyBlog.settings' if __name__ == '__main__': subject = "来自TaoYuan的测试邮件" from_email = "m18816740231@163.com" to = ["1876665310@qq.com"] text_content = "Github: https://github.com/seeways CSDN: http://blog.csdn.net/lftaoyuan" html_content = "&lt;p&gt;Github:&lt;a href='https://github.com/seeways'&gt;seeways&lt;/a&gt;&lt;/p&gt;&lt;br&gt;&lt;p&gt;CSDN:&lt;a " \ "href='http://blog.csdn.net/lftaoyuan'&gt;TaoYuan&lt;/a&gt;&lt;/p&gt; " # send_mail(主题， 内容， 发送者， 接收列表，其他默认参数) send_mail( subject, text_content, from_email, to, html_message=html_content ) # 优先发送html_content, html内容无效时，发送text # msg = EmailMultiAlternatives(subject, text_content, from_email, to) # msg.attach_alternative(html_content, "text/html") # msg.send() ```</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 世外就是TaoYuan </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年1月23日 17:27</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/151">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.29.72.151.151.50/c345a2c6jw1egex1o75ogj205c071mx9.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>建议给评论区加上MarkDown模块</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 世外就是TaoYuan &nbsp;&nbsp;回复&nbsp;&nbsp; 世外就是TaoYuan </span> 
+      <em>2018年1月23日 17:28</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/152">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.426.66.1066.1066.50/005EMUrrly8flohkwuo2uj31hc0xce81.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>为什么，我总是报错，按照你的做法， send_mail.py 页面运行报错 smtplib.SMTPAuthenticationError: (535, b'5.7.8 authentication failed') 验证码失败？是什么意思</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户5183374309 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2017年11月24日 10:51</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/59">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.426.66.1066.1066.50/005EMUrrly8flohkwuo2uj31hc0xce81.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>smtplib.SMTPAuthenticationError: (535, b'5.7.11 the behavior of this user triggered some restrictions to this account')</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 用户5183374309 &nbsp;&nbsp;回复&nbsp;&nbsp; 用户5183374309 </span> 
+      <em>2017年11月24日 10:54</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/60">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>发送邮件过程中出现的很多问题都不是Python和Django相关的，跟邮箱设置、邮箱服务器限制、网络防火墙等等都紧密相关。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 用户5183374309 </span> 
+      <em>2017年11月24日 14:00</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/61">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.14.0.721.721.50/6c4a3bfely8fjshrv39hzj20ku0k1mz8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>你去邮箱设置里把smtp服务先打开才行</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> OoakzzZ &nbsp;&nbsp;回复&nbsp;&nbsp; 用户5183374309 </span> 
+      <em>2018年1月29日 14:45</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/170">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.0.0.996.996.50/725242c7ly8fqaau6p90dj20ro0rognk.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>你这个错误怎么解决的，我也出现这个问题了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> NO清雾敛 &nbsp;&nbsp;回复&nbsp;&nbsp; 用户5183374309 </span> 
+      <em>2018年9月26日 21:46</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/754">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/default/images/default_avatar_female_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>请问这个问题你解决了吗？我照着百度说的在新浪邮箱里面设置开启SMTP服务,但是仍然会继续报这个错误</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 用户6824661707 &nbsp;&nbsp;回复&nbsp;&nbsp; 用户5183374309 </span> 
+      <em>2019年5月20日 18:04</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1338">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.664.664.50/007Oh2Pbly8g3a33jvo59j30ig0igjrq.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>两点：1、设置中EMAIL_HOST = 'smtp.qq.com'，我这里用的qq邮箱，就对应改过来了。&lt;br&gt;2、EMAIL_HOST_PASSWORD是授权码，要去自己邮箱开启smtp服务。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 林风master &nbsp;&nbsp;回复&nbsp;&nbsp; 用户5183374309 </span> 
+      <em>2019年5月22日 14:42</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1349">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

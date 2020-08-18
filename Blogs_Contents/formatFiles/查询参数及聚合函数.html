@@ -1,0 +1,481 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>查询参数及聚合函数</h1> 
+ <small>阅读:&nbsp;24483&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：3 </small> 
+ <hr> 
+ <p>字段查询是指如何指定SQL WHERE子句的内容。它们用作QuerySet的filter(), exclude()和get()方法的关键字参数。</p> 
+ <p><strong>默认查找类型为exact。</strong></p> 
+ <hr> 
+ <p>下表列出了所有的字段查询参数：</p> 
+ <table> 
+  <thead> 
+   <tr> 
+    <th>字段名</th> 
+    <th>说明</th> 
+   </tr> 
+  </thead> 
+  <tbody> 
+   <tr> 
+    <td><strong>exact</strong></td> 
+    <td>精确匹配</td> 
+   </tr> 
+   <tr> 
+    <td><strong>iexact</strong></td> 
+    <td>不区分大小写的精确匹配</td> 
+   </tr> 
+   <tr> 
+    <td><strong>contains</strong></td> 
+    <td>包含匹配</td> 
+   </tr> 
+   <tr> 
+    <td><strong>icontains</strong></td> 
+    <td>不区分大小写的包含匹配</td> 
+   </tr> 
+   <tr> 
+    <td><strong>in</strong></td> 
+    <td>在..之内的匹配</td> 
+   </tr> 
+   <tr> 
+    <td><strong>gt</strong></td> 
+    <td>大于</td> 
+   </tr> 
+   <tr> 
+    <td><strong>gte</strong></td> 
+    <td>大于等于</td> 
+   </tr> 
+   <tr> 
+    <td><strong>lt</strong></td> 
+    <td>小于</td> 
+   </tr> 
+   <tr> 
+    <td><strong>lte</strong></td> 
+    <td>小于等于</td> 
+   </tr> 
+   <tr> 
+    <td><strong>startswith</strong></td> 
+    <td>从开头匹配</td> 
+   </tr> 
+   <tr> 
+    <td><strong>istartswith</strong></td> 
+    <td>不区分大小写从开头匹配</td> 
+   </tr> 
+   <tr> 
+    <td><strong>endswith</strong></td> 
+    <td>从结尾处匹配</td> 
+   </tr> 
+   <tr> 
+    <td><strong>iendswith</strong></td> 
+    <td>不区分大小写从结尾处匹配</td> 
+   </tr> 
+   <tr> 
+    <td><strong>range</strong></td> 
+    <td>范围匹配</td> 
+   </tr> 
+   <tr> 
+    <td><strong>date</strong></td> 
+    <td>日期匹配</td> 
+   </tr> 
+   <tr> 
+    <td><strong>year</strong></td> 
+    <td>年份</td> 
+   </tr> 
+   <tr> 
+    <td><strong>month</strong></td> 
+    <td>月份</td> 
+   </tr> 
+   <tr> 
+    <td><strong>day</strong></td> 
+    <td>日期</td> 
+   </tr> 
+   <tr> 
+    <td><strong>week</strong></td> 
+    <td>第几周</td> 
+   </tr> 
+   <tr> 
+    <td><strong>week_day</strong></td> 
+    <td>周几</td> 
+   </tr> 
+   <tr> 
+    <td><strong>time</strong></td> 
+    <td>时间</td> 
+   </tr> 
+   <tr> 
+    <td><strong>hour</strong></td> 
+    <td>小时</td> 
+   </tr> 
+   <tr> 
+    <td><strong>minute</strong></td> 
+    <td>分钟</td> 
+   </tr> 
+   <tr> 
+    <td><strong>second</strong></td> 
+    <td>秒</td> 
+   </tr> 
+   <tr> 
+    <td><strong>isnull</strong></td> 
+    <td>判断是否为空</td> 
+   </tr> 
+   <tr> 
+    <td>search</td> 
+    <td>1.10中被废弃</td> 
+   </tr> 
+   <tr> 
+    <td><strong>regex</strong></td> 
+    <td>区分大小写的正则匹配</td> 
+   </tr> 
+   <tr> 
+    <td><strong>iregex</strong></td> 
+    <td>不区分大小写的正则匹配</td> 
+   </tr> 
+  </tbody> 
+ </table> 
+ <h2>1. exact</h2> 
+ <p>精确匹配。 默认的查找类型！</p> 
+ <div class="codehilite">
+  <pre><span></span>Entry.objects.get(id__exact=14)
+Entry.objects.get(id__exact=None)
+</pre>
+ </div> 
+ <h2>2. iexact</h2> 
+ <p>不区分大小写的精确匹配。</p> 
+ <div class="codehilite">
+  <pre><span></span>Blog.objects.get(name__iexact='beatles blog')
+Blog.objects.get(name__iexact=None)
+</pre>
+ </div> 
+ <p>第一个查询将匹配 'Beatles Blog', 'beatles blog', 'BeAtLes BLoG'等等。</p> 
+ <h2>3. contains</h2> 
+ <p>大小写敏感的包含关系匹配。</p> 
+ <div class="codehilite">
+  <pre><span></span>Entry.objects.get(headline__contains='Lennon')
+</pre>
+ </div> 
+ <p>这将匹配标题'Lennon honored today'，但不匹配'lennon honored today'。</p> 
+ <h2>4. icontains</h2> 
+ <p>不区分大小写的包含关系匹配。</p> 
+ <div class="codehilite">
+  <pre><span></span>Entry.objects.get(headline__icontains='Lennon')
+</pre>
+ </div> 
+ <h2>5. in</h2> 
+ <p>在给定的列表里查找。</p> 
+ <div class="codehilite">
+  <pre><span></span>Entry.objects.filter(id__in=[1, 3, 4])
+</pre>
+ </div> 
+ <p>还可以使用动态查询集，而不是提供文字值列表：</p> 
+ <div class="codehilite">
+  <pre><span></span>inner_qs = Blog.objects.filter(name__contains='Cheddar')
+entries = Entry.objects.filter(blog__in=inner_qs)
+</pre>
+ </div> 
+ <p>或者从values()或<code>values_list()</code>中获取的QuerySet作为比对的对象：</p> 
+ <div class="codehilite">
+  <pre><span></span>inner_qs = Blog.objects.filter(name__contains='Ch').values('name')
+entries = Entry.objects.filter(blog__name__in=inner_qs)
+</pre>
+ </div> 
+ <p>下面的例子将产生一个异常，因为试图提取两个字段的值，但是查询语句只需要一个字段的值：</p> 
+ <div class="codehilite">
+  <pre><span></span># 错误的实例，将弹出异常。
+inner_qs = Blog.objects.filter(name__contains='Ch').values('name', 'id')
+entries = Entry.objects.filter(blog__name__in=inner_qs)
+</pre>
+ </div> 
+ <h2>6. gt</h2> 
+ <p>大于</p> 
+ <div class="codehilite">
+  <pre><span></span>Entry.objects.filter(id__gt=4)
+</pre>
+ </div> 
+ <h2>7. gte</h2> 
+ <p>大于或等于</p> 
+ <h2>8. lt</h2> 
+ <p>小于</p> 
+ <h2>9. lte</h2> 
+ <p>小于或等于</p> 
+ <h2>10. startswith</h2> 
+ <p>区分大小写，从开始位置匹配。</p> 
+ <p><code>注意：对于SQLite数据库，不支持大小写区分的模式。</code></p> 
+ <div class="codehilite">
+  <pre><span></span>Entry.objects.filter(headline__startswith='Lennon')
+</pre>
+ </div> 
+ <h2>11. istartswith</h2> 
+ <p>不区分大小写，从开始位置匹配。</p> 
+ <div class="codehilite">
+  <pre><span></span>Entry.objects.filter(headline__istartswith='Lennon')
+</pre>
+ </div> 
+ <h2>12. endswith</h2> 
+ <p>区分大小写，从结束未知开始匹配。</p> 
+ <div class="codehilite">
+  <pre><span></span>Entry.objects.filter(headline__endswith='Lennon')
+</pre>
+ </div> 
+ <h2>13. iendswith</h2> 
+ <p>不区分大小写，从结束未知开始匹配。</p> 
+ <div class="codehilite">
+  <pre><span></span>Entry.objects.filter(headline__iendswith='Lennon')
+</pre>
+ </div> 
+ <h2>14. range</h2> 
+ <p>范围测试（包含于之中）。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">import</span> <span class="nn">datetime</span>
+<span class="n">start_date</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">(</span><span class="mi">2005</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">end_date</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">(</span><span class="mi">2005</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">31</span><span class="p">)</span>
+<span class="n">Entry</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">pub_date__range</span><span class="o">=</span><span class="p">(</span><span class="n">start_date</span><span class="p">,</span> <span class="n">end_date</span><span class="p">))</span>
+</pre>
+ </div> 
+ <p>警告:过滤具有日期的DateTimeField不会包含最后一天，因为边界被解释为“给定日期的0am”。 </p> 
+ <h2>15. date</h2> 
+ <p>进行日期对比。</p> 
+ <div class="codehilite">
+  <pre><span></span>Entry.objects.filter(pub_date__date=datetime.date(2005, 1, 1))
+Entry.objects.filter(pub_date__date__gt=datetime.date(2005, 1, 1))
+</pre>
+ </div> 
+ <p>当<code>USE_TZ</code>为True时，字段将转换为当前时区，然后进行过滤。</p> 
+ <h2>16. year</h2> 
+ <p>对年份进行匹配。</p> 
+ <div class="codehilite">
+  <pre><span></span>Entry.objects.filter(pub_date__year=2005)
+Entry.objects.filter(pub_date__year__gte=2005)
+</pre>
+ </div> 
+ <p>当<code>USE_TZ</code>为True时，在过滤之前，datetime字段将转换为当前时区。</p> 
+ <h2>17. month</h2> 
+ <p>对月份进行匹配。取整数1（1月）至12（12月）。</p> 
+ <div class="codehilite">
+  <pre><span></span>Entry.objects.filter(pub_date__month=12)
+Entry.objects.filter(pub_date__month__gte=6)
+</pre>
+ </div> 
+ <p>当USE_TZ为True时，在过滤之前，datetime字段将转换为当前时区。 </p> 
+ <h2>18. day</h2> 
+ <p>对具体到某一天的匹配。 </p> 
+ <div class="codehilite">
+  <pre><span></span>Entry.objects.filter(pub_date__day=3)
+Entry.objects.filter(pub_date__day__gte=3)
+</pre>
+ </div> 
+ <p>当USE_TZ为True时，在过滤之前，datetime字段将转换为当前时区。</p> 
+ <h2>19. week</h2> 
+ <p>Django1.11中的新功能。根据ISO-8601返回周号（1-52或53），即星期一开始的星期，星期四或之前的第一周。</p> 
+ <div class="codehilite">
+  <pre><span></span>Entry.objects.filter(pub_date__week=52)
+Entry.objects.filter(pub_date__week__gte=32, pub_date__week__lte=38)
+</pre>
+ </div> 
+ <p>当USE_TZ为True时，字段将转换为当前时区，然后进行过滤。</p> 
+ <h2>20. week_day</h2> 
+ <p>进行“星期几”匹配。 取整数值，星期日为1，星期一为2，星期六为7。</p> 
+ <div class="codehilite">
+  <pre><span></span>Entry.objects.filter(pub_date__week_day=2)
+Entry.objects.filter(pub_date__week_day__gte=2)
+</pre>
+ </div> 
+ <p>当USE_TZ为True时，在过滤之前，datetime字段将转换为当前时区。 </p> 
+ <h2>21. time</h2> 
+ <p>Django1.11中的新功能。</p> 
+ <p>将字段的值转为datetime.time格式并进行对比。</p> 
+ <div class="codehilite">
+  <pre><span></span>Entry.objects.filter(pub_date__time=datetime.time(14, 30))
+Entry.objects.filter(pub_date__time__between=(datetime.time(8), datetime.time(17)))
+</pre>
+ </div> 
+ <p>USE_TZ为True时，字段将转换为当前时区，然后进行过滤。</p> 
+ <h2>22. hour</h2> 
+ <p>对小时进行匹配。 取0和23之间的整数。</p> 
+ <div class="codehilite">
+  <pre><span></span>Event.objects.filter(timestamp__hour=23)
+Event.objects.filter(time__hour=5)
+Event.objects.filter(timestamp__hour__gte=12)
+</pre>
+ </div> 
+ <p>当USE_TZ为True时，值将过滤前转换为当前时区。</p> 
+ <h2>23. minute</h2> 
+ <p>对分钟匹配。取0和59之间的整数。</p> 
+ <div class="codehilite">
+  <pre><span></span>Event.objects.filter(timestamp__minute=29)
+Event.objects.filter(time__minute=46)
+Event.objects.filter(timestamp__minute__gte=29)
+</pre>
+ </div> 
+ <p>当USE_TZ为True时，值将被过滤前转换为当前时区。</p> 
+ <h2>24. second</h2> 
+ <p>对秒数进行匹配。取0和59之间的整数。</p> 
+ <div class="codehilite">
+  <pre><span></span>Event.objects.filter(timestamp__second=31)
+Event.objects.filter(time__second=2)
+Event.objects.filter(timestamp__second__gte=31)
+</pre>
+ </div> 
+ <p>当USE_TZ为True时，值将过滤前转换为当前时区。</p> 
+ <h2>25. isnull</h2> 
+ <p>值为False或True, 相当于SQL语句IS NULL和IS NOT NULL.</p> 
+ <div class="codehilite">
+  <pre><span></span>Entry.objects.filter(pub_date__isnull=True)
+</pre>
+ </div> 
+ <h2>26. search</h2> 
+ <p>自1.10版以来已弃用。</p> 
+ <h2>27. regex</h2> 
+ <p>区分大小写的正则表达式匹配。</p> 
+ <div class="codehilite">
+  <pre><span></span>Entry.objects.get(title__regex=r'^(An?|The) +')
+</pre>
+ </div> 
+ <p>建议使用原始字符串（例如，r'foo'而不是'foo'）来传递正则表达式语法。</p> 
+ <h2>28. iregex</h2> 
+ <p>不区分大小写的正则表达式匹配。</p> 
+ <div class="codehilite">
+  <pre><span></span>Entry.objects.get(title__iregex=r'^(an?|the) +')
+</pre>
+ </div> 
+ <h1>聚合函数</h1> 
+ <p>Django的<code>django.db.models</code>模块提供以下聚合函数。 </p> 
+ <h2>1. expression</h2> 
+ <p>引用模型字段的一个字符串，或者一个query expression。</p> 
+ <h2>2. output_field</h2> 
+ <p>用来表示返回值的model field，一个可选的参数。</p> 
+ <h2>3. <code>**extra</code></h2> 
+ <p>关键字参数可以给聚合函数生成的SQL提供额外的信息。</p> 
+ <h2>4. Avg</h2> 
+ <p>class Avg(expression, output_field=FloatField(), **extra)[source]</p> 
+ <p>返回给定表达式的平均值，它必须是数值，除非指定不同的<code>output_field</code>。</p> 
+ <div class="codehilite">
+  <pre><span></span>默认的别名：&lt;field&gt;__avg
+返回类型：float（或指定任何output_field的类型）
+</pre>
+ </div> 
+ <h2>5. Count</h2> 
+ <p>class Count(expression, distinct=False, **extra)[source]</p> 
+ <p>返回与expression相关的对象的个数。</p> 
+ <div class="codehilite">
+  <pre><span></span>默认的别名：&lt;field&gt;__count
+返回类型：int
+有一个可选的参数：distinct。如果distinct=True，Count 将只计算唯一的实例。默认值为False。
+</pre>
+ </div> 
+ <h2>6. Max</h2> 
+ <p>class Max(expression, output_field=None, **extra)[source]</p> 
+ <p>返回expression的最大值。</p> 
+ <div class="codehilite">
+  <pre><span></span>默认的别名：&lt;field&gt;__max
+返回类型：与输入字段的类型相同，如果提供则为`output_field`类型
+</pre>
+ </div> 
+ <h2>7. Min</h2> 
+ <p>class Min(expression, output_field=None, **extra)[source]</p> 
+ <p>返回expression的最小值。</p> 
+ <div class="codehilite">
+  <pre><span></span>默认的别名：&lt;field&gt;__min
+返回类型：与输入字段的类型相同，如果提供则为`output_field`类型
+</pre>
+ </div> 
+ <h2>8. StdDev</h2> 
+ <p>class StdDev(expression, sample=False, **extra)[source]</p> 
+ <p>返回expression的标准差。</p> 
+ <div class="codehilite">
+  <pre><span></span>默认的别名：&lt;field&gt;__stddev
+返回类型：float
+有一个可选的参数：sample。默认情况下，返回群体的标准差。如果sample=True，返回样本的标准差。
+SQLite 没有直接提供StdDev。
+</pre>
+ </div> 
+ <h2>9. Sum</h2> 
+ <p>class Sum(expression, output_field=None, **extra)[source]</p> 
+ <p>计算expression的所有值的和。</p> 
+ <div class="codehilite">
+  <pre><span></span>默认的别名：&lt;field&gt;__sum
+返回类型：与输入字段的类型相同，如果提供则为output_field类型
+</pre>
+ </div> 
+ <h2>10. Variance</h2> 
+ <p>class Variance(expression, sample=False, **extra)[source]</p> 
+ <p>返回expression的方差。</p> 
+ <div class="codehilite">
+  <pre><span></span>默认的别名：&lt;field&gt;__variance
+返回类型：float
+有一个可选的参数：sample。
+SQLite 没有直接提供Variance。
+</pre>
+ </div> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/131"> <i class="fa fa-arrow-left"></i>&nbsp;不返回QuerySets的API</a> 
+  <a class="float-right" href="/course/django/133"> 第二章：视图层&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 3</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/132">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.0.996.996.50/684b4357jw8f6i1rp6013j20ro0romyl.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>gt: greater than 大于 gte: greater than or equal 大于等于 lt: less than 小于 lte: less than or equal 小于等于</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 带着寂寞闯天涯 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年7月19日 20:31</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/618">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.0.996.996.50/684b4357jw8f6i1rp6013j20ro0romyl.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>是lt和lte，不是it，ite，抱歉</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 带着寂寞闯天涯 &nbsp;&nbsp;回复&nbsp;&nbsp; 带着寂寞闯天涯 </span> 
+      <em>2018年7月19日 20:40</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/619">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.960.960.50/006xIWURly8fo9wxo24vzj30qo0qoaaz.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>博主如果给各个聚合函数举个使用例子就好了。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 蔷薇-Nina </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年5月5日 18:48</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/441">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

@@ -1,0 +1,381 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>3. admin后台</h1> 
+ <small>阅读:&nbsp;55043&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：17 </small> 
+ <hr> 
+ <p>在我们开发的初期，没有真实的用户数据，也没有完整的测试环境，为了测试和开发的方便，通常我们会频繁地使用Django给我们提供的Admin后台管理界面，创建测试用例，观察模型效果等等。</p> 
+ <h2>一、 在admin中注册模型</h2> 
+ <p>admin后台本质上是Django给我们提供的一个app，默认情况下，它已经在settings中注册了，如下所示的第一行！同样的还有session会话框架，后面我们会使用的。</p> 
+ <div class="codehilite">
+  <pre><span></span># Application definition
+
+INSTALLED_APPS = [
+    'django.contrib.admin',     # 看这里
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',      # 看这里
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'login',
+]
+</pre>
+ </div> 
+ <p>进入<code>login/admin.py</code>文件，代码如下：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.contrib</span> <span class="kn">import</span> <span class="n">admin</span>
+
+<span class="c1"># Register your models here.</span>
+
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">models</span>
+
+<span class="n">admin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">User</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>暂时简单点，直接注册就好了。</p> 
+ <h2>二、创建超级管理员</h2> 
+ <p>Django的admin后台拥有完整的较为安全的用户认证和授权机制，防护等级还算可以。</p> 
+ <p>要进入该后台，需要创建超级管理员，该管理员和我们先前创建的User用户不是一个概念，要注意区别对待。</p> 
+ <p>同样在Pycharm的终端中，执行下面的命令：</p> 
+ <div class="codehilite">
+  <pre><span></span>python manage.py createsuperuser
+</pre>
+ </div> 
+ <p>用户名、邮箱和密码请自行设定，但一定不要忘记。密码最好有一定强度，并且不能太简单和普遍，会有提示，我这里强制通过了。</p> 
+ <div class="codehilite">
+  <pre><span></span>(venv) D:\work\2019\for_test\mysite&gt;python manage.py createsuperuser
+用户名 (leave blank to use 'feixuelym'): admin
+电子邮件地址: admin@admin.com
+Password:
+Password (again):
+这个密码太常见了。
+Bypass password validation and create user anyway? [y/N]: y
+Superuser created successfully.
+</pre>
+ </div> 
+ <h2>三、 使用Admin后台</h2> 
+ <p>创建好超级管理员后，就可以启动我们的开发服务器了，然后在浏览器中访问<code>http://127.0.0.1:8000/admin/</code>地址，可以看到如下的登录界面：</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/105-1.png"></p> 
+ <p>输入我们先前创建的超级管理员账户，进入管理界面：</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/105-2.png"></p> 
+ <p>注意，图中下方的<code>认证和授权</code>是admin应用自身的账户管理，上面的LOGIN栏目才是我们创建的login应用所对应的User模型。</p> 
+ <p>点击Login栏目中的用户链接，进入用户列表界面，发现是空的，因为我们当前没有任何用户。点击右上方的增加用户按钮，我们创建几个测试用户试试：</p> 
+ <p>通过输入不同的数据，我们看到Email会有地址合法性检查，性别有个选择框，非常的人性化。</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/105-3.png"></p> 
+ <p>但是，实际上这里还有点小问题，那就是密码相关。密码不能保存为明文，这个问题我们后面再解决；其次，不可以这么随意的修改和设置密码，为了展示的方便性，我们先这样。</p> 
+ <p>这里我随便创建了三个测试账号，如下所示：</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/105-4.png"></p> 
+ <p>admin的使用和配置博大精深，但在本实战项目里，我们暂时把它当做一个数据库管理后台使用。</p> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/104"> <i class="fa fa-arrow-left"></i>&nbsp;2. 设计数据模型</a> 
+  <a class="float-right" href="/course/django/106"> 4. url路由和视图&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 17</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/105">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax2.sinaimg.cn/crop.0.0.479.479.50/0062WGOKly8g8i9t3ciy6j30db0db3zc.jpg?KID=imgbed,tva&amp;Expires=1577208181&amp;ssig=QQnadWObTM" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我在做到3.3的‘在浏览器中访问http://127.0.0.1:8000/admin/地址’这就出错了，pycharm显示Process finished with exit code -1，然后停止了 是不是和我用的django3.0.1有关啊</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 八合一大腹肌 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年12月24日 22:24</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1781">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax2.sinaimg.cn/crop.0.0.479.479.50/0062WGOKly8g8i9t3ciy6j30db0db3zc.jpg?KID=imgbed,tva&amp;Expires=1577208181&amp;ssig=QQnadWObTM" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我把django降到2.2就没问题了... 不知道是什么原因</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 八合一大腹肌 &nbsp;&nbsp;回复&nbsp;&nbsp; 八合一大腹肌 </span> 
+      <em>2019年12月25日 19:55</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1785">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax2.sinaimg.cn/crop.0.0.996.996.50/006DLpuxly8fe8m3w0g1jj30ro0rpdkc.jpg?KID=imgbed,tva&amp;Expires=1571593869&amp;ssig=fbBvIepGSl" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>添加完用户数据后，点保存就会出现TypeError at /admin/login/user/ except string or bytes-like object的报错,返回上一级页面，查看已添加的数据时，也会报同样的错误，但是添加的数据确实都存到本地数据库了，请问这个问题咋处理啊！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; ---宇浩 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年10月20日 23:00</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1674">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/default/images/default_avatar_male_50.gif?Expires=1565144714&amp;ssig=6n1sMOp85D&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>请问为什么我的用户连管理员也显示出来了？需要在哪里坐下配置。 还有就是admin添加用户，密码如何实现加密？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户5284878985 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年8月7日 09:26</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1543">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.0.0.1002.1002.50/005TwQLKly8fs98lasnyyj30ru0ruq4k.jpg?Expires=1564070268&amp;ssig=mVsVpUNmy4&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>上面那些路径怎么变成中文，就是首页&gt;login&gt;用户，为了请教特地注册的微博。。。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 黄涛69939 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年7月25日 23:01</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1519">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif?KID=imgbed,tva&amp;Expires=1572599037&amp;ssig=MEht3hLLjE" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>不知道你说的是不是login这个单词转为中文，你可以在login这个子应用里面的apps.py里面设置，你在LoginConfig这个类里面添加verbose_name= “登录”，然后你在admin后台管理系统里面就可以看到变为啦 首页&gt;登录&gt;用户</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 用户0856724271 &nbsp;&nbsp;回复&nbsp;&nbsp; 黄涛69939 </span> 
+      <em>2019年11月1日 14:10</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1689">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.7.0.200.200.50/0080ymKLly8g8xayg2ggfj305y05k746.jpg?KID=imgbed,tva&amp;Expires=1576578707&amp;ssig=E2oH5PyYkr" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>LANGUAGE_CODE = 'zh-hans'</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> dyphon &nbsp;&nbsp;回复&nbsp;&nbsp; 黄涛69939 </span> 
+      <em>2019年12月19日 16:59</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1773">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.14.611.611.50/4abb8878tw1eglzejb56rj20hs0hswg2.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>name输入为中文时，崩溃了？？怎么设置呢应该</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 天然呆尘落 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年4月15日 17:01</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1256">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.1080.1080.50/005FIz91jw8emh5wrkffej30u00u0762.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>登录后显示 禁止访问 (403) 把 csrf注释掉也没用。。该怎么弄啊</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; LBJYPY仅此而已 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年11月12日 16:02</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/847">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>本质上是csrf还在发挥作用</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; LBJYPY仅此而已 </span> 
+      <em>2018年11月13日 10:27</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/850">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.0.0.996.996.50/725242c7ly8fqaau6p90dj20ro0rognk.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>admin后台注册的用户，login登陆时显示用户不存在</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; NO清雾敛 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年9月26日 17:35</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/753">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>能够登陆成功，也可以成功执行各种操作，但会在pycharm控制台报错 self.status.split(' ',1)[0], self.bytes_sent AttributeError: 'NoneType' object has no attribute 'split'</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户5518846533 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年7月11日 20:48</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/567">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.960.960.50/006xIWURly8fo9wxo24vzj30qo0qoaaz.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>name最好用字母。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 蔷薇-Nina </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年3月10日 19:14</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/259">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>为什么创建了三个用户，名字都是User object ，根本不是我自己创建的名字</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户6399391019 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年3月7日 11:21</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/251">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>因为你没有在User模型中定义__str__方法</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 用户6399391019 </span> 
+      <em>2018年3月7日 16:47</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/252">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.1080.1080.50/5ec2a85bjw8eh4ja956ryj20u00u0abc.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>为什么我站点管理里面没有LOGIN的用户啊,我都注册了啊</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 秋秋秋秋方 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年3月5日 16:06</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/247">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.960.960.50/006xIWURly8fo9wxo24vzj30qo0qoaaz.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>在admin.py里注册了吗？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 蔷薇-Nina &nbsp;&nbsp;回复&nbsp;&nbsp; 秋秋秋秋方 </span> 
+      <em>2018年3月10日 18:38</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/258">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

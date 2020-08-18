@@ -1,0 +1,161 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>第一个Django应用</h1> 
+ <small>阅读:&nbsp;86121&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：7 </small> 
+ <hr> 
+ <h3>本章以创建一个Web投票应用为例子，手把手的教你如何使用Django开发Web应用，力图从全局范围带给大家一个整体的Django概念，让你对Django的设计理念、功能模块、体系架构、基本用法有个初步的印象。</h3> 
+ <p>该应用包括以下两个部分：</p> 
+ <ul> 
+  <li>一个可以让公众用户进行投票和查看投票结果的站点</li> 
+  <li>一个让可以进行增、删、改、查的后台admin管理界面</li> 
+ </ul> 
+ <p>在开始之前，再次重申，请确保已经安装最新版本的Django。可以在命令行或者$提示符下输入：</p> 
+ <div class="codehilite">
+  <pre><span></span>$ python -m django --version
+</pre>
+ </div> 
+ <p>如果没有显示版本号，而是提示“No module named django”，请返回前面的章节，参考安装Django。</p> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/85"> <i class="fa fa-arrow-left"></i>&nbsp;Django环境安装</a> 
+  <a class="float-right" href="/course/django/87"> Part 1：请求与响应&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 7</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/86">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva2.sinaimg.cn/crop.132.0.305.305.50/485e44b7jw1fasp6rfe8xj20fu08hdgh.jpg?KID=imgbed,tva&amp;Expires=1597489311&amp;ssig=4RXtn8Qa%2Fw" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>刘江老师。非常感谢你的django教程。学到了很多实用的技术。但是越学习疑问越多。能不能请你给讲讲django的原理。浏览器作为socket客户端，发送一个request，wsgi收到这个request后转发给django后，django到底做了怎么样的处理呢？为什么需要django的中间件做预处理呢？request本身应该是遵循HTTP协议封装好的数据结构啊。django直接用不行吗？再说response；django把view处理好的数据按照HTTP协议再封装好，直接response不行吗？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 黑礁洛奇_103 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年8月15日 16:10</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2178">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax2.sinaimg.cn/crop.0.0.132.132.50/007w9FHKly4fy8izbzk6cj303o03ojr7.jpg?KID=imgbed,tva&amp;Expires=1597552138&amp;ssig=aNy4rYqj6A" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>同问</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 用户6888077844 &nbsp;&nbsp;回复&nbsp;&nbsp; 黑礁洛奇_103 </span> 
+      <em>2020年8月16日 09:31</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2180">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1596971213&amp;ssig=sUPI4jIHgg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>Django对request进行处理是为了满足自身的不同需求，进行分类、报文解析、数据格式化。至于中间件，其实就是对原始request进行加工，比如安全、认证、上下文、会话等等，这些都是web开发中必然会碰到的业务。而最后对response的处理，则是上面的逆过程，除了安全、认证等工作，还要为原始的响应数据添上一些cookie、session，token等私货。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 黑礁洛奇_103 </span> 
+      <em>2020年8月16日 10:07</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2181">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax4.sinaimg.cn/crop.0.0.996.996.50/006vPrJKly8fq16j0k29nj30ro0rogo2.jpg?KID=imgbed,tva&amp;Expires=1570862585&amp;ssig=IoAvEjDmMk" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>“该应用包括以下两个部分： 一个可以让公众用户进行投票和查看投票结果的站点 一个让可以进行增、删、改、查的后台admin管理界面” “一个让可以”应修改为“一个可以”？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 阿克蒙德AAQ </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年10月13日 16:13</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1653">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.0.0.996.996.50/007wzSt0ly8g1lsa61ee7j30ro0ro41k.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>老师，注意一本书叫《Django 2.0 入门与实践》是一个叫李健的写的，用的代码和示例和这里的一模一样，都没带改的。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; Window-窗口 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年5月30日 22:31</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1374">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.996.996.50/a2366742ly8g29lk0pge2j20ro0rot9k.jpg?Expires=1563328364&amp;ssig=oyVmKVAkgv&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>这个是官方文档的例子呀，大家都可以参考。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 木村拓七199 &nbsp;&nbsp;回复&nbsp;&nbsp; Window-窗口 </span> 
+      <em>2019年7月17日 16:03</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1486">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.0.0.996.996.50/006xIWURly8gehjmghiqfj30ro0roq53.jpg?KID=imgbed,tva&amp;Expires=1591289035&amp;ssig=NX%2BU5OBrH%2F" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>都是官方的例子，具有代表性，所以都采用。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 蔷薇-Nina &nbsp;&nbsp;回复&nbsp;&nbsp; Window-窗口 </span> 
+      <em>2020年6月4日 21:45</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2095">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

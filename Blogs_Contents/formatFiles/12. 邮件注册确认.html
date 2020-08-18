@@ -1,0 +1,1063 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>12. 邮件注册确认</h1> 
+ <small>阅读:&nbsp;29260&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：33 </small> 
+ <hr> 
+ <p>很自然地，我们会想到如果能用邮件确认的方式对新注册用户进行审查，既安全又正式，也是目前很多站点的做法。</p> 
+ <h2>一、 创建模型</h2> 
+ <p>既然要区分通过和未通过邮件确认的用户，那么必须给用户添加一个是否进行过邮件确认的属性。</p> 
+ <p>另外，我们要创建一张新表，用于保存用户的确认码以及注册提交的时间。</p> 
+ <p>全新、完整的<code>/login/models.py</code>文件如下：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
+
+<span class="c1"># Create your models here.</span>
+
+
+<span class="k">class</span> <span class="nc">User</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+
+    <span class="n">gender</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="p">(</span><span class="s1">'male'</span><span class="p">,</span> <span class="s2">"男"</span><span class="p">),</span>
+        <span class="p">(</span><span class="s1">'female'</span><span class="p">,</span> <span class="s2">"女"</span><span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="n">name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span> <span class="n">unique</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">password</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">256</span><span class="p">)</span>
+    <span class="n">email</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">EmailField</span><span class="p">(</span><span class="n">unique</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">sex</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="n">gender</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">"男"</span><span class="p">)</span>
+    <span class="n">c_time</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateTimeField</span><span class="p">(</span><span class="n">auto_now_add</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">has_confirmed</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
+
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">ordering</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"-c_time"</span><span class="p">]</span>
+        <span class="n">verbose_name</span> <span class="o">=</span> <span class="s2">"用户"</span>
+        <span class="n">verbose_name_plural</span> <span class="o">=</span> <span class="s2">"用户"</span>
+
+
+<span class="k">class</span> <span class="nc">ConfirmString</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">code</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">256</span><span class="p">)</span>
+    <span class="n">user</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">OneToOneField</span><span class="p">(</span><span class="s1">'User'</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
+    <span class="n">c_time</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateTimeField</span><span class="p">(</span><span class="n">auto_now_add</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s2">":   "</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">code</span>
+
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+
+        <span class="n">ordering</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"-c_time"</span><span class="p">]</span>
+        <span class="n">verbose_name</span> <span class="o">=</span> <span class="s2">"确认码"</span>
+        <span class="n">verbose_name_plural</span> <span class="o">=</span> <span class="s2">"确认码"</span>
+</pre>
+ </div> 
+ <p>说明：</p> 
+ <ul> 
+  <li>User模型新增了<code>has_confirmed</code>字段，这是个布尔值，默认为False，也就是未进行邮件注册；</li> 
+  <li>ConfirmString模型保存了用户和注册码之间的关系，一对一的形式；</li> 
+  <li>code字段是哈希后的注册码；</li> 
+  <li>user是关联的一对一用户；</li> 
+  <li><code>c_time</code>是注册的提交时间。</li> 
+ </ul> 
+ <p>这里有个问题可以讨论一下：是否需要创建ConfirmString新表？可否都放在User表里？我认为如果全都放在User中，不利于管理，查询速度慢，创建新表有利于区分已确认和未确认的用户。最终的选择可以根据你的实际情况具体分析。</p> 
+ <p>模型修改和创建完毕，需要执行migrate命令，一定不要忘了。</p> 
+ <p>顺便修改一下admin.py文件，方便我们在后台修改和观察数据。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="c1"># login/admin.py</span>
+
+<span class="kn">from</span> <span class="nn">django.contrib</span> <span class="kn">import</span> <span class="n">admin</span>
+
+<span class="c1"># Register your models here.</span>
+
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">models</span>
+
+<span class="n">admin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">User</span><span class="p">)</span>
+<span class="n">admin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">ConfirmString</span><span class="p">)</span>
+</pre>
+ </div> 
+ <h2>二、修改视图</h2> 
+ <p>首先，要修改我们的<code>register()</code>视图的逻辑：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="k">def</span> <span class="nf">register</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'is_login'</span><span class="p">,</span> <span class="bp">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'/index/'</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s1">'POST'</span><span class="p">:</span>
+        <span class="n">register_form</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">RegisterForm</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="p">)</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="s2">"请检查填写的内容！"</span>
+        <span class="k">if</span> <span class="n">register_form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">():</span>
+            <span class="n">username</span> <span class="o">=</span> <span class="n">register_form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'username'</span><span class="p">)</span>
+            <span class="n">password1</span> <span class="o">=</span> <span class="n">register_form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'password1'</span><span class="p">)</span>
+            <span class="n">password2</span> <span class="o">=</span> <span class="n">register_form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'password2'</span><span class="p">)</span>
+            <span class="n">email</span> <span class="o">=</span> <span class="n">register_form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'email'</span><span class="p">)</span>
+            <span class="n">sex</span> <span class="o">=</span> <span class="n">register_form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'sex'</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">password1</span> <span class="o">!=</span> <span class="n">password2</span><span class="p">:</span>
+                <span class="n">message</span> <span class="o">=</span> <span class="s1">'两次输入的密码不同！'</span>
+                <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/register.html'</span><span class="p">,</span> <span class="nb">locals</span><span class="p">())</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">same_name_user</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">username</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">same_name_user</span><span class="p">:</span>
+                    <span class="n">message</span> <span class="o">=</span> <span class="s1">'用户名已经存在'</span>
+                    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/register.html'</span><span class="p">,</span> <span class="nb">locals</span><span class="p">())</span>
+                <span class="n">same_email_user</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">email</span><span class="o">=</span><span class="n">email</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">same_email_user</span><span class="p">:</span>
+                    <span class="n">message</span> <span class="o">=</span> <span class="s1">'该邮箱已经被注册了！'</span>
+                    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/register.html'</span><span class="p">,</span> <span class="nb">locals</span><span class="p">())</span>
+
+                <span class="n">new_user</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">User</span><span class="p">()</span>
+                <span class="n">new_user</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">username</span>
+                <span class="n">new_user</span><span class="o">.</span><span class="n">password</span> <span class="o">=</span> <span class="n">hash_code</span><span class="p">(</span><span class="n">password1</span><span class="p">)</span>
+                <span class="n">new_user</span><span class="o">.</span><span class="n">email</span> <span class="o">=</span> <span class="n">email</span>
+                <span class="n">new_user</span><span class="o">.</span><span class="n">sex</span> <span class="o">=</span> <span class="n">sex</span>
+                <span class="n">new_user</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+
+                <span class="n">code</span> <span class="o">=</span> <span class="n">make_confirm_string</span><span class="p">(</span><span class="n">new_user</span><span class="p">)</span>
+                <span class="n">send_email</span><span class="p">(</span><span class="n">email</span><span class="p">,</span> <span class="n">code</span><span class="p">)</span>
+
+                <span class="n">message</span> <span class="o">=</span> <span class="s1">'请前往邮箱进行确认！'</span>
+                <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/confirm.html'</span><span class="p">,</span> <span class="nb">locals</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/register.html'</span><span class="p">,</span> <span class="nb">locals</span><span class="p">())</span>
+    <span class="n">register_form</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">RegisterForm</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/register.html'</span><span class="p">,</span> <span class="nb">locals</span><span class="p">())</span>
+</pre>
+ </div> 
+ <p>关键是多了下面两行：</p> 
+ <div class="codehilite">
+  <pre><span></span>code = make_confirm_string(new_user)
+send_email(email, code)
+</pre>
+ </div> 
+ <p><code>make_confirm_string()</code>是创建确认码对象的方法，代码如下：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">import</span> <span class="nn">datetime</span>
+
+<span class="k">def</span> <span class="nf">make_confirm_string</span><span class="p">(</span><span class="n">user</span><span class="p">):</span>
+    <span class="n">now</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">"%Y-%m-</span><span class="si">%d</span><span class="s2"> %H:%M:%S"</span><span class="p">)</span>
+    <span class="n">code</span> <span class="o">=</span> <span class="n">hash_code</span><span class="p">(</span><span class="n">user</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">now</span><span class="p">)</span>
+    <span class="n">models</span><span class="o">.</span><span class="n">ConfirmString</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">code</span><span class="o">=</span><span class="n">code</span><span class="p">,</span> <span class="n">user</span><span class="o">=</span><span class="n">user</span><span class="p">,)</span>
+    <span class="k">return</span> <span class="n">code</span>
+</pre>
+ </div> 
+ <p>在文件顶部要先导入<code>datetime</code>模块。</p> 
+ <p><code>make_confirm_string()</code>方法接收一个用户对象作为参数。首先利用datetime模块生成一个当前时间的字符串now，再调用我们前面编写的<code>hash_code()</code>方法以用户名为基础，now为‘盐’，生成一个独一无二的哈希值，再调用ConfirmString模型的create()方法，生成并保存一个确认码对象。最后返回这个哈希值。</p> 
+ <p><code>send_email(email, code)</code>方法接收两个参数，分别是注册的邮箱和前面生成的哈希值，代码如下：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.conf</span> <span class="kn">import</span> <span class="n">settings</span>
+
+<span class="k">def</span> <span class="nf">send_email</span><span class="p">(</span><span class="n">email</span><span class="p">,</span> <span class="n">code</span><span class="p">):</span>
+
+    <span class="kn">from</span> <span class="nn">django.core.mail</span> <span class="kn">import</span> <span class="n">EmailMultiAlternatives</span>
+
+    <span class="n">subject</span> <span class="o">=</span> <span class="s1">'来自www.liujiangblog.com的注册确认邮件'</span>
+
+    <span class="n">text_content</span> <span class="o">=</span> <span class="s1">'''感谢注册www.liujiangblog.com，这里是刘江的博客和教程站点，专注于Python、Django和机器学习技术的分享！</span><span class="se">\</span>
+<span class="s1">                    如果你看到这条消息，说明你的邮箱服务器不提供HTML链接功能，请联系管理员！'''</span>
+
+    <span class="n">html_content</span> <span class="o">=</span> <span class="s1">'''</span>
+<span class="s1">                    &lt;p&gt;感谢注册&lt;a href="http://{}/confirm/?code={}" target=blank&gt;www.liujiangblog.com&lt;/a&gt;，</span><span class="se">\</span>
+<span class="s1">                    这里是刘江的博客和教程站点，专注于Python、Django和机器学习技术的分享！&lt;/p&gt;</span>
+<span class="s1">                    &lt;p&gt;请点击站点链接完成注册确认！&lt;/p&gt;</span>
+<span class="s1">                    &lt;p&gt;此链接有效期为{}天！&lt;/p&gt;</span>
+<span class="s1">                    '''</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">'127.0.0.1:8000'</span><span class="p">,</span> <span class="n">code</span><span class="p">,</span> <span class="n">settings</span><span class="o">.</span><span class="n">CONFIRM_DAYS</span><span class="p">)</span>
+
+    <span class="n">msg</span> <span class="o">=</span> <span class="n">EmailMultiAlternatives</span><span class="p">(</span><span class="n">subject</span><span class="p">,</span> <span class="n">text_content</span><span class="p">,</span> <span class="n">settings</span><span class="o">.</span><span class="n">EMAIL_HOST_USER</span><span class="p">,</span> <span class="p">[</span><span class="n">email</span><span class="p">])</span>
+    <span class="n">msg</span><span class="o">.</span><span class="n">attach_alternative</span><span class="p">(</span><span class="n">html_content</span><span class="p">,</span> <span class="s2">"text/html"</span><span class="p">)</span>
+    <span class="n">msg</span><span class="o">.</span><span class="n">send</span><span class="p">()</span>
+</pre>
+ </div> 
+ <p>首先我们需要导入settings配置文件<code>from django.conf import settings</code>。</p> 
+ <p>邮件内容中的所有字符串都可以根据你的实际情况进行修改。其中关键在于<code>&lt;a href=''&gt;</code>中链接地址的格式，我这里使用了硬编码的'127.0.0.1:8000'，请酌情修改，url里的参数名为<code>code</code>，它保存了关键的注册确认码，最后的有效期天数为设置在settings中的<code>CONFIRM_DAYS</code>。所有的这些都是可以定制的！</p> 
+ <p>下面是邮件相关的settings配置：</p> 
+ <div class="codehilite">
+  <pre><span></span># 邮件配置
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.sina.com'
+EMAIL_PORT = 25
+EMAIL_HOST_USER = 'xxx@sina.com'
+EMAIL_HOST_PASSWORD = 'xxxxxx'
+
+# 注册有效期天数
+CONFIRM_DAYS = 7
+</pre>
+ </div> 
+ <h2>三、处理邮件确认请求</h2> 
+ <p>首先，在根目录的<code>urls.py</code>中添加一条url：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="n">path</span><span class="p">(</span><span class="s1">'confirm/'</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">user_confirm</span><span class="p">),</span>
+</pre>
+ </div> 
+ <p>其次，在<code>login/views.py</code>中添加一个<code>user_confirm</code>视图。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="k">def</span> <span class="nf">user_confirm</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="n">code</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'code'</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+    <span class="n">message</span> <span class="o">=</span> <span class="s1">''</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">confirm</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ConfirmString</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">code</span><span class="o">=</span><span class="n">code</span><span class="p">)</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="s1">'无效的确认请求!'</span>
+        <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/confirm.html'</span><span class="p">,</span> <span class="nb">locals</span><span class="p">())</span>
+
+    <span class="n">c_time</span> <span class="o">=</span> <span class="n">confirm</span><span class="o">.</span><span class="n">c_time</span>
+    <span class="n">now</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">now</span> <span class="o">&gt;</span> <span class="n">c_time</span> <span class="o">+</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">CONFIRM_DAYS</span><span class="p">):</span>
+        <span class="n">confirm</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="s1">'您的邮件已经过期！请重新注册!'</span>
+        <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/confirm.html'</span><span class="p">,</span> <span class="nb">locals</span><span class="p">())</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">confirm</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">has_confirmed</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="n">confirm</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+        <span class="n">confirm</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="s1">'感谢确认，请使用账户登录！'</span>
+        <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/confirm.html'</span><span class="p">,</span> <span class="nb">locals</span><span class="p">())</span>
+</pre>
+ </div> 
+ <p>说明：</p> 
+ <ul> 
+  <li>通过<code>request.GET.get('code', None)</code>从请求的url地址中获取确认码;</li> 
+  <li>先去数据库内查询是否有对应的确认码;</li> 
+  <li>如果没有，返回<code>confirm.html</code>页面，并提示;</li> 
+  <li>如果有，获取注册的时间<code>c_time</code>，加上设置的过期天数，这里是7天，然后与现在时间点进行对比；</li> 
+  <li>如果时间已经超期，删除注册的用户，同时注册码也会一并删除，然后返回<code>confirm.html</code>页面，并提示;</li> 
+  <li>如果未超期，修改用户的<code>has_confirmed</code>字段为True，并保存，表示通过确认了。然后删除注册码，但不删除用户本身。最后返回<code>confirm.html</code>页面，并提示。</li> 
+ </ul> 
+ <p>这里需要一个<code>confirm.html</code>页面，我们将它创建在<code>/login/templates/login/</code>下面：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">&lt;!DOCTYPE html&gt;</span>
+<span class="p">&lt;</span><span class="nt">html</span> <span class="na">lang</span><span class="o">=</span><span class="s">"en"</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">head</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">meta</span> <span class="na">charset</span><span class="o">=</span><span class="s">"UTF-8"</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">title</span><span class="p">&gt;</span>注册确认<span class="p">&lt;/</span><span class="nt">title</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">head</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">body</span><span class="p">&gt;</span>
+
+
+    <span class="p">&lt;</span><span class="nt">h1</span> <span class="na">style</span><span class="o">=</span><span class="s">"margin-left: 100px;"</span><span class="p">&gt;</span>{{ message }}<span class="p">&lt;/</span><span class="nt">h1</span><span class="p">&gt;</span>
+
+    <span class="p">&lt;</span><span class="nt">script</span><span class="p">&gt;</span>
+        <span class="nb">window</span><span class="p">.</span><span class="nx">setTimeout</span><span class="p">(</span><span class="s2">"window.location='/login/'"</span><span class="p">,</span><span class="mi">2000</span><span class="p">);</span>
+    <span class="p">&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+
+<span class="p">&lt;/</span><span class="nt">body</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">html</span><span class="p">&gt;</span>
+</pre>
+ </div> 
+ <p>页面中通过JS代码，设置2秒后自动跳转到登录页面。</p> 
+ <p>confirm.html页面仅仅是个示意的提示页面，你可以根据自己的需要去除或者美化。</p> 
+ <h2>四、修改登录规则</h2> 
+ <p>既然未进行邮件确认的用户不能登录，那么我们就必须修改登录规则，如下所示：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="k">def</span> <span class="nf">login</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'is_login'</span><span class="p">,</span> <span class="bp">None</span><span class="p">):</span>  <span class="c1"># 不允许重复登录</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'/index/'</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s1">'POST'</span><span class="p">:</span>
+        <span class="n">login_form</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">UserForm</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="p">)</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="s1">'请检查填写的内容！'</span>
+        <span class="k">if</span> <span class="n">login_form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">():</span>
+            <span class="n">username</span> <span class="o">=</span> <span class="n">login_form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'username'</span><span class="p">)</span>
+            <span class="n">password</span> <span class="o">=</span> <span class="n">login_form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'password'</span><span class="p">)</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">user</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">username</span><span class="p">)</span>
+            <span class="k">except</span> <span class="p">:</span>
+                <span class="n">message</span> <span class="o">=</span> <span class="s1">'用户不存在！'</span>
+                <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/login.html'</span><span class="p">,</span> <span class="nb">locals</span><span class="p">())</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">user</span><span class="o">.</span><span class="n">has_confirmed</span><span class="p">:</span>
+                <span class="n">message</span> <span class="o">=</span> <span class="s1">'该用户还未经过邮件确认！'</span>
+                <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/login.html'</span><span class="p">,</span> <span class="nb">locals</span><span class="p">())</span>
+
+            <span class="k">if</span> <span class="n">user</span><span class="o">.</span><span class="n">password</span> <span class="o">==</span> <span class="n">hash_code</span><span class="p">(</span><span class="n">password</span><span class="p">):</span>
+                <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="p">[</span><span class="s1">'is_login'</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
+                <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="p">[</span><span class="s1">'user_id'</span><span class="p">]</span> <span class="o">=</span> <span class="n">user</span><span class="o">.</span><span class="n">id</span>
+                <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="p">[</span><span class="s1">'user_name'</span><span class="p">]</span> <span class="o">=</span> <span class="n">user</span><span class="o">.</span><span class="n">name</span>
+                <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'/index/'</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">message</span> <span class="o">=</span> <span class="s1">'密码不正确！'</span>
+                <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/login.html'</span><span class="p">,</span> <span class="nb">locals</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/login.html'</span><span class="p">,</span> <span class="nb">locals</span><span class="p">())</span>
+
+    <span class="n">login_form</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">UserForm</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/login.html'</span><span class="p">,</span> <span class="nb">locals</span><span class="p">())</span>
+</pre>
+ </div> 
+ <p>关键是下面的部分：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="k">if</span> <span class="ow">not</span> <span class="n">user</span><span class="o">.</span><span class="n">has_confirmed</span><span class="p">:</span>
+    <span class="n">message</span> <span class="o">=</span> <span class="s1">'该用户还未经过邮件确认！'</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/login.html'</span><span class="p">,</span> <span class="nb">locals</span><span class="p">())</span>
+</pre>
+ </div> 
+ <p>最后，贴出view.py的整体代码，供大家参考：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.shortcuts</span> <span class="kn">import</span> <span class="n">render</span>
+<span class="kn">from</span> <span class="nn">django.shortcuts</span> <span class="kn">import</span> <span class="n">redirect</span>
+<span class="kn">from</span> <span class="nn">django.conf</span> <span class="kn">import</span> <span class="n">settings</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">models</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">forms</span>
+<span class="kn">import</span> <span class="nn">hashlib</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="c1"># Create your views here.</span>
+
+
+<span class="k">def</span> <span class="nf">hash_code</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">salt</span><span class="o">=</span><span class="s1">'mysite'</span><span class="p">):</span>
+    <span class="n">h</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">()</span>
+    <span class="n">s</span> <span class="o">+=</span> <span class="n">salt</span>
+    <span class="n">h</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">h</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+
+
+<span class="k">def</span> <span class="nf">make_confirm_string</span><span class="p">(</span><span class="n">user</span><span class="p">):</span>
+    <span class="n">now</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">"%Y-%m-</span><span class="si">%d</span><span class="s2"> %H:%M:%S"</span><span class="p">)</span>
+    <span class="n">code</span> <span class="o">=</span> <span class="n">hash_code</span><span class="p">(</span><span class="n">user</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">now</span><span class="p">)</span>
+    <span class="n">models</span><span class="o">.</span><span class="n">ConfirmString</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">code</span><span class="o">=</span><span class="n">code</span><span class="p">,</span> <span class="n">user</span><span class="o">=</span><span class="n">user</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">code</span>
+
+
+<span class="k">def</span> <span class="nf">send_email</span><span class="p">(</span><span class="n">email</span><span class="p">,</span> <span class="n">code</span><span class="p">):</span>
+
+    <span class="kn">from</span> <span class="nn">django.core.mail</span> <span class="kn">import</span> <span class="n">EmailMultiAlternatives</span>
+
+    <span class="n">subject</span> <span class="o">=</span> <span class="s1">'来自www.liujiangblog.com的注册确认邮件'</span>
+
+    <span class="n">text_content</span> <span class="o">=</span> <span class="s1">'''感谢注册www.liujiangblog.com，这里是刘江的博客和教程站点，专注于Python、Django和机器学习技术的分享！</span><span class="se">\</span>
+<span class="s1">                    如果你看到这条消息，说明你的邮箱服务器不提供HTML链接功能，请联系管理员！'''</span>
+
+    <span class="n">html_content</span> <span class="o">=</span> <span class="s1">'''</span>
+<span class="s1">                    &lt;p&gt;感谢注册&lt;a href="http://{}/confirm/?code={}" target=blank&gt;www.liujiangblog.com&lt;/a&gt;，</span><span class="se">\</span>
+<span class="s1">                    这里是刘江的博客和教程站点，专注于Python、Django和机器学习技术的分享！&lt;/p&gt;</span>
+<span class="s1">                    &lt;p&gt;请点击站点链接完成注册确认！&lt;/p&gt;</span>
+<span class="s1">                    &lt;p&gt;此链接有效期为{}天！&lt;/p&gt;</span>
+<span class="s1">                    '''</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">'127.0.0.1:8000'</span><span class="p">,</span> <span class="n">code</span><span class="p">,</span> <span class="n">settings</span><span class="o">.</span><span class="n">CONFIRM_DAYS</span><span class="p">)</span>
+
+    <span class="n">msg</span> <span class="o">=</span> <span class="n">EmailMultiAlternatives</span><span class="p">(</span><span class="n">subject</span><span class="p">,</span> <span class="n">text_content</span><span class="p">,</span> <span class="n">settings</span><span class="o">.</span><span class="n">EMAIL_HOST_USER</span><span class="p">,</span> <span class="p">[</span><span class="n">email</span><span class="p">])</span>
+    <span class="n">msg</span><span class="o">.</span><span class="n">attach_alternative</span><span class="p">(</span><span class="n">html_content</span><span class="p">,</span> <span class="s2">"text/html"</span><span class="p">)</span>
+    <span class="n">msg</span><span class="o">.</span><span class="n">send</span><span class="p">()</span>
+
+
+<span class="k">def</span> <span class="nf">index</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'is_login'</span><span class="p">,</span> <span class="bp">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'/login/'</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/index.html'</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">login</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'is_login'</span><span class="p">,</span> <span class="bp">None</span><span class="p">):</span>  <span class="c1"># 不允许重复登录</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'/index/'</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s1">'POST'</span><span class="p">:</span>
+        <span class="n">login_form</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">UserForm</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="p">)</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="s1">'请检查填写的内容！'</span>
+        <span class="k">if</span> <span class="n">login_form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">():</span>
+            <span class="n">username</span> <span class="o">=</span> <span class="n">login_form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'username'</span><span class="p">)</span>
+            <span class="n">password</span> <span class="o">=</span> <span class="n">login_form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'password'</span><span class="p">)</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">user</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">username</span><span class="p">)</span>
+            <span class="k">except</span> <span class="p">:</span>
+                <span class="n">message</span> <span class="o">=</span> <span class="s1">'用户不存在！'</span>
+                <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/login.html'</span><span class="p">,</span> <span class="nb">locals</span><span class="p">())</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">user</span><span class="o">.</span><span class="n">has_confirmed</span><span class="p">:</span>
+                <span class="n">message</span> <span class="o">=</span> <span class="s1">'该用户还未经过邮件确认！'</span>
+                <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/login.html'</span><span class="p">,</span> <span class="nb">locals</span><span class="p">())</span>
+
+            <span class="k">if</span> <span class="n">user</span><span class="o">.</span><span class="n">password</span> <span class="o">==</span> <span class="n">hash_code</span><span class="p">(</span><span class="n">password</span><span class="p">):</span>
+                <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="p">[</span><span class="s1">'is_login'</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
+                <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="p">[</span><span class="s1">'user_id'</span><span class="p">]</span> <span class="o">=</span> <span class="n">user</span><span class="o">.</span><span class="n">id</span>
+                <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="p">[</span><span class="s1">'user_name'</span><span class="p">]</span> <span class="o">=</span> <span class="n">user</span><span class="o">.</span><span class="n">name</span>
+                <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'/index/'</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">message</span> <span class="o">=</span> <span class="s1">'密码不正确！'</span>
+                <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/login.html'</span><span class="p">,</span> <span class="nb">locals</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/login.html'</span><span class="p">,</span> <span class="nb">locals</span><span class="p">())</span>
+
+    <span class="n">login_form</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">UserForm</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/login.html'</span><span class="p">,</span> <span class="nb">locals</span><span class="p">())</span>
+
+
+<span class="k">def</span> <span class="nf">register</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'is_login'</span><span class="p">,</span> <span class="bp">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'/index/'</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s1">'POST'</span><span class="p">:</span>
+        <span class="n">register_form</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">RegisterForm</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="p">)</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="s2">"请检查填写的内容！"</span>
+        <span class="k">if</span> <span class="n">register_form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">():</span>
+            <span class="n">username</span> <span class="o">=</span> <span class="n">register_form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'username'</span><span class="p">)</span>
+            <span class="n">password1</span> <span class="o">=</span> <span class="n">register_form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'password1'</span><span class="p">)</span>
+            <span class="n">password2</span> <span class="o">=</span> <span class="n">register_form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'password2'</span><span class="p">)</span>
+            <span class="n">email</span> <span class="o">=</span> <span class="n">register_form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'email'</span><span class="p">)</span>
+            <span class="n">sex</span> <span class="o">=</span> <span class="n">register_form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'sex'</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">password1</span> <span class="o">!=</span> <span class="n">password2</span><span class="p">:</span>
+                <span class="n">message</span> <span class="o">=</span> <span class="s1">'两次输入的密码不同！'</span>
+                <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/register.html'</span><span class="p">,</span> <span class="nb">locals</span><span class="p">())</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">same_name_user</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">username</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">same_name_user</span><span class="p">:</span>
+                    <span class="n">message</span> <span class="o">=</span> <span class="s1">'用户名已经存在'</span>
+                    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/register.html'</span><span class="p">,</span> <span class="nb">locals</span><span class="p">())</span>
+                <span class="n">same_email_user</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">email</span><span class="o">=</span><span class="n">email</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">same_email_user</span><span class="p">:</span>
+                    <span class="n">message</span> <span class="o">=</span> <span class="s1">'该邮箱已经被注册了！'</span>
+                    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/register.html'</span><span class="p">,</span> <span class="nb">locals</span><span class="p">())</span>
+
+                <span class="n">new_user</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">User</span><span class="p">()</span>
+                <span class="n">new_user</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">username</span>
+                <span class="n">new_user</span><span class="o">.</span><span class="n">password</span> <span class="o">=</span> <span class="n">hash_code</span><span class="p">(</span><span class="n">password1</span><span class="p">)</span>
+                <span class="n">new_user</span><span class="o">.</span><span class="n">email</span> <span class="o">=</span> <span class="n">email</span>
+                <span class="n">new_user</span><span class="o">.</span><span class="n">sex</span> <span class="o">=</span> <span class="n">sex</span>
+                <span class="n">new_user</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+
+                <span class="n">code</span> <span class="o">=</span> <span class="n">make_confirm_string</span><span class="p">(</span><span class="n">new_user</span><span class="p">)</span>
+                <span class="n">send_email</span><span class="p">(</span><span class="n">email</span><span class="p">,</span> <span class="n">code</span><span class="p">)</span>
+
+                <span class="n">message</span> <span class="o">=</span> <span class="s1">'请前往邮箱进行确认！'</span>
+                <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/confirm.html'</span><span class="p">,</span> <span class="nb">locals</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/register.html'</span><span class="p">,</span> <span class="nb">locals</span><span class="p">())</span>
+    <span class="n">register_form</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">RegisterForm</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/register.html'</span><span class="p">,</span> <span class="nb">locals</span><span class="p">())</span>
+
+
+<span class="k">def</span> <span class="nf">logout</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'is_login'</span><span class="p">,</span> <span class="bp">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'/login/'</span><span class="p">)</span>
+
+    <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+    <span class="c1"># del request.session['is_login']</span>
+    <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s2">"/login/"</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">user_confirm</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="n">code</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'code'</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+    <span class="n">message</span> <span class="o">=</span> <span class="s1">''</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">confirm</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ConfirmString</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">code</span><span class="o">=</span><span class="n">code</span><span class="p">)</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="s1">'无效的确认请求！'</span>
+        <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/confirm.html'</span><span class="p">,</span> <span class="nb">locals</span><span class="p">())</span>
+
+    <span class="n">c_time</span> <span class="o">=</span> <span class="n">confirm</span><span class="o">.</span><span class="n">c_time</span>
+    <span class="n">now</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">now</span> <span class="o">&gt;</span> <span class="n">c_time</span> <span class="o">+</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">CONFIRM_DAYS</span><span class="p">):</span>
+        <span class="n">confirm</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="s1">'您的邮件已经过期！请重新注册！'</span>
+        <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/confirm.html'</span><span class="p">,</span> <span class="nb">locals</span><span class="p">())</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">confirm</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">has_confirmed</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="n">confirm</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+        <span class="n">confirm</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="s1">'感谢确认，请使用账户登录！'</span>
+        <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/confirm.html'</span><span class="p">,</span> <span class="nb">locals</span><span class="p">())</span>
+</pre>
+ </div> 
+ <h2>五、功能展示</h2> 
+ <p>首先，通过admin后台删除原来所有的用户。</p> 
+ <p>进入注册页面，如下图所示：</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/114-1.png"></p> 
+ <p>点击注册后，跳转到提示信息页面，2秒后再跳转到登录页面。</p> 
+ <p>尝试登录用户，但提示还未进行邮件确认：</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/114-2.png"></p> 
+ <p>进入admin后台，查看刚才建立的用户，可以看到其处于未确认状态：</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/114-3.png"></p> 
+ <p>进入你的测试邮箱，查看注册邮件：</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/114-4.png"></p> 
+ <p>点击链接，自动跳转到确认成功提示页面，2秒后再跳转到登录页面。这个时候再次查看admin后台，可以看到用户已经处于登录确认状态，并且确认码也被自动删除了，不会第二次被使用：</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/114-5.png"></p> 
+ <p>使用该用户正常登录吧！Very Good！一切都很不错！</p> 
+ <h2>六、总结说明</h2> 
+ <p>关于邮件注册，还有很多内容可以探讨，比如定时删除未在有效期内进行邮件确认的用户，这个可以用Django的celery实现，或者使用Linux的cronb功能。</p> 
+ <p>关于邮件注册的工作逻辑，项目里只是抛砖引玉，做个展示，并不够严谨，也需要你自己根据实际环境去设计。</p> 
+ <p>最后，其实Django生态圈有一个现成的邮件注册模块django-registration，但是这个模块灵活度不高，并且绑定了Auth框架，有兴趣的可以去看看其英文文档，中文资料较少。</p> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/113"> <i class="fa fa-arrow-left"></i>&nbsp;11.Django发送邮件</a> 
+  <a class="float-right" href="/course/django/115"> 13. Github管理项目&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 33</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/114">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif?KID=imgbed,tva&amp;Expires=1597303960&amp;ssig=4uayTL4IOW" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>no such column: login_user.has_confirmed 代码是一样的可是注册进去就报错了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户6248750922 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年8月14日 16:13</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2177">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.0.0.512.512.50/61a4c283ly8g1f05yfe16j20e80e8aab.jpg?KID=imgbed,tva&amp;Expires=1597492869&amp;ssig=c36zLDPbfx" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我也遇到了一样的问题，请问您解决了么？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> QL60999 &nbsp;&nbsp;回复&nbsp;&nbsp; 用户6248750922 </span> 
+      <em>2020年8月15日 17:01</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2179">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1590380527&amp;ssig=H6XfX69rRB" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>这一节，很多朋友出现时间对比错误。是因为在项目一开始，没有仔细看说明，忘了把USE_TZ配置项改为False了。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年5月26日 20:05</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2080">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax4.sinaimg.cn/crop.0.0.996.996.50/0063g5sCly8fgk0nd2szqj30ro0ro0ui.jpg?KID=imgbed,tva&amp;Expires=1583420818&amp;ssig=vKtf3ZpCf8" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>博主，您写的user_confirm()函数似乎有点问题！！邮箱确认过后，用户表里面的has_confiremed字段并不会被修改，所以不管怎么确认，登陆的时候提示的都是邮箱未确认。 后面我发现ConfirmString表里面的user使用的是一对一OneToOneField('User', on_delete=models.CASCADE)，这样的好像在ConfirmString表上面的修改不会同步到原来的User表里面 原来您里面是这么写的，ConfirmString表上面的数据不会同步到User表上面 confirm = models.ConfirmString.objects.get(code=code) ........... confirm.user.has_confirmed = True confirm.user.save() 所以我只能手动去修改User表里面的has_confiremed 字段 user = models.User.objects.get(name=confirm.user.name) user.has_confiremed = True user.save() 这样修改之后，就可以了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 翁明强w </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年3月5日 20:16</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1941">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1583472635&amp;ssig=ZxtcMRQSIL" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我在文字教程和视频教程里都实际测试验证过的，没有问题。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 翁明强w </span> 
+      <em>2020年3月6日 10:58</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1947">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.0.0.480.480.50/0076Cfgrly8fxwcc1411mj30dc0dcn05.jpg?KID=imgbed,tva&amp;Expires=1582918750&amp;ssig=Gr2kNGQrlq" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>发邮件那里 是不是用异步比较好</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; luck85697 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年2月29日 00:39</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1928">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1590380527&amp;ssig=H6XfX69rRB" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>异步当然是最好，并且Django3.1开始支持异步视图了。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; luck85697 </span> 
+      <em>2020年5月26日 20:01</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2079">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva2.sinaimg.cn/crop.0.0.100.100.50/0063RJ6njw8ert13e2463j302s02st8i.jpg?KID=imgbed,tva&amp;Expires=1582008187&amp;ssig=i1JJhEaqHd" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>now = datetime.datetime.now()与c_time + datetime.timedelta(settings.CONFIRM_DAYS)总是会报错，后来想了个简单方法，他们都是datetime.datetime对象，于是就 now = datetime.datetime.now() othertime = c_time + datetime.timedelta(settings.CONFIRM_DAYS) if now.date() &gt; othertime.date():</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 璩鳐125 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年2月18日 21:45</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1911">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax2.sinaimg.cn/crop.0.0.479.479.50/0062WGOKly8g8i9t3ciy6j30db0db3zc.jpg?KID=imgbed,tva&amp;Expires=1577208181&amp;ssig=QQnadWObTM" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>超级感谢刘老师 做到这一步的时候非常有成就感！下一步就是自己回去重新捋一遍代码，然后尝试着不看教程自己重新搭一个！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 八合一大腹肌 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年12月27日 11:06</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1806">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif?KID=imgbed,tva&amp;Expires=1572599037&amp;ssig=MEht3hLLjE" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我发现在创建确认码对象的方法make_confirm_string()导入datetime的时候，刘老师导入成啦datatime！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户0856724271 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年11月4日 14:41</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1691">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1573045997&amp;ssig=x1BZU9hqr4" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>感谢指出，已经修改！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 用户0856724271 </span> 
+      <em>2019年11月6日 18:20</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1695">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_female_50.gif?KID=imgbed,tva&amp;Expires=1568023154&amp;ssig=9oC0uA5eik" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>超级困惑，求解 关于发送邮件部分，目前 发送方为qq邮箱，基本配置完好，测试成功。 按照博主步骤注册成功，邮箱确认成功。 但是，当我注册时的接收方为Google的Gmail邮箱时，怎么弄都接收不到。（之前成功的是QQ邮箱接收，其他未测试）。 然后改用django.core.mail 的 send_mail 方法，还是一样——qq邮箱接收成功，Gmail无法接收。 更神奇的是，相同项目下分享功能下的发送邮件（send_mail）功能完好，Gmail是可以接收的！！！ 非常纳闷！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户6837904130 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年9月9日 15:13</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1622">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.960.960.50/006Ujsxrly8fx7zf565dgj30qo0qo76g.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>请问一下，注册之后发送的邮件的网址应该填写什么才能够确认啊？还有这个获取对应邮箱与注册码之间的原理是什么啊</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 锦鲤之博 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年6月27日 18:05</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1415">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.0.0.996.996.50/007FOjP8ly8g110pu8dzvj30ro0ron0h.jpg?Expires=1563287325&amp;ssig=grQrexy228&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>发送给你邮箱的地址，只是一个伪地址，你可点击链接，假装可以确认，然后在后台改状态</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 墨古_10734 &nbsp;&nbsp;回复&nbsp;&nbsp; 锦鲤之博 </span> 
+      <em>2019年7月18日 16:41</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1495">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>这个登录的项目部署到Linux服务器后无法发送邮件是怎么回事呢？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 兔子拼命跑 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年12月18日 19:54</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/961">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>邮件能否成功发送，涉及的因素太多，在前面我有提到过一些。这些因素，通常与代码无关，而是环境、网络、设置等等</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 兔子拼命跑 </span> 
+      <em>2019年1月1日 11:12</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/992">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>from django.utils import timezone now = timezone.now()</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; Chihiro1992_54528 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年10月31日 15:34</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/812">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>感谢博主的精彩演绎！项目完成了，不过具体过程还得好好捋一捋</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 了繁精彩 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年9月15日 01:21</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/730">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.180.180.50/88d81163jw8f3lpqro6w3j2050050wer.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>多谢博主！用户系统终于搞定了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; DuoyiChen </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年9月14日 01:28</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/729">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.0.0.512.512.50/70e53e59ly8fs1znvelvrj20e80e8aah.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>验证码通过也能正常登陆了，但发现confirm注册码这个表中数据未添加上去。麻烦解释一下，谢谢！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 这个微博是帅比 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年8月31日 09:55</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/716">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.0.0.512.512.50/70e53e59ly8fs1znvelvrj20e80e8aah.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>创建出来后面delete掉了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 这个微博是帅比 &nbsp;&nbsp;回复&nbsp;&nbsp; 这个微博是帅比 </span> 
+      <em>2018年8月31日 14:16</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/717">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax3.sinaimg.cn/crop.0.0.1242.1242.50/cb76f7acly8ftiv04bnijj20yi0yigno.jpg?KID=imgbed,tva&amp;Expires=1571655654&amp;ssig=EFRThA6%2BEn" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我也遇到这个问题了，请问下你怎么解决的啊</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 啧啧的男神 &nbsp;&nbsp;回复&nbsp;&nbsp; 这个微博是帅比 </span> 
+      <em>2019年10月21日 16:01</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1675">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.0.996.996.50/684b4357jw8f6i1rp6013j20ro0romyl.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>起因：正常的dateime.now()得到的日期不能和Django数据库里面存储的日期数据做对比，两个解决办法： 1、是把Django配置里面的USE_TZ设置成False，这样Django的数据就没有时区信息了。 2、是在这个对比情景下，不要用datetime.now()来得当前数据，用以下代码： from django.utils import timezone now = timezone.now()</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 带着寂寞闯天涯 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年7月25日 16:21</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/638">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>TypeError: __init__() missing 1 required positional argument: 'on_delete' 缺一个参数？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 一年一月一日一时_45749 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年6月27日 17:08</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/545">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>一个是关联的模型，另一个是on_delete选项。实际上，在目前版本中，on_delete选项也可以不设置，但Django极力反对如此，因此在Django2.0版本后，该选项会设置为必填。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 一年一月一日一时_45749 &nbsp;&nbsp;回复&nbsp;&nbsp; 一年一月一日一时_45749 </span> 
+      <em>2018年6月27日 17:18</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/546">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva3.sinaimg.cn/crop.0.3.506.506.50/8d626e10jw8f6gpi0e4b8j20e20e8dg1.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>一路下来碰到不少问题，但都被我一一解决了，谢谢博主的分享！博主以后会不会写一个完整的blog开发实战</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; Silence_hoo </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年6月19日 17:04</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/540">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>if now &gt; c_time + datetime.timedelta(settings.CONFIRM_DAYS): TypeError: can't compare offset-naive and offset-aware datetimes</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 爱读书的默勤 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年4月10日 22:28</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/372">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>参考https://blog.csdn.net/qq_25420115/article/details/53149669</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 爱读书的默勤 </span> 
+      <em>2018年4月11日 08:51</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/373">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/default/images/default_avatar_male_50.gif?Expires=1565604483&amp;ssig=D2sCFKU%2BOM&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我也碰到，但我解决了，问题就是date类型不能与datetime类型比较，可以使用这个方法from django.utils import timezone now = timezone.now()</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 用户5534500230 &nbsp;&nbsp;回复&nbsp;&nbsp; 爱读书的默勤 </span> 
+      <em>2019年8月20日 13:22</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1572">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/default/images/default_avatar_male_50.gif?Expires=1565604483&amp;ssig=D2sCFKU%2BOM&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>还有一个可能就是你在模型层那里讲c_time的类型设置为了DateField,</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 用户5534500230 &nbsp;&nbsp;回复&nbsp;&nbsp; 爱读书的默勤 </span> 
+      <em>2019年8月20日 13:35</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1573">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva3.sinaimg.cn/crop.53.213.533.533.50/005Hctu9jw8fbx217tvp0j30hs0qot90.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>多谢博主</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 大圣______ </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年4月4日 16:48</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/360">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.960.960.50/006xIWURly8fo9wxo24vzj30qo0qoaaz.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>大功告成！感谢博主。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 蔷薇-Nina </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年3月13日 23:49</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/305">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.29.72.151.151.50/c345a2c6jw1egex1o75ogj205c071mx9.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>这里也搞定了，基本成型了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 世外就是TaoYuan </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年1月23日 19:47</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/153">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

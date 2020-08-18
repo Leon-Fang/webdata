@@ -1,0 +1,968 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>9.前端框架AdminLTE</h1> 
+ <small>阅读:&nbsp;55988&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：25 </small> 
+ <hr> 
+ <p>作为CMDB资产管理项目，必须有一个丰富、直观、酷炫的前端页面。</p> 
+ <p>适合运维平台的前端框架有很多，开源的也不少，这里选用的是AdminLTE。</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/125-1.png"></p> 
+ <p>AdminLTE托管在GitHub上，可以通过下面的地址下载：</p> 
+ <p><a href="https://github.com/ColorlibHQ/AdminLTE/releases">https://github.com/ColorlibHQ/AdminLTE/releases</a></p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/125-2.png"></p> 
+ <p>这里我们下载的是2.4.10版本，其官方文档地址：<a href="https://adminlte.io/docs/2.4/installation">https://adminlte.io/docs/2.4/installation</a></p> 
+ <p>AdminLTE自带JQuery和Bootstrap3框架插件，无需另外下载。</p> 
+ <p>AdminLTE自带多种配色皮肤，可根据需要实时调整。</p> 
+ <p>AdminLTE是移动端自适应的，无需单独考虑。</p> 
+ <p>AdminLTE自带大量插件，比如表格、Charts等等，可根据需要载入。</p> 
+ <h2>一、创建base.html</h2> 
+ <p>AdminLTE源文件根目录下有个<code>starter.html</code>页面文件，可以利用它修改出我们CMDB项目需要的基本框架。</p> 
+ <p>在项目的根目录cmdb下新建static目录，在settings文件中添加下面的配置：</p> 
+ <div class="codehilite">
+  <pre><span></span>STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "static"),
+]
+</pre>
+ </div> 
+ <p>为了以后扩展的方便，在<code>CMDB/static/</code>目录下再创建一级目录<code>adminlet-2.4.10</code>，将 AdminLTE源文件包里的<code>bower_components</code>、<code>dist</code>和<code>plugins</code>三个文件夹，全部拷贝到<code>adminlet-2.4.10</code>目录中，这样做的话文件会比较大，比较多，但可以防止出现引用文件找不到、插件缺失等情况的发生，等以后对AdminLTE非常熟悉了，可以对其中无用的文件进行删减。</p> 
+ <p>在cmdb根目录下的templates目录中，新建<code>base.html</code>文件，将AdminLTE源文件包中的<code>starter.html</code>中的内容拷贝过去。然后，根据我们项目的具体情况修改文件引用、页面框架、title、CSS、主体和script块。这一部分工作量还是蛮大的，很繁琐，下面给出成品：</p> 
+ <div class="codehilite">
+  <pre><span></span>{% load static %}
+<span class="cp">&lt;!DOCTYPE html&gt;</span>
+<span class="c">&lt;!--</span>
+<span class="c">This is a starter template page. Use this page to start your new project from</span>
+<span class="c">scratch. This page gets rid of all links and provides the needed markup only.</span>
+<span class="c">--&gt;</span>
+<span class="p">&lt;</span><span class="nt">html</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">head</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">meta</span> <span class="na">charset</span><span class="o">=</span><span class="s">"utf-8"</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">meta</span> <span class="na">http-equiv</span><span class="o">=</span><span class="s">"X-UA-Compatible"</span> <span class="na">content</span><span class="o">=</span><span class="s">"IE=edge"</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">title</span><span class="p">&gt;</span>{% block title %}base{% endblock %}<span class="p">&lt;/</span><span class="nt">title</span><span class="p">&gt;</span>
+  <span class="c">&lt;!-- Tell the browser to be responsive to screen width --&gt;</span>
+  <span class="p">&lt;</span><span class="nt">meta</span> <span class="na">content</span><span class="o">=</span><span class="s">"width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"</span> <span class="na">name</span><span class="o">=</span><span class="s">"viewport"</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">link</span> <span class="na">rel</span><span class="o">=</span><span class="s">"stylesheet"</span> <span class="na">href</span><span class="o">=</span><span class="s">"{% static 'adminlet-2.4.10/bower_components/bootstrap/dist/css/bootstrap.min.css' %}"</span><span class="p">&gt;</span>
+  <span class="c">&lt;!-- Font Awesome --&gt;</span>
+  <span class="p">&lt;</span><span class="nt">link</span> <span class="na">rel</span><span class="o">=</span><span class="s">"stylesheet"</span> <span class="na">href</span><span class="o">=</span><span class="s">"{% static 'adminlet-2.4.10/bower_components/font-awesome/css/font-awesome.min.css' %}"</span><span class="p">&gt;</span>
+  <span class="c">&lt;!-- Ionicons --&gt;</span>
+  <span class="p">&lt;</span><span class="nt">link</span> <span class="na">rel</span><span class="o">=</span><span class="s">"stylesheet"</span> <span class="na">href</span><span class="o">=</span><span class="s">"{% static 'adminlet-2.4.10/bower_components/Ionicons/css/ionicons.min.css' %}"</span><span class="p">&gt;</span>
+  <span class="c">&lt;!-- Theme style --&gt;</span>
+  <span class="p">&lt;</span><span class="nt">link</span> <span class="na">rel</span><span class="o">=</span><span class="s">"stylesheet"</span> <span class="na">href</span><span class="o">=</span><span class="s">"{% static 'adminlet-2.4.10/dist/css/AdminLTE.min.css' %}"</span><span class="p">&gt;</span>
+  <span class="c">&lt;!-- AdminLTE Skins. We have chosen the skin-blue for this starter</span>
+<span class="c">        page. However, you can choose any other skin. Make sure you</span>
+<span class="c">        apply the skin class to the body tag so the changes take effect. --&gt;</span>
+  <span class="p">&lt;</span><span class="nt">link</span> <span class="na">rel</span><span class="o">=</span><span class="s">"stylesheet"</span> <span class="na">href</span><span class="o">=</span><span class="s">"{% static 'adminlet-2.4.10/dist/css/skins/skin-blue.min.css' %}"</span><span class="p">&gt;</span>
+
+    {% block css %}{% endblock %}
+
+<span class="p">&lt;/</span><span class="nt">head</span><span class="p">&gt;</span>
+<span class="c">&lt;!--</span>
+<span class="c">BODY TAG OPTIONS:</span>
+<span class="c">=================</span>
+<span class="c">Apply one or more of the following classes to get the</span>
+<span class="c">desired effect</span>
+<span class="c">|---------------------------------------------------------|</span>
+<span class="c">| SKINS         | skin-blue                               |</span>
+<span class="c">|               | skin-black                              |</span>
+<span class="c">|               | skin-purple                             |</span>
+<span class="c">|               | skin-yellow                             |</span>
+<span class="c">|               | skin-red                                |</span>
+<span class="c">|               | skin-green                              |</span>
+<span class="c">|---------------------------------------------------------|</span>
+<span class="c">|LAYOUT OPTIONS | fixed                                   |</span>
+<span class="c">|               | layout-boxed                            |</span>
+<span class="c">|               | layout-top-nav                          |</span>
+<span class="c">|               | sidebar-collapse                        |</span>
+<span class="c">|               | sidebar-mini                            |</span>
+<span class="c">|---------------------------------------------------------|</span>
+<span class="c">--&gt;</span>
+<span class="p">&lt;</span><span class="nt">body</span> <span class="na">class</span><span class="o">=</span><span class="s">"hold-transition skin-blue sidebar-mini"</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"wrapper"</span><span class="p">&gt;</span>
+
+  <span class="c">&lt;!-- Main Header --&gt;</span>
+  <span class="p">&lt;</span><span class="nt">header</span> <span class="na">class</span><span class="o">=</span><span class="s">"main-header"</span><span class="p">&gt;</span>
+
+    <span class="c">&lt;!-- Logo --&gt;</span>
+    <span class="p">&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">"#"</span> <span class="na">class</span><span class="o">=</span><span class="s">"logo"</span><span class="p">&gt;</span>
+      <span class="c">&lt;!-- mini logo for sidebar mini 50x50 pixels --&gt;</span>
+      <span class="p">&lt;</span><span class="nt">span</span> <span class="na">class</span><span class="o">=</span><span class="s">"logo-mini"</span><span class="p">&gt;&lt;</span><span class="nt">b</span><span class="p">&gt;</span>CMDB<span class="p">&lt;/</span><span class="nt">b</span><span class="p">&gt;&lt;/</span><span class="nt">span</span><span class="p">&gt;</span>
+      <span class="c">&lt;!-- logo for regular state and mobile devices --&gt;</span>
+      <span class="p">&lt;</span><span class="nt">span</span> <span class="na">class</span><span class="o">=</span><span class="s">"logo-lg"</span><span class="p">&gt;&lt;</span><span class="nt">b</span><span class="p">&gt;</span>CMDB<span class="p">&lt;/</span><span class="nt">b</span><span class="p">&gt;&lt;/</span><span class="nt">span</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;</span>
+
+    <span class="c">&lt;!-- Header Navbar --&gt;</span>
+    <span class="p">&lt;</span><span class="nt">nav</span> <span class="na">class</span><span class="o">=</span><span class="s">"navbar navbar-static-top"</span> <span class="na">role</span><span class="o">=</span><span class="s">"navigation"</span><span class="p">&gt;</span>
+      <span class="c">&lt;!-- Sidebar toggle button--&gt;</span>
+      <span class="p">&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">"#"</span> <span class="na">class</span><span class="o">=</span><span class="s">"sidebar-toggle"</span> <span class="na">data-toggle</span><span class="o">=</span><span class="s">"push-menu"</span> <span class="na">role</span><span class="o">=</span><span class="s">"button"</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">span</span> <span class="na">class</span><span class="o">=</span><span class="s">"sr-only"</span><span class="p">&gt;</span>Toggle navigation<span class="p">&lt;/</span><span class="nt">span</span><span class="p">&gt;</span>
+      <span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;</span>
+      <span class="c">&lt;!-- Navbar Right Menu --&gt;</span>
+      <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"navbar-custom-menu"</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">ul</span> <span class="na">class</span><span class="o">=</span><span class="s">"nav navbar-nav"</span><span class="p">&gt;</span>
+          <span class="c">&lt;!-- Messages: style can be found in dropdown.less--&gt;</span>
+          <span class="p">&lt;</span><span class="nt">li</span> <span class="na">class</span><span class="o">=</span><span class="s">"dropdown messages-menu"</span><span class="p">&gt;</span>
+            <span class="c">&lt;!-- Menu toggle button --&gt;</span>
+            <span class="p">&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">"#"</span> <span class="na">class</span><span class="o">=</span><span class="s">"dropdown-toggle"</span> <span class="na">data-toggle</span><span class="o">=</span><span class="s">"dropdown"</span><span class="p">&gt;</span>
+              <span class="p">&lt;</span><span class="nt">i</span> <span class="na">class</span><span class="o">=</span><span class="s">"fa fa-envelope-o"</span><span class="p">&gt;&lt;/</span><span class="nt">i</span><span class="p">&gt;</span>
+              <span class="p">&lt;</span><span class="nt">span</span> <span class="na">class</span><span class="o">=</span><span class="s">"label label-success"</span><span class="p">&gt;</span>4<span class="p">&lt;/</span><span class="nt">span</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="nt">ul</span> <span class="na">class</span><span class="o">=</span><span class="s">"dropdown-menu"</span><span class="p">&gt;</span>
+              <span class="p">&lt;</span><span class="nt">li</span> <span class="na">class</span><span class="o">=</span><span class="s">"header"</span><span class="p">&gt;</span>You have 4 messages<span class="p">&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+              <span class="p">&lt;</span><span class="nt">li</span><span class="p">&gt;</span>
+                <span class="c">&lt;!-- inner menu: contains the messages --&gt;</span>
+                <span class="p">&lt;</span><span class="nt">ul</span> <span class="na">class</span><span class="o">=</span><span class="s">"menu"</span><span class="p">&gt;</span>
+                  <span class="p">&lt;</span><span class="nt">li</span><span class="p">&gt;</span><span class="c">&lt;!-- start message --&gt;</span>
+                    <span class="p">&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">"#"</span><span class="p">&gt;</span>
+                      <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"pull-left"</span><span class="p">&gt;</span>
+                        <span class="c">&lt;!-- User Image --&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">img</span> <span class="na">src</span><span class="o">=</span><span class="s">"{% static 'adminlet-2.4.10/dist/img/user2-160x160.jpg' %}"</span> <span class="na">class</span><span class="o">=</span><span class="s">"img-circle"</span> <span class="na">alt</span><span class="o">=</span><span class="s">"User Image"</span><span class="p">&gt;</span>
+                      <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+                      <span class="c">&lt;!-- Message title and timestamp --&gt;</span>
+                      <span class="p">&lt;</span><span class="nt">h4</span><span class="p">&gt;</span>
+                        Support Team
+                        <span class="p">&lt;</span><span class="nt">small</span><span class="p">&gt;&lt;</span><span class="nt">i</span> <span class="na">class</span><span class="o">=</span><span class="s">"fa fa-clock-o"</span><span class="p">&gt;&lt;/</span><span class="nt">i</span><span class="p">&gt;</span> 5 mins<span class="p">&lt;/</span><span class="nt">small</span><span class="p">&gt;</span>
+                      <span class="p">&lt;/</span><span class="nt">h4</span><span class="p">&gt;</span>
+                      <span class="c">&lt;!-- The message --&gt;</span>
+                      <span class="p">&lt;</span><span class="nt">p</span><span class="p">&gt;</span>Why not buy a new awesome theme?<span class="p">&lt;/</span><span class="nt">p</span><span class="p">&gt;</span>
+                    <span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;</span>
+                  <span class="p">&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+                  <span class="c">&lt;!-- end message --&gt;</span>
+                <span class="p">&lt;/</span><span class="nt">ul</span><span class="p">&gt;</span>
+                <span class="c">&lt;!-- /.menu --&gt;</span>
+              <span class="p">&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+              <span class="p">&lt;</span><span class="nt">li</span> <span class="na">class</span><span class="o">=</span><span class="s">"footer"</span><span class="p">&gt;&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">"#"</span><span class="p">&gt;</span>See All Messages<span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="nt">ul</span><span class="p">&gt;</span>
+          <span class="p">&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+          <span class="c">&lt;!-- /.messages-menu --&gt;</span>
+
+          <span class="c">&lt;!-- Notifications Menu --&gt;</span>
+          <span class="p">&lt;</span><span class="nt">li</span> <span class="na">class</span><span class="o">=</span><span class="s">"dropdown notifications-menu"</span><span class="p">&gt;</span>
+            <span class="c">&lt;!-- Menu toggle button --&gt;</span>
+            <span class="p">&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">"#"</span> <span class="na">class</span><span class="o">=</span><span class="s">"dropdown-toggle"</span> <span class="na">data-toggle</span><span class="o">=</span><span class="s">"dropdown"</span><span class="p">&gt;</span>
+              <span class="p">&lt;</span><span class="nt">i</span> <span class="na">class</span><span class="o">=</span><span class="s">"fa fa-bell-o"</span><span class="p">&gt;&lt;/</span><span class="nt">i</span><span class="p">&gt;</span>
+              <span class="p">&lt;</span><span class="nt">span</span> <span class="na">class</span><span class="o">=</span><span class="s">"label label-warning"</span><span class="p">&gt;</span>10<span class="p">&lt;/</span><span class="nt">span</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="nt">ul</span> <span class="na">class</span><span class="o">=</span><span class="s">"dropdown-menu"</span><span class="p">&gt;</span>
+              <span class="p">&lt;</span><span class="nt">li</span> <span class="na">class</span><span class="o">=</span><span class="s">"header"</span><span class="p">&gt;</span>You have 10 notifications<span class="p">&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+              <span class="p">&lt;</span><span class="nt">li</span><span class="p">&gt;</span>
+                <span class="c">&lt;!-- Inner Menu: contains the notifications --&gt;</span>
+                <span class="p">&lt;</span><span class="nt">ul</span> <span class="na">class</span><span class="o">=</span><span class="s">"menu"</span><span class="p">&gt;</span>
+                  <span class="p">&lt;</span><span class="nt">li</span><span class="p">&gt;</span><span class="c">&lt;!-- start notification --&gt;</span>
+                    <span class="p">&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">"#"</span><span class="p">&gt;</span>
+                      <span class="p">&lt;</span><span class="nt">i</span> <span class="na">class</span><span class="o">=</span><span class="s">"fa fa-users text-aqua"</span><span class="p">&gt;&lt;/</span><span class="nt">i</span><span class="p">&gt;</span> 5 new members joined today
+                    <span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;</span>
+                  <span class="p">&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+                  <span class="c">&lt;!-- end notification --&gt;</span>
+                <span class="p">&lt;/</span><span class="nt">ul</span><span class="p">&gt;</span>
+              <span class="p">&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+              <span class="p">&lt;</span><span class="nt">li</span> <span class="na">class</span><span class="o">=</span><span class="s">"footer"</span><span class="p">&gt;&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">"#"</span><span class="p">&gt;</span>View all<span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="nt">ul</span><span class="p">&gt;</span>
+          <span class="p">&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+          <span class="c">&lt;!-- Tasks Menu --&gt;</span>
+          <span class="p">&lt;</span><span class="nt">li</span> <span class="na">class</span><span class="o">=</span><span class="s">"dropdown tasks-menu"</span><span class="p">&gt;</span>
+            <span class="c">&lt;!-- Menu Toggle Button --&gt;</span>
+            <span class="p">&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">"#"</span> <span class="na">class</span><span class="o">=</span><span class="s">"dropdown-toggle"</span> <span class="na">data-toggle</span><span class="o">=</span><span class="s">"dropdown"</span><span class="p">&gt;</span>
+              <span class="p">&lt;</span><span class="nt">i</span> <span class="na">class</span><span class="o">=</span><span class="s">"fa fa-flag-o"</span><span class="p">&gt;&lt;/</span><span class="nt">i</span><span class="p">&gt;</span>
+              <span class="p">&lt;</span><span class="nt">span</span> <span class="na">class</span><span class="o">=</span><span class="s">"label label-danger"</span><span class="p">&gt;</span>9<span class="p">&lt;/</span><span class="nt">span</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="nt">ul</span> <span class="na">class</span><span class="o">=</span><span class="s">"dropdown-menu"</span><span class="p">&gt;</span>
+              <span class="p">&lt;</span><span class="nt">li</span> <span class="na">class</span><span class="o">=</span><span class="s">"header"</span><span class="p">&gt;</span>You have 9 tasks<span class="p">&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+              <span class="p">&lt;</span><span class="nt">li</span><span class="p">&gt;</span>
+                <span class="c">&lt;!-- Inner menu: contains the tasks --&gt;</span>
+                <span class="p">&lt;</span><span class="nt">ul</span> <span class="na">class</span><span class="o">=</span><span class="s">"menu"</span><span class="p">&gt;</span>
+                  <span class="p">&lt;</span><span class="nt">li</span><span class="p">&gt;</span><span class="c">&lt;!-- Task item --&gt;</span>
+                    <span class="p">&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">"#"</span><span class="p">&gt;</span>
+                      <span class="c">&lt;!-- Task title and progress text --&gt;</span>
+                      <span class="p">&lt;</span><span class="nt">h3</span><span class="p">&gt;</span>
+                        Design some buttons
+                        <span class="p">&lt;</span><span class="nt">small</span> <span class="na">class</span><span class="o">=</span><span class="s">"pull-right"</span><span class="p">&gt;</span>20%<span class="p">&lt;/</span><span class="nt">small</span><span class="p">&gt;</span>
+                      <span class="p">&lt;/</span><span class="nt">h3</span><span class="p">&gt;</span>
+                      <span class="c">&lt;!-- The progress bar --&gt;</span>
+                      <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"progress xs"</span><span class="p">&gt;</span>
+                        <span class="c">&lt;!-- Change the css width attribute to simulate progress --&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"progress-bar progress-bar-aqua"</span> <span class="na">style</span><span class="o">=</span><span class="s">"width: 20%"</span> <span class="na">role</span><span class="o">=</span><span class="s">"progressbar"</span>
+                             <span class="na">aria-valuenow</span><span class="o">=</span><span class="s">"20"</span> <span class="na">aria-valuemin</span><span class="o">=</span><span class="s">"0"</span> <span class="na">aria-valuemax</span><span class="o">=</span><span class="s">"100"</span><span class="p">&gt;</span>
+                          <span class="p">&lt;</span><span class="nt">span</span> <span class="na">class</span><span class="o">=</span><span class="s">"sr-only"</span><span class="p">&gt;</span>20% Complete<span class="p">&lt;/</span><span class="nt">span</span><span class="p">&gt;</span>
+                        <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+                      <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+                    <span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;</span>
+                  <span class="p">&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+                  <span class="c">&lt;!-- end task item --&gt;</span>
+                <span class="p">&lt;/</span><span class="nt">ul</span><span class="p">&gt;</span>
+              <span class="p">&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+              <span class="p">&lt;</span><span class="nt">li</span> <span class="na">class</span><span class="o">=</span><span class="s">"footer"</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">"#"</span><span class="p">&gt;</span>View all tasks<span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;</span>
+              <span class="p">&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="nt">ul</span><span class="p">&gt;</span>
+          <span class="p">&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+          <span class="c">&lt;!-- User Account Menu --&gt;</span>
+          <span class="p">&lt;</span><span class="nt">li</span> <span class="na">class</span><span class="o">=</span><span class="s">"dropdown user user-menu"</span><span class="p">&gt;</span>
+            <span class="c">&lt;!-- Menu Toggle Button --&gt;</span>
+            <span class="p">&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">"#"</span> <span class="na">class</span><span class="o">=</span><span class="s">"dropdown-toggle"</span> <span class="na">data-toggle</span><span class="o">=</span><span class="s">"dropdown"</span><span class="p">&gt;</span>
+              <span class="c">&lt;!-- The user image in the navbar--&gt;</span>
+              <span class="p">&lt;</span><span class="nt">img</span> <span class="na">src</span><span class="o">=</span><span class="s">"{% static 'adminlet-2.4.10/dist/img/user2-160x160.jpg' %}"</span> <span class="na">class</span><span class="o">=</span><span class="s">"user-image"</span> <span class="na">alt</span><span class="o">=</span><span class="s">"User Image"</span><span class="p">&gt;</span>
+              <span class="c">&lt;!-- hidden-xs hides the username on small devices so only the image appears. --&gt;</span>
+              <span class="p">&lt;</span><span class="nt">span</span> <span class="na">class</span><span class="o">=</span><span class="s">"hidden-xs"</span><span class="p">&gt;</span>系统管理员<span class="p">&lt;/</span><span class="nt">span</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="nt">ul</span> <span class="na">class</span><span class="o">=</span><span class="s">"dropdown-menu"</span><span class="p">&gt;</span>
+              <span class="c">&lt;!-- The user image in the menu --&gt;</span>
+              <span class="p">&lt;</span><span class="nt">li</span> <span class="na">class</span><span class="o">=</span><span class="s">"user-header"</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="nt">img</span> <span class="na">src</span><span class="o">=</span><span class="s">"{% static 'adminlet-2.4.10/dist/img/user2-160x160.jpg' %}"</span> <span class="na">class</span><span class="o">=</span><span class="s">"img-circle"</span> <span class="na">alt</span><span class="o">=</span><span class="s">"User Image"</span><span class="p">&gt;</span>
+
+                <span class="p">&lt;</span><span class="nt">p</span><span class="p">&gt;</span>
+                  系统管理员
+                  <span class="p">&lt;</span><span class="nt">small</span><span class="p">&gt;</span>2019-4-12<span class="p">&lt;/</span><span class="nt">small</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="nt">p</span><span class="p">&gt;</span>
+              <span class="p">&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+              <span class="c">&lt;!-- Menu Body --&gt;</span>
+              <span class="p">&lt;</span><span class="nt">li</span> <span class="na">class</span><span class="o">=</span><span class="s">"user-body"</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"row"</span><span class="p">&gt;</span>
+                  <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"col-xs-4 text-center"</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">"#"</span><span class="p">&gt;</span>Followers<span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;</span>
+                  <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+                  <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"col-xs-4 text-center"</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">"#"</span><span class="p">&gt;</span>Sales<span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;</span>
+                  <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+                  <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"col-xs-4 text-center"</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">"#"</span><span class="p">&gt;</span>Friends<span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;</span>
+                  <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+                <span class="c">&lt;!-- /.row --&gt;</span>
+              <span class="p">&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+              <span class="c">&lt;!-- Menu Footer--&gt;</span>
+              <span class="p">&lt;</span><span class="nt">li</span> <span class="na">class</span><span class="o">=</span><span class="s">"user-footer"</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"pull-left"</span><span class="p">&gt;</span>
+                  <span class="p">&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">"#"</span> <span class="na">class</span><span class="o">=</span><span class="s">"btn btn-default btn-flat"</span><span class="p">&gt;</span>Profile<span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"pull-right"</span><span class="p">&gt;</span>
+                  <span class="p">&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">"#"</span> <span class="na">class</span><span class="o">=</span><span class="s">"btn btn-default btn-flat"</span><span class="p">&gt;</span>Sign out<span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+              <span class="p">&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="nt">ul</span><span class="p">&gt;</span>
+          <span class="p">&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="nt">ul</span><span class="p">&gt;</span>
+      <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="nt">nav</span><span class="p">&gt;</span>
+  <span class="p">&lt;/</span><span class="nt">header</span><span class="p">&gt;</span>
+
+  <span class="c">&lt;!-- Left side column. contains the logo and sidebar --&gt;</span>
+  <span class="p">&lt;</span><span class="nt">aside</span> <span class="na">class</span><span class="o">=</span><span class="s">"main-sidebar"</span><span class="p">&gt;</span>
+
+    <span class="c">&lt;!-- sidebar: style can be found in sidebar.less --&gt;</span>
+    <span class="p">&lt;</span><span class="nt">section</span> <span class="na">class</span><span class="o">=</span><span class="s">"sidebar"</span><span class="p">&gt;</span>
+
+      <span class="c">&lt;!-- Sidebar user panel (optional) --&gt;</span>
+      <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"user-panel"</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"pull-left image"</span><span class="p">&gt;</span>
+          <span class="p">&lt;</span><span class="nt">img</span> <span class="na">src</span><span class="o">=</span><span class="s">"{% static 'adminlet-2.4.10/dist/img/user2-160x160.jpg' %}"</span> <span class="na">class</span><span class="o">=</span><span class="s">"img-circle"</span> <span class="na">alt</span><span class="o">=</span><span class="s">"User Image"</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"pull-left info"</span><span class="p">&gt;</span>
+          <span class="p">&lt;</span><span class="nt">p</span><span class="p">&gt;</span>Admin<span class="p">&lt;/</span><span class="nt">p</span><span class="p">&gt;</span>
+          <span class="c">&lt;!-- Status --&gt;</span>
+          <span class="p">&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">"#"</span><span class="p">&gt;&lt;</span><span class="nt">i</span> <span class="na">class</span><span class="o">=</span><span class="s">"fa fa-circle text-success"</span><span class="p">&gt;&lt;/</span><span class="nt">i</span><span class="p">&gt;</span>在线<span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+      <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+
+      <span class="c">&lt;!-- search form (Optional) --&gt;</span>
+      <span class="p">&lt;</span><span class="nt">form</span> <span class="na">action</span><span class="o">=</span><span class="s">"#"</span> <span class="na">method</span><span class="o">=</span><span class="s">"get"</span> <span class="na">class</span><span class="o">=</span><span class="s">"sidebar-form"</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"input-group"</span><span class="p">&gt;</span>
+          <span class="p">&lt;</span><span class="nt">input</span> <span class="na">type</span><span class="o">=</span><span class="s">"text"</span> <span class="na">name</span><span class="o">=</span><span class="s">"q"</span> <span class="na">class</span><span class="o">=</span><span class="s">"form-control"</span> <span class="na">placeholder</span><span class="o">=</span><span class="s">"Search..."</span><span class="p">&gt;</span>
+          <span class="p">&lt;</span><span class="nt">span</span> <span class="na">class</span><span class="o">=</span><span class="s">"input-group-btn"</span><span class="p">&gt;</span>
+              <span class="p">&lt;</span><span class="nt">button</span> <span class="na">type</span><span class="o">=</span><span class="s">"submit"</span> <span class="na">name</span><span class="o">=</span><span class="s">"search"</span> <span class="na">id</span><span class="o">=</span><span class="s">"search-btn"</span> <span class="na">class</span><span class="o">=</span><span class="s">"btn btn-flat"</span><span class="p">&gt;&lt;</span><span class="nt">i</span> <span class="na">class</span><span class="o">=</span><span class="s">"fa fa-search"</span><span class="p">&gt;&lt;/</span><span class="nt">i</span><span class="p">&gt;</span>
+              <span class="p">&lt;/</span><span class="nt">button</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="nt">span</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+      <span class="p">&lt;/</span><span class="nt">form</span><span class="p">&gt;</span>
+      <span class="c">&lt;!-- /.search form --&gt;</span>
+
+      <span class="c">&lt;!-- Sidebar Menu --&gt;</span>
+      <span class="p">&lt;</span><span class="nt">ul</span> <span class="na">class</span><span class="o">=</span><span class="s">"sidebar-menu"</span> <span class="na">data-widget</span><span class="o">=</span><span class="s">"tree"</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">li</span> <span class="na">class</span><span class="o">=</span><span class="s">"header"</span><span class="p">&gt;</span>导航栏<span class="p">&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+        <span class="c">&lt;!-- Optionally, you can add icons to the links --&gt;</span>
+        <span class="p">&lt;</span><span class="nt">li</span><span class="p">&gt;&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">"{% url 'assets:dashboard' %}"</span><span class="p">&gt;&lt;</span><span class="nt">i</span> <span class="na">class</span><span class="o">=</span><span class="s">"fa fa-dashboard"</span><span class="p">&gt;&lt;/</span><span class="nt">i</span><span class="p">&gt;</span> <span class="p">&lt;</span><span class="nt">span</span><span class="p">&gt;</span>仪表盘<span class="p">&lt;/</span><span class="nt">span</span><span class="p">&gt;&lt;/</span><span class="nt">a</span><span class="p">&gt;&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">li</span><span class="p">&gt;&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">"{% url 'assets:index' %}"</span><span class="p">&gt;&lt;</span><span class="nt">i</span> <span class="na">class</span><span class="o">=</span><span class="s">"fa fa-table"</span><span class="p">&gt;&lt;/</span><span class="nt">i</span><span class="p">&gt;</span> <span class="p">&lt;</span><span class="nt">span</span><span class="p">&gt;</span>资产总表<span class="p">&lt;/</span><span class="nt">span</span><span class="p">&gt;&lt;/</span><span class="nt">a</span><span class="p">&gt;&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+      <span class="p">&lt;/</span><span class="nt">ul</span><span class="p">&gt;</span>
+      <span class="c">&lt;!-- /.sidebar-menu --&gt;</span>
+    <span class="p">&lt;/</span><span class="nt">section</span><span class="p">&gt;</span>
+    <span class="c">&lt;!-- /.sidebar --&gt;</span>
+  <span class="p">&lt;/</span><span class="nt">aside</span><span class="p">&gt;</span>
+
+  <span class="c">&lt;!-- Content Wrapper. Contains page content --&gt;</span>
+  <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"content-wrapper"</span><span class="p">&gt;</span>
+
+    {% block breadcrumb %}{% endblock %}
+
+    <span class="c">&lt;!-- Main content --&gt;</span>
+    <span class="p">&lt;</span><span class="nt">section</span> <span class="na">class</span><span class="o">=</span><span class="s">"content container-fluid"</span><span class="p">&gt;</span>
+        {#        主体内容全放到这里！#}
+        {% block content %}{% endblock %}
+    <span class="p">&lt;/</span><span class="nt">section</span><span class="p">&gt;</span>
+    <span class="c">&lt;!-- /.content --&gt;</span>
+
+  <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+  <span class="c">&lt;!-- /.content-wrapper --&gt;</span>
+
+
+  <span class="c">&lt;!-- Main Footer --&gt;</span>
+  <span class="p">&lt;</span><span class="nt">footer</span> <span class="na">class</span><span class="o">=</span><span class="s">"main-footer"</span><span class="p">&gt;</span>
+    <span class="c">&lt;!-- To the right --&gt;</span>
+    <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"pull-right hidden-xs"</span><span class="p">&gt;</span>
+      http://www.liujiangblog.com
+    <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+    <span class="c">&lt;!-- Default to the left --&gt;</span>
+    <span class="p">&lt;</span><span class="nt">strong</span><span class="p">&gt;</span>Copyright <span class="ni">&amp;copy;</span> 2019 <span class="p">&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">"http://www.liujiangblog.com"</span> <span class="na">target</span><span class="o">=</span><span class="s">"_blank"</span><span class="p">&gt;</span>刘江的Django教程<span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;</span>.<span class="p">&lt;/</span><span class="nt">strong</span><span class="p">&gt;</span> All rights reserved.
+  <span class="p">&lt;/</span><span class="nt">footer</span><span class="p">&gt;</span>
+
+
+<span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+<span class="c">&lt;!-- ./wrapper --&gt;</span>
+
+<span class="c">&lt;!-- REQUIRED JS SCRIPTS --&gt;</span>
+
+<span class="c">&lt;!-- jQuery 3 --&gt;</span>
+<span class="p">&lt;</span><span class="nt">script</span> <span class="na">src</span><span class="o">=</span><span class="s">"{% static 'adminlet-2.4.10/bower_components/jquery/dist/jquery.min.js' %}"</span><span class="p">&gt;&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+<span class="c">&lt;!-- Bootstrap 3.3.7 --&gt;</span>
+<span class="p">&lt;</span><span class="nt">script</span> <span class="na">src</span><span class="o">=</span><span class="s">"{% static 'adminlet-2.4.10/bower_components/bootstrap/dist/js/bootstrap.min.js' %}"</span><span class="p">&gt;&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+<span class="c">&lt;!-- AdminLTE App --&gt;</span>
+<span class="p">&lt;</span><span class="nt">script</span> <span class="na">src</span><span class="o">=</span><span class="s">"{% static 'adminlet-2.4.10/dist/js/adminlte.min.js' %}"</span><span class="p">&gt;&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+
+{% block script %}{% endblock %}
+
+<span class="p">&lt;</span><span class="nt">script</span><span class="p">&gt;</span>
+    <span class="nx">$</span><span class="p">(</span><span class="s1">'ul.sidebar-menu li'</span><span class="p">).</span><span class="nx">each</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">i</span><span class="p">){</span>
+        <span class="k">if</span><span class="p">(</span><span class="nx">$</span><span class="p">(</span><span class="k">this</span><span class="p">).</span><span class="nx">children</span><span class="p">().</span><span class="nx">first</span><span class="p">().</span><span class="nx">attr</span><span class="p">(</span><span class="s1">'href'</span><span class="p">)</span><span class="o">===</span><span class="s1">'{{ request.path }}'</span><span class="p">){</span>
+            <span class="nx">$</span><span class="p">(</span><span class="k">this</span><span class="p">).</span><span class="nx">addClass</span><span class="p">(</span><span class="s1">'active'</span><span class="p">);</span>
+        <span class="p">}</span><span class="k">else</span><span class="p">{</span>
+        <span class="p">}</span>
+    <span class="p">});</span>
+<span class="p">&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">body</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">html</span><span class="p">&gt;</span>
+</pre>
+ </div> 
+ <p>其中，在代码的底部，为了让侧边栏根据当前url的不同，实现不同的激活active状态，编写了一段简单的js代码：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="o">&lt;</span><span class="nx">script</span><span class="o">&gt;</span>
+    <span class="nx">$</span><span class="p">(</span><span class="s1">'ul.sidebar-menu li'</span><span class="p">).</span><span class="nx">each</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">i</span><span class="p">){</span>
+        <span class="k">if</span><span class="p">(</span><span class="nx">$</span><span class="p">(</span><span class="k">this</span><span class="p">).</span><span class="nx">children</span><span class="p">().</span><span class="nx">first</span><span class="p">().</span><span class="nx">attr</span><span class="p">(</span><span class="s1">'href'</span><span class="p">)</span><span class="o">===</span><span class="s1">'{{ request.path }}'</span><span class="p">){</span>
+            <span class="nx">$</span><span class="p">(</span><span class="k">this</span><span class="p">).</span><span class="nx">addClass</span><span class="p">(</span><span class="s1">'active'</span><span class="p">);</span>
+        <span class="p">}</span><span class="k">else</span><span class="p">{</span>
+        <span class="p">}</span>
+ <span class="p">});</span>
+<span class="o">&lt;</span><span class="err">/script&gt;</span>
+</pre>
+ </div> 
+ <h2>二、创建路由、视图</h2> 
+ <p>这里设计了三个视图和页面，分别是：</p> 
+ <ul> 
+  <li>dashboard：仪表盘，图形化的数据展示</li> 
+  <li>index：资产总表，表格的形式展示资产信息</li> 
+  <li>detail：单个资产的详细信息页面</li> 
+ </ul> 
+ <p>将<code>assets/urls.py</code>修改成下面的样子：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">path</span>
+<span class="kn">from</span> <span class="nn">assets</span> <span class="kn">import</span> <span class="n">views</span>
+
+<span class="n">app_name</span> <span class="o">=</span> <span class="s1">'assets'</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'report/'</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">report</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">'report'</span><span class="p">),</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'dashboard/'</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">dashboard</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">'dashboard'</span><span class="p">),</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'index/'</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">'index'</span><span class="p">),</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'detail/&lt;int:asset_id&gt;/'</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">detail</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"detail"</span><span class="p">),</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">''</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">dashboard</span><span class="p">),</span>   
+<span class="p">]</span>
+</pre>
+ </div> 
+ <p>在<code>assets/views.py</code>中，增加下面三个视图：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.shortcuts</span> <span class="kn">import</span> <span class="n">get_object_or_404</span>
+
+<span class="k">def</span> <span class="nf">index</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+
+    <span class="n">assets</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">Asset</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'assets/index.html'</span><span class="p">,</span> <span class="nb">locals</span><span class="p">())</span>
+
+
+<span class="k">def</span> <span class="nf">dashboard</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">pass</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'assets/dashboard.html'</span><span class="p">,</span> <span class="nb">locals</span><span class="p">())</span>
+
+
+<span class="k">def</span> <span class="nf">detail</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">asset_id</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    以显示服务器类型资产详细为例，安全设备、存储设备、网络设备等参照此例。</span>
+<span class="sd">    :param request:</span>
+<span class="sd">    :param asset_id:</span>
+<span class="sd">    :return:</span>
+<span class="sd">    """</span>
+    <span class="n">asset</span> <span class="o">=</span> <span class="n">get_object_or_404</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Asset</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="n">asset_id</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'assets/detail.html'</span><span class="p">,</span> <span class="nb">locals</span><span class="p">())</span>
+</pre>
+ </div> 
+ <p>注意需要提前<code>from django.shortcuts import get_object_or_404</code>导入<code>get_object_or_404()</code>方法，这是一个常用的内置方法。</p> 
+ <h2>三、创建模版</h2> 
+ <h3>1.dashboard.html</h3> 
+ <p>在assets目录下创建<code>templates/assets/dashboard.html</code>文件，写入下面的代码：</p> 
+ <div class="codehilite">
+  <pre><span></span>{% extends 'base.html' %}
+{% load static %}
+{% block title %}仪表盘{% endblock %}
+{% block css %}{% endblock %}
+
+{% block breadcrumb %}
+    <span class="c">&lt;!-- Content Header (Page header) --&gt;</span>
+    <span class="p">&lt;</span><span class="nt">section</span> <span class="na">class</span><span class="o">=</span><span class="s">"content-header"</span><span class="p">&gt;</span>
+      <span class="p">&lt;</span><span class="nt">h1</span><span class="p">&gt;</span>
+        仪表盘
+        <span class="p">&lt;</span><span class="nt">small</span><span class="p">&gt;</span>dashboard<span class="p">&lt;/</span><span class="nt">small</span><span class="p">&gt;</span>
+      <span class="p">&lt;/</span><span class="nt">h1</span><span class="p">&gt;</span>
+      <span class="p">&lt;</span><span class="nt">ol</span> <span class="na">class</span><span class="o">=</span><span class="s">"breadcrumb"</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">li</span><span class="p">&gt;&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">"#"</span><span class="p">&gt;&lt;</span><span class="nt">i</span> <span class="na">class</span><span class="o">=</span><span class="s">"fa fa-dashboard"</span><span class="p">&gt;&lt;/</span><span class="nt">i</span><span class="p">&gt;</span> 主页<span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">li</span> <span class="na">class</span><span class="o">=</span><span class="s">"active"</span><span class="p">&gt;</span>仪表盘<span class="p">&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+      <span class="p">&lt;/</span><span class="nt">ol</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="nt">section</span><span class="p">&gt;</span>
+{% endblock %}
+
+{% block content %}
+
+{% endblock %}
+
+{% block script %}
+
+{% endblock %}
+</pre>
+ </div> 
+ <h3>2.index.html</h3> 
+ <p>在assets目录下创建<code>templates/assets/index.html</code>文件，写入下面的代码：</p> 
+ <div class="codehilite">
+  <pre><span></span>{% extends 'base.html' %}
+{% load static %}
+{% block title %}资产总表{% endblock %}
+
+{% block css %}{% endblock %}
+
+{% block breadcrumb %}
+<span class="c">&lt;!-- Content Header (Page header) --&gt;</span>
+    <span class="p">&lt;</span><span class="nt">section</span> <span class="na">class</span><span class="o">=</span><span class="s">"content-header"</span><span class="p">&gt;</span>
+      <span class="p">&lt;</span><span class="nt">h1</span><span class="p">&gt;</span>
+        资产总表
+        <span class="p">&lt;</span><span class="nt">small</span><span class="p">&gt;</span>assets list<span class="p">&lt;/</span><span class="nt">small</span><span class="p">&gt;</span>
+      <span class="p">&lt;/</span><span class="nt">h1</span><span class="p">&gt;</span>
+      <span class="p">&lt;</span><span class="nt">ol</span> <span class="na">class</span><span class="o">=</span><span class="s">"breadcrumb"</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">li</span><span class="p">&gt;&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">"#"</span><span class="p">&gt;&lt;</span><span class="nt">i</span> <span class="na">class</span><span class="o">=</span><span class="s">"fa fa-dashboard"</span><span class="p">&gt;&lt;/</span><span class="nt">i</span><span class="p">&gt;</span> 主页<span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">li</span> <span class="na">class</span><span class="o">=</span><span class="s">"active"</span><span class="p">&gt;</span>资产总表<span class="p">&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+      <span class="p">&lt;/</span><span class="nt">ol</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="nt">section</span><span class="p">&gt;</span>
+{% endblock %}
+
+{% block content %}
+{% endblock %}
+
+
+{% block script %}
+{% endblock %}
+</pre>
+ </div> 
+ <h3>3.detail.html</h3> 
+ <p>在assets目录下创建<code>templates/assets/detail.html</code>文件，写入下面的代码：</p> 
+ <div class="codehilite">
+  <pre><span></span>{% extends 'base.html' %}
+{% load static %}
+{% block title %}资产详细{% endblock %}
+
+{% block css %}
+
+{% endblock %}
+
+{% block breadcrumb %}
+<span class="c">&lt;!-- Content Header (Page header) --&gt;</span>
+    <span class="p">&lt;</span><span class="nt">section</span> <span class="na">class</span><span class="o">=</span><span class="s">"content-header"</span><span class="p">&gt;</span>
+      <span class="p">&lt;</span><span class="nt">h1</span><span class="p">&gt;</span>
+        资产详细
+        <span class="p">&lt;</span><span class="nt">small</span><span class="p">&gt;</span>asset info<span class="p">&lt;/</span><span class="nt">small</span><span class="p">&gt;</span>
+      <span class="p">&lt;/</span><span class="nt">h1</span><span class="p">&gt;</span>
+      <span class="p">&lt;</span><span class="nt">ol</span> <span class="na">class</span><span class="o">=</span><span class="s">"breadcrumb"</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">li</span><span class="p">&gt;&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">"#"</span><span class="p">&gt;&lt;</span><span class="nt">i</span> <span class="na">class</span><span class="o">=</span><span class="s">"fa fa-dashboard"</span><span class="p">&gt;&lt;/</span><span class="nt">i</span><span class="p">&gt;</span> 主页<span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">li</span><span class="p">&gt;</span>资产总表<span class="p">&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">li</span> <span class="na">class</span><span class="o">=</span><span class="s">"active"</span><span class="p">&gt;</span>资产详细<span class="p">&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+      <span class="p">&lt;/</span><span class="nt">ol</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="nt">section</span><span class="p">&gt;</span>
+{% endblock %}
+
+{% block content %}
+
+{% endblock %}
+
+{% block script %}
+
+{% endblock %}
+</pre>
+ </div> 
+ <p>以上三个模板都很简单，就是下面的流程：</p> 
+ <ul> 
+  <li>extends继承‘base.html’；</li> 
+  <li><code>{% load static %}</code>载入静态文件；</li> 
+  <li><code>{% block title %}资产详细{% endblock %}</code>，定制title;</li> 
+  <li><code>{% block css %}</code>，载入当前页面的专用CSS文件；</li> 
+  <li><code>{% block breadcrumb%}</code>定制顶部面包屑导航;</li> 
+  <li><code>{% block script %}</code>，载入当前页面的专用js文件；</li> 
+  <li>最后在<code>{% block content %}</code>中， 填充页面的主体内容</li> 
+ </ul> 
+ <h2>四、访问页面</h2> 
+ <p>重启CMDB服务器，访问<code>http://192.168.0.100:8000/assets/dashboard/</code>，可以看到下面的页面。</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/125-3.png"></p> 
+ <p>访问<code>http://192.168.0.100:8000/assets/index/</code>，可以看到下面的页面：</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/125-4.png"></p> 
+ <p>访问<code>http://192.168.0.100:8000/assets/detail/1/</code>，可以看到下面的页面(需要已经有了资产对象)：</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/125-5.png"></p> 
+ <p>如果你的配色和我的不一样，没关系，都可以调整的，在base.html中有说明注释。</p> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/124"> <i class="fa fa-arrow-left"></i>&nbsp;8.已上线资产更新</a> 
+  <a class="float-right" href="/course/django/126"> 10.资产总表&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 25</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/125">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva4.sinaimg.cn/crop.75.0.450.450.50/c2a9bbe1jw1e7ndarq8l0j20go0ci75d.jpg?KID=imgbed,tva&amp;Expires=1595059436&amp;ssig=4YCaw2YLov" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>按照老师的步骤，运行后报这个错： Page not found (404) Request Method: GET Request URL: http://127.0.0.1:8000/assets/dashboard/ Using the URLconf defined in CMDB.urls, Django tried these URL patterns, in this order: admin/ The current path, assets/dashboard/, didn't match any of these. You're seeing this error because you have DEBUG = True in your Django settings file. Change that to False, and Django will display a standard 404 page.</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; tigerkin3265903585 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年7月18日 13:09</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2142">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1595566769&amp;ssig=qVeSsp06gY" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>应该是路由出了问题</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; tigerkin3265903585 </span> 
+      <em>2020年7月24日 10:05</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2154">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax4.sinaimg.cn/crop.0.0.664.664.50/006Znun5ly8g593czt268j30ig0igjt6.jpg?KID=imgbed,tva&amp;Expires=1581274489&amp;ssig=fr%2BxspwFah" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>有没有兄弟把dist/css/skins/skin-blue.min.css，的skin-blue.min.css发我一下/(ㄒoㄒ)/~~</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 一伊面一 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年2月11日 13:20</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1884">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax4.sinaimg.cn/crop.0.0.664.664.50/006Znun5ly8g593czt268j30ig0igjt6.jpg?KID=imgbed,tva&amp;Expires=1581274489&amp;ssig=fr%2BxspwFah" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>AdminLTE源文件包里bower_components、plugins这两文件夹我怎么找不到了，/(ㄒoㄒ)/~~</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 一伊面一 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年2月10日 21:50</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1883">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.150.150.50/7e1ea162jw8f2xc6vmk4uj2047047t8m.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>刘老师，我直接把源码放在window的虚拟机上，python manage.py runserver后 提示no such table: assets_asset，是指数据库端有问题吗？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 鑫鑫小王子要发奋 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年5月20日 18:55</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1339">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>你还没有创建数据库吧？makemigration和migrate做了吗？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 鑫鑫小王子要发奋 </span> 
+      <em>2019年7月1日 15:01</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1421">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.128.0.768.768.50/68588c5djw8e7f0r3g9ekj20sg0lcwhu.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>刘大大，你好，我尝试在base.html的左侧导航栏中从数据库中读出节点树信息，叶子节点的url链接从数据库中读出，但是总是失败，能指导下吗？ &lt;ul class="sidebar-menu" data-widget="tree"&gt; &lt;li class="header"&gt;导航栏&lt;/li&gt; &lt;!-- Optionally, you can add icons to the links --&gt; &lt;li&gt;&lt;a href="{% url 'assets:dashboard' %}"&gt;&lt;i class="fa fa-dashboard"&gt;&lt;/i&gt; &lt;span&gt;仪表盘&lt;/span&gt;&lt;/a&gt;&lt;/li&gt; &lt;li&gt;&lt;a href="{% url 'assets:index' %}"&gt;&lt;i class="fa fa-table"&gt;&lt;/i&gt; &lt;span&gt;资产总表&lt;/span&gt;&lt;/a&gt;&lt;/li&gt; &lt;/ul&gt; 替换为 &lt;div class="framework_nav"&gt; &lt;ul class="sidebar-menu" data-widget="tree"&gt; &lt;li class="all"&gt;导航栏&lt;/li&gt; &lt;ul show="true"&gt; {% recursetree nodes %} &lt;li&gt; {% if node.is_leaf_node %} &lt;li&gt;&lt;a href="{{ node.url }}"&gt;&lt;i class="fa fa-dashboard"&gt;&lt;/i&gt;&lt;span&gt;{{ node.name }}&lt;/span&gt;&lt;/a&gt;&lt;/li&gt; {% else %} &lt;li&gt;&lt;a href="#"&gt;&lt;i class="fa fa-table"&gt;&lt;/i&gt; &lt;span&gt;{{ node.name }}&lt;/span&gt;&lt;/a&gt;&lt;/li&gt; &lt;ul&gt; &lt;li&gt;&lt;a href="#"&gt;&lt;span&gt;{{ children }}&lt;/span&gt;&lt;/a&gt;&lt;/li&gt; &lt;/ul&gt; {% endif %} &lt;/li&gt; {% endrecursetree %} &lt;/ul&gt; &lt;/ul&gt; &lt;/div&gt;</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 青岛浪淘沙 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年5月7日 13:57</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1316">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.128.0.768.768.50/68588c5djw8e7f0r3g9ekj20sg0lcwhu.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>&lt;a href="{{ node.url }}"&gt;的信息能从库里读出，但是老报错： Page not found (404) Request Method: GET Request URL: http://127.0.0.1:8000/assets/index/%7B%25%20url%20'dashboard'%20%25%7D</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 青岛浪淘沙 &nbsp;&nbsp;回复&nbsp;&nbsp; 青岛浪淘沙 </span> 
+      <em>2019年5月7日 13:58</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1317">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>url错了，多了一部分`%7B%25%20url%20'dashboard'%20%25%7D`</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 青岛浪淘沙 </span> 
+      <em>2019年7月1日 15:01</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1422">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva4.sinaimg.cn/crop.0.0.1342.1342.50/005NQBQ8jw8f5q3for1d6j311a11ak05.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我的版本是2.4.10，右上角的显示好像不太对，感觉高度超过了顶部导航条的高度</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; SEE__终极 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年4月3日 17:06</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1216">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva4.sinaimg.cn/crop.0.0.1342.1342.50/005NQBQ8jw8f5q3for1d6j311a11ak05.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>能不能把你框架的目录结构发下，我也时从你的github上拉下来的zip，用的版本2.4.10，没有找到你说的bootstrap文件夹，他名字是browse的文件夹，请问是这个文件夹放到static目录下吗，不然引用路径就有问题，求解答</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> SEE__终极 &nbsp;&nbsp;回复&nbsp;&nbsp; SEE__终极 </span> 
+      <em>2019年4月11日 16:23</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1244">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>bootstrap 和plugins 的问题已经搞定。感谢刘老师的教程</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 晓明月201801 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年2月27日 20:59</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1089">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>刘老师 你的AdminLTE源包里的bootstrap和plugins文件夹在哪？下载后没有看到。我自己找了一些，但是有的没起作用。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 晓明月201801 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年2月27日 19:16</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1087">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.996.996.50/006mbSp6ly8ffiwekd507j30ro0rp440.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>亲，你的AdminLTE源包里的bootstrap和plugins文件夹是哪来的？？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 爱他么谁谁的快意人生 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年2月25日 12:19</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1078">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>你找到可用的bootstrap和plugins吗？ plugins 里面的文件有四个 第一个：https://jqueryui.com/download/ ，jqueryui的。第二个：http://fontawesome.dashgame.com/ ， font-awesome的。第三个：https://www.mvnjar.com/org.webjars.npm/ionicons/2.0.1/detail.html， ionicons的。第四个是 jquery， 第一个项目里面有。bootstrap也在第一个项目里面。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 晓明月201801 &nbsp;&nbsp;回复&nbsp;&nbsp; 爱他么谁谁的快意人生 </span> 
+      <em>2019年2月27日 21:07</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1090">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>左边的导航Treeview点击后颜色没变化，逻辑是对的，但颜色没有变化，怎么把电击后的Treeview改成active呢？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; ora1998_686 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年12月23日 12:16</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/973">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.0.639.639.50/b1d78f46jw8eovdb2c4xmj20hs0hr3zt.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>模板配置 TEMPLATES 中应用 'DIRS': [os.path.join(BASE_DIR+'/cmdb/templates')], 静态文件配置 STATICFILES_DIRS = [ os.path.join(BASE_DIR, "cmdb/static"), ]</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; Veyron_Rui </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年7月10日 19:01</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/562">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.0.639.639.50/b1d78f46jw8eovdb2c4xmj20hs0hr3zt.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>上述变化是因为模板和静态文件目录建在了cmdb/cmdb下，如果直接建在cmdb下不用加 cmdb，按照教程来</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> Veyron_Rui &nbsp;&nbsp;回复&nbsp;&nbsp; Veyron_Rui </span> 
+      <em>2018年7月10日 19:25</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/563">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.56.56.142.142.50/d4a98b85jw8exc9rebm2qj2074074glm.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>火狐浏览器样式出不来，界面兰起来很别扭。ie倒是可以。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 张小二_tiny </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年5月4日 15:08</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/429">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.996.996.50/af3a5069ly8fjv3yl1bowj20ro0roq4r.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>同问，Admin-LTE框架是哪个版本的？我的管理员头像比较大</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 深情默默爱格格 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年4月15日 18:20</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/383">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.996.996.50/af3a5069ly8fjv3yl1bowj20ro0roq4r.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>但是又有新问题，访问首页的时候是空白，看console知道是demo.js有误，可能还是版本问题。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 深情默默爱格格 &nbsp;&nbsp;回复&nbsp;&nbsp; 深情默默爱格格 </span> 
+      <em>2018年4月15日 18:46</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/384">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.996.996.50/af3a5069ly8fjv3yl1bowj20ro0roq4r.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>问题都解决了，是我JS库的引用顺序跟老师不同，终于发现了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 深情默默爱格格 &nbsp;&nbsp;回复&nbsp;&nbsp; 深情默默爱格格 </span> 
+      <em>2018年4月15日 19:05</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/385">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.960.960.50/006xIWURly8fo9wxo24vzj30qo0qoaaz.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>完成</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 蔷薇-Nina </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年3月29日 23:21</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/346">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva4.sinaimg.cn/crop.0.0.100.100.50/005BLsjSjw8elvl8gl2ooj302s02s744.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>你这个adminLTE是哪个版本啊？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 贵于非_756 &nbsp;&nbsp;回复&nbsp;&nbsp; 蔷薇-Nina </span> 
+      <em>2018年4月2日 10:01</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/359">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.540.540.50/ea7dd574jw8eqsab0tnq3j20f00f0751.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>AdminLTE-2.3.10版本可以</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 水木foreveryu &nbsp;&nbsp;回复&nbsp;&nbsp; 贵于非_756 </span> 
+      <em>2018年5月10日 15:00</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/470">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

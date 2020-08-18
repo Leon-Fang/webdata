@@ -1,0 +1,591 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>5.Linux下收集数据</h1> 
+ <small>阅读:&nbsp;25519&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：15 </small> 
+ <hr> 
+ <p>Linux下收集数据就有很多命令和工具了，比Windows方便多了。</p> 
+ <p>但是要在Python的进程中运行操作系统级别的命令，通常需要使用subprocess模块。这个模块的具体用法，请查看Python教程中相关部分的内容。</p> 
+ <p>在Client/plugins下创建一个<code>collect_linux_info.py</code>文件，写入下面的代码：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="c1"># -*- coding:utf-8 -*-</span>
+
+<span class="kn">import</span> <span class="nn">subprocess</span>
+
+
+<span class="k">def</span> <span class="nf">collect</span><span class="p">():</span>
+    <span class="n">filter_keys</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'Manufacturer'</span><span class="p">,</span> <span class="s1">'Serial Number'</span><span class="p">,</span> <span class="s1">'Product Name'</span><span class="p">,</span> <span class="s1">'UUID'</span><span class="p">,</span> <span class="s1">'Wake-up Type'</span><span class="p">]</span>
+    <span class="n">raw_data</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">filter_keys</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="s2">"sudo dmidecode -t system|grep '</span><span class="si">%s</span><span class="s2">'"</span> <span class="o">%</span> <span class="n">key</span><span class="p">,</span>
+                                   <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span>
+            <span class="n">data_list</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">':'</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">data_list</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">raw_data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">data_list</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">raw_data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="s1">''</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="n">raw_data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="s1">''</span>
+
+    <span class="n">data</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+    <span class="n">data</span><span class="p">[</span><span class="s1">'asset_type'</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'server'</span>
+    <span class="n">data</span><span class="p">[</span><span class="s1">'manufacturer'</span><span class="p">]</span> <span class="o">=</span> <span class="n">raw_data</span><span class="p">[</span><span class="s1">'Manufacturer'</span><span class="p">]</span>
+    <span class="n">data</span><span class="p">[</span><span class="s1">'sn'</span><span class="p">]</span> <span class="o">=</span> <span class="n">raw_data</span><span class="p">[</span><span class="s1">'Serial Number'</span><span class="p">]</span>
+    <span class="n">data</span><span class="p">[</span><span class="s1">'model'</span><span class="p">]</span> <span class="o">=</span> <span class="n">raw_data</span><span class="p">[</span><span class="s1">'Product Name'</span><span class="p">]</span>
+    <span class="n">data</span><span class="p">[</span><span class="s1">'uuid'</span><span class="p">]</span> <span class="o">=</span> <span class="n">raw_data</span><span class="p">[</span><span class="s1">'UUID'</span><span class="p">]</span>
+    <span class="n">data</span><span class="p">[</span><span class="s1">'wake_up_type'</span><span class="p">]</span> <span class="o">=</span> <span class="n">raw_data</span><span class="p">[</span><span class="s1">'Wake-up Type'</span><span class="p">]</span>
+
+    <span class="n">data</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">get_os_info</span><span class="p">())</span>
+    <span class="n">data</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">get_cpu_info</span><span class="p">())</span>
+    <span class="n">data</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">get_ram_info</span><span class="p">())</span>
+    <span class="n">data</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">get_nic_info</span><span class="p">())</span>
+    <span class="n">data</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">get_disk_info</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">data</span>
+
+
+<span class="k">def</span> <span class="nf">get_os_info</span><span class="p">():</span>
+    <span class="sd">"""</span>
+<span class="sd">    获取操作系统信息</span>
+<span class="sd">    :return:</span>
+<span class="sd">    """</span>
+    <span class="n">distributor</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="s2">"lsb_release -a|grep 'Distributor ID'"</span><span class="p">,</span>
+                                   <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">distributor</span> <span class="o">=</span> <span class="n">distributor</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">":"</span><span class="p">)</span>
+
+    <span class="n">release</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="s2">"lsb_release -a|grep 'Description'"</span><span class="p">,</span>
+                               <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+    <span class="n">release</span> <span class="o">=</span> <span class="n">release</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">":"</span><span class="p">)</span>
+    <span class="n">data_dic</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"os_distribution"</span><span class="p">:</span> <span class="n">distributor</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">distributor</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="s2">""</span><span class="p">,</span>
+        <span class="s2">"os_release"</span><span class="p">:</span> <span class="n">release</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">release</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="s2">""</span><span class="p">,</span>
+        <span class="s2">"os_type"</span><span class="p">:</span> <span class="s2">"Linux"</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">data_dic</span>
+
+
+<span class="k">def</span> <span class="nf">get_cpu_info</span><span class="p">():</span>
+    <span class="sd">"""</span>
+<span class="sd">    获取cpu信息</span>
+<span class="sd">    :return:</span>
+<span class="sd">    """</span>
+    <span class="n">raw_cmd</span> <span class="o">=</span> <span class="s1">'cat /proc/cpuinfo'</span>
+
+    <span class="n">raw_data</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">'cpu_model'</span><span class="p">:</span> <span class="s2">"</span><span class="si">%s</span><span class="s2"> |grep 'model name' |head -1 "</span> <span class="o">%</span> <span class="n">raw_cmd</span><span class="p">,</span>
+        <span class="s1">'cpu_count'</span><span class="p">:</span>  <span class="s2">"</span><span class="si">%s</span><span class="s2"> |grep  'processor'|wc -l "</span> <span class="o">%</span> <span class="n">raw_cmd</span><span class="p">,</span>
+        <span class="s1">'cpu_core_count'</span><span class="p">:</span> <span class="s2">"</span><span class="si">%s</span><span class="s2"> |grep 'cpu cores' |awk -F: '{SUM +=$2} END {print SUM}'"</span> <span class="o">%</span> <span class="n">raw_cmd</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">cmd</span> <span class="ow">in</span> <span class="n">raw_data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+            <span class="n">raw_data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="n">raw_data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="s2">""</span>
+
+    <span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"cpu_count"</span><span class="p">:</span> <span class="n">raw_data</span><span class="p">[</span><span class="s2">"cpu_count"</span><span class="p">],</span>
+        <span class="s2">"cpu_core_count"</span><span class="p">:</span> <span class="n">raw_data</span><span class="p">[</span><span class="s2">"cpu_core_count"</span><span class="p">]</span>
+        <span class="p">}</span>
+
+    <span class="n">cpu_model</span> <span class="o">=</span> <span class="n">raw_data</span><span class="p">[</span><span class="s2">"cpu_model"</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">":"</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cpu_model</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">data</span><span class="p">[</span><span class="s2">"cpu_model"</span><span class="p">]</span> <span class="o">=</span> <span class="n">cpu_model</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">data</span><span class="p">[</span><span class="s2">"cpu_model"</span><span class="p">]</span> <span class="o">=</span> <span class="s1">''</span>
+
+    <span class="k">return</span> <span class="n">data</span>
+
+
+<span class="k">def</span> <span class="nf">get_ram_info</span><span class="p">():</span>
+    <span class="sd">"""</span>
+<span class="sd">    获取内存信息</span>
+<span class="sd">    :return:</span>
+<span class="sd">    """</span>
+    <span class="n">raw_data</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="s2">"sudo dmidecode -t memory"</span><span class="p">,</span> <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">raw_list</span> <span class="o">=</span> <span class="n">raw_data</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">raw_ram_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">item_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">raw_list</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"Memory Device"</span><span class="p">):</span>
+            <span class="n">raw_ram_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item_list</span><span class="p">)</span>
+            <span class="n">item_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">item_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+
+    <span class="n">ram_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">raw_ram_list</span><span class="p">:</span>
+        <span class="n">item_ram_size</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">ram_item_to_dic</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">item</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">i</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">":"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="n">key</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="n">data</span>
+                <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s1">'Size'</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">!=</span> <span class="s2">"No Module Installed"</span><span class="p">:</span>
+                        <span class="n">ram_item_to_dic</span><span class="p">[</span><span class="s1">'capacity'</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                        <span class="n">item_ram_size</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="mi">0</span><span class="p">])</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">ram_item_to_dic</span><span class="p">[</span><span class="s1">'capacity'</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+                <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s1">'Type'</span><span class="p">:</span>
+                    <span class="n">ram_item_to_dic</span><span class="p">[</span><span class="s1">'model'</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s1">'Manufacturer'</span><span class="p">:</span>
+                    <span class="n">ram_item_to_dic</span><span class="p">[</span><span class="s1">'manufacturer'</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s1">'Serial Number'</span><span class="p">:</span>
+                    <span class="n">ram_item_to_dic</span><span class="p">[</span><span class="s1">'sn'</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s1">'Asset Tag'</span><span class="p">:</span>
+                    <span class="n">ram_item_to_dic</span><span class="p">[</span><span class="s1">'asset_tag'</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s1">'Locator'</span><span class="p">:</span>
+                    <span class="n">ram_item_to_dic</span><span class="p">[</span><span class="s1">'slot'</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">item_ram_size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ram_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ram_item_to_dic</span><span class="p">)</span>
+
+    <span class="n">raw_total_size</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="s2">"cat /proc/meminfo|grep MemTotal "</span><span class="p">,</span> <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">raw_total_size</span> <span class="o">=</span> <span class="n">raw_total_size</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">":"</span><span class="p">)</span>
+    <span class="n">ram_data</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'ram'</span><span class="p">:</span> <span class="n">ram_list</span><span class="p">}</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">raw_total_size</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">total_gb_size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">raw_total_size</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="mi">0</span><span class="p">])</span> <span class="o">/</span> <span class="mi">1024</span><span class="o">**</span><span class="mi">2</span>
+        <span class="n">ram_data</span><span class="p">[</span><span class="s1">'ram_size'</span><span class="p">]</span> <span class="o">=</span> <span class="n">total_gb_size</span>
+
+    <span class="k">return</span> <span class="n">ram_data</span>
+
+
+<span class="k">def</span> <span class="nf">get_nic_info</span><span class="p">():</span>
+    <span class="sd">"""</span>
+<span class="sd">    获取网卡信息</span>
+<span class="sd">    :return:</span>
+<span class="sd">    """</span>
+    <span class="n">raw_data</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="s2">"ifconfig -a"</span><span class="p">,</span> <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+    <span class="n">raw_data</span> <span class="o">=</span> <span class="n">raw_data</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="n">nic_dic</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+    <span class="n">next_ip_line</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="n">last_mac_addr</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">raw_data</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">next_ip_line</span><span class="p">:</span>
+            <span class="n">next_ip_line</span> <span class="o">=</span> <span class="bp">False</span>
+            <span class="n">nic_name</span> <span class="o">=</span> <span class="n">last_mac_addr</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">mac_addr</span> <span class="o">=</span> <span class="n">last_mac_addr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"HWaddr"</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="n">raw_ip_addr</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"inet addr:"</span><span class="p">)</span>
+            <span class="n">raw_bcast</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"Bcast:"</span><span class="p">)</span>
+            <span class="n">raw_netmask</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"Mask:"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">raw_ip_addr</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">ip_addr</span> <span class="o">=</span> <span class="n">raw_ip_addr</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">network</span> <span class="o">=</span> <span class="n">raw_bcast</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">netmask</span> <span class="o">=</span> <span class="n">raw_netmask</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">ip_addr</span> <span class="o">=</span> <span class="bp">None</span>
+                <span class="n">network</span> <span class="o">=</span> <span class="bp">None</span>
+                <span class="n">netmask</span> <span class="o">=</span> <span class="bp">None</span>
+            <span class="k">if</span> <span class="n">mac_addr</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">nic_dic</span><span class="p">:</span>
+                <span class="n">nic_dic</span><span class="p">[</span><span class="n">mac_addr</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'name'</span><span class="p">:</span> <span class="n">nic_name</span><span class="p">,</span>
+                                     <span class="s1">'mac'</span><span class="p">:</span> <span class="n">mac_addr</span><span class="p">,</span>
+                                     <span class="s1">'net_mask'</span><span class="p">:</span> <span class="n">netmask</span><span class="p">,</span>
+                                     <span class="s1">'network'</span><span class="p">:</span> <span class="n">network</span><span class="p">,</span>
+                                     <span class="s1">'bonding'</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+                                     <span class="s1">'model'</span><span class="p">:</span> <span class="s1">'unknown'</span><span class="p">,</span>
+                                     <span class="s1">'ip_address'</span><span class="p">:</span> <span class="n">ip_addr</span><span class="p">,</span>
+                                     <span class="p">}</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="s1">'</span><span class="si">%s</span><span class="s1">_bonding_addr'</span> <span class="o">%</span> <span class="p">(</span><span class="n">mac_addr</span><span class="p">,)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">nic_dic</span><span class="p">:</span>
+                    <span class="n">random_mac_addr</span> <span class="o">=</span> <span class="s1">'</span><span class="si">%s</span><span class="s1">_bonding_addr'</span> <span class="o">%</span> <span class="p">(</span><span class="n">mac_addr</span><span class="p">,)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">random_mac_addr</span> <span class="o">=</span> <span class="s1">'</span><span class="si">%s</span><span class="s1">_bonding_addr2'</span> <span class="o">%</span> <span class="p">(</span><span class="n">mac_addr</span><span class="p">,)</span>
+
+                <span class="n">nic_dic</span><span class="p">[</span><span class="n">random_mac_addr</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'name'</span><span class="p">:</span> <span class="n">nic_name</span><span class="p">,</span>
+                                            <span class="s1">'mac'</span><span class="p">:</span> <span class="n">random_mac_addr</span><span class="p">,</span>
+                                            <span class="s1">'net_mask'</span><span class="p">:</span> <span class="n">netmask</span><span class="p">,</span>
+                                            <span class="s1">'network'</span><span class="p">:</span> <span class="n">network</span><span class="p">,</span>
+                                            <span class="s1">'bonding'</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+                                            <span class="s1">'model'</span><span class="p">:</span> <span class="s1">'unknown'</span><span class="p">,</span>
+                                            <span class="s1">'ip_address'</span><span class="p">:</span> <span class="n">ip_addr</span><span class="p">,</span>
+                                            <span class="p">}</span>
+
+        <span class="k">if</span> <span class="s2">"HWaddr"</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
+            <span class="n">next_ip_line</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="n">last_mac_addr</span> <span class="o">=</span> <span class="n">line</span>
+    <span class="n">nic_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">nic_dic</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">nic_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">{</span><span class="s1">'nic'</span><span class="p">:</span> <span class="n">nic_list</span><span class="p">}</span>
+
+
+<span class="k">def</span> <span class="nf">get_disk_info</span><span class="p">():</span>
+    <span class="sd">"""</span>
+<span class="sd">    获取存储信息。</span>
+<span class="sd">    本脚本只针对ubuntu中使用sda，且只有一块硬盘的情况。</span>
+<span class="sd">    具体查看硬盘信息的命令，请根据实际情况，实际调整。</span>
+<span class="sd">    如果需要查看Raid信息，可以尝试MegaCli工具。</span>
+<span class="sd">    :return:</span>
+<span class="sd">    """</span>
+    <span class="n">raw_data</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="s2">"sudo hdparm -i /dev/sda | grep Model"</span><span class="p">,</span> <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">raw_data</span> <span class="o">=</span> <span class="n">raw_data</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span>
+    <span class="n">data_list</span> <span class="o">=</span> <span class="n">raw_data</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">","</span><span class="p">)</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">data_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"="</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">sn</span> <span class="o">=</span> <span class="n">data_list</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"="</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+
+    <span class="n">size_data</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="s2">"sudo fdisk -l /dev/sda | grep Disk|head -1"</span><span class="p">,</span> <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">size_data</span> <span class="o">=</span> <span class="n">size_data</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span>
+    <span class="n">size</span> <span class="o">=</span> <span class="n">size_data</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">":"</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">" "</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="n">result</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'physical_disk_driver'</span><span class="p">:</span> <span class="p">[]}</span>
+    <span class="n">disk_dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+    <span class="n">disk_dict</span><span class="p">[</span><span class="s2">"model"</span><span class="p">]</span> <span class="o">=</span> <span class="n">model</span>
+    <span class="n">disk_dict</span><span class="p">[</span><span class="s2">"size"</span><span class="p">]</span> <span class="o">=</span> <span class="n">size</span>
+    <span class="n">disk_dict</span><span class="p">[</span><span class="s2">"sn"</span><span class="p">]</span> <span class="o">=</span> <span class="n">sn</span>
+    <span class="n">result</span><span class="p">[</span><span class="s1">'physical_disk_driver'</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">disk_dict</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">result</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+    <span class="c1"># 收集信息功能测试</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">collect</span><span class="p">()</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>代码整体没有什么难点，无非就是使用subprocess.Popen()方法执行Linux的命令，然后获取返回值，并以规定的格式打包到data字典里。</p> 
+ <p>需要说明的问题有：</p> 
+ <ul> 
+  <li>当Linux中存在好几个Python解释器版本时，要注意调用方式，前面已经强调过了；</li> 
+  <li>不同的Linux发行版，有些命令可能没有，需要额外安装；</li> 
+  <li>所使用的查看硬件信息的命令并不一定必须和这里的一样，只要能获得数据就行；</li> 
+  <li>有一些命令在ubuntu中涉及sudo的问题，需要特别对待；</li> 
+  <li>最终数据字典的格式一定要正确；</li> 
+  <li>可以在Linux下配置cronb或其它定时服务，设置定期的数据收集、报告任务。</li> 
+ </ul> 
+ <hr> 
+ <p>下面在Linux虚拟机上，测试一下客户端。</p> 
+ <p>将Pycharm中的Client客户端文件夹，拷贝到Linux虚拟机中，这里是ubuntu16.04.</p> 
+ <p>进入bin目录，运行“python3 main.py report_data”，一切顺利的话应该能得到如下的反馈：</p> 
+ <div class="codehilite">
+  <pre><span></span>正在将数据发送至： [http://192.168.1.100:8000/assets/report/]  ......
+发送完毕！ 
+返回结果：成功收到数据！
+日志记录成功！
+</pre>
+ </div> 
+ <p>然后，在Pycharm中，也可以看到接收的数据：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="p">{</span>
+    <span class="s2">"asset_type"</span><span class="p">:</span> <span class="s2">"server"</span><span class="p">,</span>
+    <span class="s2">"manufacturer"</span><span class="p">:</span> <span class="s2">"innotek GmbH"</span><span class="p">,</span>
+    <span class="s2">"sn"</span><span class="p">:</span> <span class="s2">"0"</span><span class="p">,</span>
+    <span class="s2">"model"</span><span class="p">:</span> <span class="s2">"VirtualBox"</span><span class="p">,</span>
+    <span class="s2">"uuid"</span><span class="p">:</span> <span class="s2">"E8DE611C-4279-495C-9B58-502B6FCED076"</span><span class="p">,</span>
+    <span class="s2">"wake_up_type"</span><span class="p">:</span> <span class="s2">"Power Switch"</span><span class="p">,</span>
+    <span class="s2">"os_distribution"</span><span class="p">:</span> <span class="s2">"Ubuntu"</span><span class="p">,</span>
+    <span class="s2">"os_release"</span><span class="p">:</span> <span class="s2">"Ubuntu 16.04.3 LTS"</span><span class="p">,</span>
+    <span class="s2">"os_type"</span><span class="p">:</span> <span class="s2">"Linux"</span><span class="p">,</span>
+    <span class="s2">"cpu_count"</span><span class="p">:</span> <span class="s2">"2"</span><span class="p">,</span>
+    <span class="s2">"cpu_core_count"</span><span class="p">:</span> <span class="s2">"4"</span><span class="p">,</span>
+    <span class="s2">"cpu_model"</span><span class="p">:</span> <span class="s2">"Intel(R) Core(TM) i5-2300 CPU @ 2.80GHz"</span><span class="p">,</span>
+    <span class="s2">"ram"</span><span class="p">:</span> <span class="p">[],</span>
+    <span class="s2">"ram_size"</span><span class="p">:</span> <span class="mf">3.858997344970703</span><span class="p">,</span>
+    <span class="s2">"nic"</span><span class="p">:</span> <span class="p">[],</span>
+    <span class="s2">"physical_disk_driver"</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">{</span>
+            <span class="s2">"model"</span><span class="p">:</span> <span class="s2">"VBOX HARDDISK"</span><span class="p">,</span>
+            <span class="s2">"size"</span><span class="p">:</span> <span class="s2">"50"</span><span class="p">,</span>
+            <span class="s2">"sn"</span><span class="p">:</span> <span class="s2">"VBeee1ba73-09085302"</span>
+        <span class="p">}</span>
+    <span class="p">]</span>
+<span class="p">}</span>
+</pre>
+ </div> 
+ <p>可以看到，由于是virtualbox虚拟机的原因，sn为0，内存和网卡信息一条都没有，数据有点可怜，vmware的虚拟机可能好点。如果你对Linux比较熟悉，还可以自己尝试获取更多的数据，但是要注意虚拟机的sn可能重复，要防止冲突。</p> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/120"> <i class="fa fa-arrow-left"></i>&nbsp;4.收集Windows数据</a> 
+  <a class="float-right" href="/course/django/122"> 6.新资产待审批区&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 15</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/121">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax4.sinaimg.cn/crop.0.0.996.996.50/0063g5sCly8fgk0nd2szqj30ro0ro0ui.jpg?KID=imgbed,tva&amp;Expires=1585913565&amp;ssig=AKe66P4aZr" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>File "/root/testDjango/SaltOps/SaltOps/Client/plugins/collect_linux_info.py", line 242, in get_disk_info model = data_list[0].split("=")[1] IndexError: list index out of range 这个数组越界是什么意思呢</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 翁明强w </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年4月3日 16:33</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2004">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1586851613&amp;ssig=EAgcKENHyi" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>意思就是你的数组没那么长，或者根本就是个空数组</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 翁明强w </span> 
+      <em>2020年4月14日 13:38</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2031">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax4.sinaimg.cn/crop.0.0.664.664.50/006Znun5ly8g593czt268j30ig0igjt6.jpg?KID=imgbed,tva&amp;Expires=1581274489&amp;ssig=fr%2BxspwFah" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>Traceback (most recent call last): File "main.py", line 18, in &lt;module&gt; handler.ArgvHandler(sys.argv) File "/root/Client/core/handler.py", line 15, in __init__ self.parse_args() File "/root/Client/core/handler.py", line 24, in parse_args func() File "/root/Client/core/handler.py", line 58, in report_data asset_data = info.collect() File "/root/Client/core/info_collection.py", line 14, in collect info_data = func() File "/root/Client/core/info_collection.py", line 23, in linux return collect() File "/root/Client/plugins/collect_linux_info.py", line 36, in collect data.update(get_ram_info()) File "/root/Client/plugins/collect_linux_info.py", line 126, in get_ram_info item_ram_size = round(v.split()[0]) TypeError: type str doesn't define __round__ method，博主，我在ubuntu1604运行python3 main.py report_data后，出现这些报错，请问有什么解决方法/(ㄒoㄒ)/~~</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 一伊面一 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年2月10日 00:01</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1877">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif?KID=imgbed,tva&amp;Expires=1578995866&amp;ssig=azsfmiG7NB" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>CentOS 7 lsblk --list /dev/sda -o NAME,SERIAL,SIZE,MODEL 用这句查硬盘信息挺方便</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户5617139709 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年1月20日 21:28</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1853">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.0.0.512.512.50/72414db8ly8g0q1s6wjqmj20e80e83yx.jpg?Expires=1563272600&amp;ssig=YyZk1ttC6k&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>修改 135 行样子。 item_ram_size = round(float(v.split()[0])) ``` yum install redhat-lsb-core dmidecode hdparm net-tools -y</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 夕已而 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年7月16日 17:57</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1463">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.180.180.50/9e7f8196jw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>[root@limtest bin]# python main.py report_data Traceback (most recent call last): File "main.py", line 18, in &lt;module&gt; handler.ArgvHandler(sys.argv) File "/client/core/handler.py", line 15, in __init__ self.parse_args() File "/client/core/handler.py", line 24, in parse_args func() File "/client/core/handler.py", line 58, in report_data asset_data = info.collect() File "/client/core/info_collection.py", line 14, in collect info_data = func() File "/client/core/info_collection.py", line 23, in linux return collect() File "/client/plugins/collect_linux_info.py", line 36, in collect data.update(get_ram_info()) File "/client/plugins/collect_linux_info.py", line 126, in get_ram_info item_ram_size = round(v.split()[0]) TypeError: type str doesn't define __round__ method linux下运行报这个错误，怎么处理</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 龙love慧2012 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年4月20日 15:47</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1271">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax4.sinaimg.cn/crop.0.0.664.664.50/006Znun5ly8g593czt268j30ig0igjt6.jpg?KID=imgbed,tva&amp;Expires=1581274489&amp;ssig=fr%2BxspwFah" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>兄弟你解决了嘛，我也遇到了，解决了方便交流交流嘛，我微信min15916044035</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 一伊面一 &nbsp;&nbsp;回复&nbsp;&nbsp; 龙love慧2012 </span> 
+      <em>2020年2月9日 23:56</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1876">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva4.sinaimg.cn/crop.0.0.180.180.50/682e1544jw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>MAC系统收集信息不支持吗</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 风的碎发 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年3月25日 00:09</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1177">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.996.996.50/006rlcsvjw8fbcakrcf7ij30ro0rpn0k.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>cmd1 = "/usr/sbin/system_profiler SPHardwareDataType" # cmd1 = "/usr/sbin/system_profiler SPSoftwareDataType" output1 = os.popen(cmd1) print(output1.read()) 这样就可以获取Mac系统的硬件配置</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> aifeiyu915 &nbsp;&nbsp;回复&nbsp;&nbsp; 风的碎发 </span> 
+      <em>2019年6月6日 11:11</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1393">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.300.0.764.764.50/97867009gw1f7m5ojassgj211y0lcduj.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>item_ram_size = round(v.split()[0]) 这条获取的值类型为“str”round函数不可以对str进行处理，建议改为：item_ram_size = round(float(v.split()[0])) 就不会报错了！ 推荐3个获取disk信息的命令： ##获取厂商： [root@python_master pythontest]# dmidecode -s system-manufacturer VMware, Inc. ##获取型号： [root@python_master pythontest]# dmidecode -s system-product-name VMware Virtual Platform ##获取sn： [root@python_master pythontest]# dmidecode -s system-serial-number VMware-56 4d 25 68 5c ee dc fb-a1 5e 77 6a 5f e7 66 60</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; Hello_zhdya </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年3月4日 08:33</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1101">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.300.0.764.764.50/97867009gw1f7m5ojassgj211y0lcduj.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>竟然没有换行，，</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> Hello_zhdya &nbsp;&nbsp;回复&nbsp;&nbsp; Hello_zhdya </span> 
+      <em>2019年3月4日 08:34</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1102">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.0.0.512.512.50/005E4cQTly8g14sgw93q3j30e80e8jrr.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>改了后还是出错 HDIO_GET_IDENTITY failed: Invalid argument Traceback (most recent call last): File "collect_linux_info.py", line 258, in &lt;module&gt; data = collect() File "collect_linux_info.py", line 38, in collect data.update(get_disk_info()) File "collect_linux_info.py", line 239, in get_disk_info model = data_list[0].split("=")[1] IndexError: list index out of range</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> Fuckkkerrr &nbsp;&nbsp;回复&nbsp;&nbsp; Hello_zhdya </span> 
+      <em>2019年6月6日 16:44</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1395">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 12em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax4.sinaimg.cn/crop.0.0.996.996.50/0076UKf5ly8fw71pxvc1yj30ro0roju1.jpg?KID=imgbed,tva&amp;Expires=1576666600&amp;ssig=3HHGHrWSIf" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>请问解决了吗</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> yunchuan537 &nbsp;&nbsp;回复&nbsp;&nbsp; Fuckkkerrr </span> 
+      <em>2019年12月18日 15:58</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1770">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1577334347&amp;ssig=QyjwpbGyW9" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>回复本评论及下面的子评论。 这个实战中的linux主机信息获取脚本，非常依赖信息的格式。这其实是一个文本分析、抓取、传递的过程。 我在开篇就强调过，要根据你的实际情况，灵活调整使用的linux命令和文本分析代码，不可照搬照抄。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; Hello_zhdya </span> 
+      <em>2019年12月26日 10:14</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1794">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva3.sinaimg.cn/crop.0.58.440.440.50/b8253f15jw8eayptqq27uj20c80fh755.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>如果是获取dell服务器那种物理服务器的信息，两台设备需要在同一个网段吗？就是客户端与物理服务器要在同一个局域网里面吗？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 衰老的粽子 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年2月14日 16:22</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1067">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

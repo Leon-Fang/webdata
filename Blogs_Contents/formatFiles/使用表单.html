@@ -1,0 +1,531 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>使用表单</h1> 
+ <small>阅读:&nbsp;49715&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：9 </small> 
+ <hr> 
+ <p>假设你想从表单接收用户名数据，一般情况下，你需要在HTML中手动编写一个如下的表单元素：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="p">&lt;</span><span class="nt">form</span> <span class="na">action</span><span class="o">=</span><span class="s">"/your-name/"</span> <span class="na">method</span><span class="o">=</span><span class="s">"post"</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">label</span> <span class="na">for</span><span class="o">=</span><span class="s">"your_name"</span><span class="p">&gt;</span>Your name: <span class="p">&lt;/</span><span class="nt">label</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">input</span> <span class="na">id</span><span class="o">=</span><span class="s">"your_name"</span> <span class="na">type</span><span class="o">=</span><span class="s">"text"</span> <span class="na">name</span><span class="o">=</span><span class="s">"your_name"</span> <span class="na">value</span><span class="o">=</span><span class="s">"{{ current_name }}"</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">input</span> <span class="na">type</span><span class="o">=</span><span class="s">"submit"</span> <span class="na">value</span><span class="o">=</span><span class="s">"OK"</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">form</span><span class="p">&gt;</span>
+</pre>
+ </div> 
+ <p><code>&lt;form action="/your-name/" method="post"&gt;</code>这一行定义了我们的发送目的地<code>/your-name/</code>和HTTP方法<code>POST</code>。form元素内部还定义了一个说明标签<code>&lt;label&gt;</code>和一个发送按钮‘submit’，以及最关键的接收用户输入的<code>&lt;input&gt;</code>元素。具体的更多HTML语言相关内容，请自行学习。</p> 
+ <h2>一、编写表单类</h2> 
+ <p>我们可以通过Django提供的Form类来自用生成上面的表单，不再需要手动在HTML中编写。</p> 
+ <p>首先，在你当前app内新建一个<code>forms.py</code>文件（这个套路是Django的惯用手法，就像<code>views.py</code>，<code>models.py</code>等等），然后输入下面的内容：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django</span> <span class="kn">import</span> <span class="n">forms</span>
+
+<span class="k">class</span> <span class="nc">NameForm</span><span class="p">(</span><span class="n">forms</span><span class="o">.</span><span class="n">Form</span><span class="p">):</span>
+    <span class="n">your_name</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s1">'Your name'</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>要点：</p> 
+ <ul> 
+  <li>提前导入forms模块</li> 
+  <li>所有的表单类都要继承forms.Form类</li> 
+  <li>每个表单字段都有自己的字段类型比如CharField，它们分别对应一种HTML语言中的<code>&lt;form&gt;</code>元素中的表单元素。这一点和Django模型系统的设计非常相似。</li> 
+  <li>例子中的label用于设置说明标签</li> 
+  <li><code>max_length</code>限制最大长度为100。它同时起到两个作用，一是在浏览器页面限制用户输入不可超过100个字符，二是在后端服务器验证用户输入的长度不可超过100。</li> 
+ </ul> 
+ <p><strong>(警告：由于浏览器页面是可以被篡改、伪造、禁用、跳过的，所有的HTML手段的数据验证只能防止意外不能防止恶意行为，是没有安全保证的，破坏分子完全可以跳过浏览器的防御手段伪造发送请求！所以，在服务器后端，必须将前端当做“裸机”来对待，再次进行完全彻底的数据验证和安全防护！)</strong></p> 
+ <p>每个Django表单的实例都有一个内置的<code>is_valid()</code>方法，用来验证接收的数据是否合法。如果所有数据都合法，那么该方法将返回True，并将所有的表单数据转存到它的一个叫做<code>cleaned_data</code>的属性中，该属性是一个字典类型数据。</p> 
+ <p>当我们将上面的表单渲染成真正的HTML元素，其内容如下：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="p">&lt;</span><span class="nt">label</span> <span class="na">for</span><span class="o">=</span><span class="s">"your_name"</span><span class="p">&gt;</span>Your name: <span class="p">&lt;/</span><span class="nt">label</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">input</span> <span class="na">id</span><span class="o">=</span><span class="s">"your_name"</span> <span class="na">type</span><span class="o">=</span><span class="s">"text"</span> <span class="na">name</span><span class="o">=</span><span class="s">"your_name"</span> <span class="na">maxlength</span><span class="o">=</span><span class="s">"100"</span> <span class="na">required</span> <span class="p">/&gt;</span>
+</pre>
+ </div> 
+ <p><strong>一定要注意，它不包含<code>&lt;form&gt;</code>标签本身以及提交按钮！！</strong>！为什么要这样？方便你自己控制表单动作和CSS，JS以及其它类似bootstrap框架的嵌入！</p> 
+ <h2>二、视图处理</h2> 
+ <p>需要在视图中，实例化我们编写好的表单类。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="c1"># views.py</span>
+
+<span class="kn">from</span> <span class="nn">django.shortcuts</span> <span class="kn">import</span> <span class="n">render</span>
+<span class="kn">from</span> <span class="nn">django.http</span> <span class="kn">import</span> <span class="n">HttpResponseRedirect</span>
+
+<span class="kn">from</span> <span class="nn">.forms</span> <span class="kn">import</span> <span class="n">NameForm</span>
+
+<span class="k">def</span> <span class="nf">get_name</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="c1"># 如果form通过POST方法发送数据</span>
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s1">'POST'</span><span class="p">:</span>
+        <span class="c1"># 接受request.POST参数构造form类的实例</span>
+        <span class="n">form</span> <span class="o">=</span> <span class="n">NameForm</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="p">)</span>
+        <span class="c1"># 验证数据是否合法</span>
+        <span class="k">if</span> <span class="n">form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">():</span>
+            <span class="c1"># 处理form.cleaned_data中的数据</span>
+            <span class="c1"># ...</span>
+            <span class="c1"># 重定向到一个新的URL</span>
+            <span class="k">return</span> <span class="n">HttpResponseRedirect</span><span class="p">(</span><span class="s1">'/thanks/'</span><span class="p">)</span>
+
+    <span class="c1"># 如果是通过GET方法请求数据，返回一个空的表单</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">form</span> <span class="o">=</span> <span class="n">NameForm</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'name.html'</span><span class="p">,</span> <span class="p">{</span><span class="s1">'form'</span><span class="p">:</span> <span class="n">form</span><span class="p">})</span>
+</pre>
+ </div> 
+ <p>要点是：</p> 
+ <ul> 
+  <li>对于GET方法请求页面时，返回空的表单，让用户可以填入数据；</li> 
+  <li>对于POST方法，接收表单数据，并验证；</li> 
+  <li>如果数据合法，按照正常业务逻辑继续执行下去；</li> 
+  <li>如果不合法，返回一个包含先前数据的表单给前端页面，方便用户修改。</li> 
+ </ul> 
+ <p>通过表单的<code>is_bound</code>属性可以获知一个表单已经绑定了数据，还是一个空表。</p> 
+ <h2>三、模板处理</h2> 
+ <p>在Django的模板中，我们只需要按下面处理，就可以得到完整的HTML页面：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="p">&lt;</span><span class="nt">form</span> <span class="na">action</span><span class="o">=</span><span class="s">"/your-name/"</span> <span class="na">method</span><span class="o">=</span><span class="s">"post"</span><span class="p">&gt;</span>
+    {% csrf_token %}
+    {{ form }}
+    <span class="p">&lt;</span><span class="nt">input</span> <span class="na">type</span><span class="o">=</span><span class="s">"submit"</span> <span class="na">value</span><span class="o">=</span><span class="s">"Submit"</span> <span class="p">/&gt;</span>
+<span class="p">&lt;/</span><span class="nt">form</span><span class="p">&gt;</span>
+</pre>
+ </div> 
+ <p>要点：</p> 
+ <ul> 
+  <li><code>&lt;form&gt;...&lt;/form&gt;</code>标签要自己写；</li> 
+  <li>使用POST的方法时，必须添加<code>{% csrf_token %}</code>标签，用于处理csrf安全机制；</li> 
+  <li><code>{{ form }}</code>代表Django为你生成其它所有的form标签元素，也就是我们上面做的事情；</li> 
+  <li>提交按钮需要手动添加！</li> 
+ </ul> 
+ <p>提示：默认情况下，Django支持HTML5的表单验证功能，比如邮箱地址验证、必填项目验证等等。</p> 
+ <h2>四、高级技巧</h2> 
+ <p>上面的例子中，只有一个用户名输入框，太简单了，实际上有更多的表单元素。看下面的例子：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django</span> <span class="kn">import</span> <span class="n">forms</span>
+
+<span class="k">class</span> <span class="nc">ContactForm</span><span class="p">(</span><span class="n">forms</span><span class="o">.</span><span class="n">Form</span><span class="p">):</span>
+    <span class="n">subject</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+    <span class="n">message</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">widget</span><span class="o">=</span><span class="n">forms</span><span class="o">.</span><span class="n">Textarea</span><span class="p">)</span>
+    <span class="n">sender</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">EmailField</span><span class="p">()</span>
+    <span class="n">cc_myself</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>这个例子就有4个框组了。实际上Django的表单模块为我们内置了许多表单字段，如下所示：</p> 
+ <ul> 
+  <li>BooleanField</li> 
+  <li>CharField</li> 
+  <li>ChoiceField</li> 
+  <li>TypedChoiceField</li> 
+  <li>DateField</li> 
+  <li>DateTimeField</li> 
+  <li>DecimalField</li> 
+  <li>DurationField</li> 
+  <li>EmailField</li> 
+  <li>FileField</li> 
+  <li>FilePathField</li> 
+  <li>FloatField</li> 
+  <li>ImageField</li> 
+  <li>IntegerField</li> 
+  <li>GenericIPAddressField</li> 
+  <li>MultipleChoiceField</li> 
+  <li>TypedMultipleChoiceField</li> 
+  <li>NullBooleanField</li> 
+  <li>RegexField</li> 
+  <li>SlugField</li> 
+  <li>TimeField</li> 
+  <li>URLField</li> 
+  <li>UUIDField</li> 
+  <li>ComboField</li> 
+  <li>MultiValueField</li> 
+  <li>SplitDateTimeField</li> 
+  <li>ModelChoiceField</li> 
+  <li>ModelMultipleChoiceField</li> 
+ </ul> 
+ <p>每一个表单字段类型都对应一种Widget类，每一种Widget类都对应了HMTL语言中的一种input元素类型，比如<code>&lt;input type="text"&gt;</code>。需要在HTML中实际使用什么类型的input，就需要在Django的表单字段中选择相应的field。比如要一个<code>&lt;input type="text"&gt;</code>，可以选择一个<code>CharField</code>。</p> 
+ <p>一旦你的表单接收数据并验证通过了，那么就可以从<code>form.cleaned_data</code>字典中读取所有的表单数据，下面是一个例子：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="c1"># views.py</span>
+
+<span class="kn">from</span> <span class="nn">django.core.mail</span> <span class="kn">import</span> <span class="n">send_mail</span>
+
+<span class="k">if</span> <span class="n">form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">():</span>
+    <span class="n">subject</span> <span class="o">=</span> <span class="n">form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">[</span><span class="s1">'subject'</span><span class="p">]</span>
+    <span class="n">message</span> <span class="o">=</span> <span class="n">form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">[</span><span class="s1">'message'</span><span class="p">]</span>
+    <span class="n">sender</span> <span class="o">=</span> <span class="n">form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">[</span><span class="s1">'sender'</span><span class="p">]</span>
+    <span class="n">cc_myself</span> <span class="o">=</span> <span class="n">form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">[</span><span class="s1">'cc_myself'</span><span class="p">]</span>
+
+    <span class="n">recipients</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'info@example.com'</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">cc_myself</span><span class="p">:</span>
+        <span class="n">recipients</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sender</span><span class="p">)</span>
+
+    <span class="n">send_mail</span><span class="p">(</span><span class="n">subject</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">sender</span><span class="p">,</span> <span class="n">recipients</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">HttpResponseRedirect</span><span class="p">(</span><span class="s1">'/thanks/'</span><span class="p">)</span>
+</pre>
+ </div> 
+ <h2>五、 使用表单模板</h2> 
+ <h3>1.表单渲染格式</h3> 
+ <p>前面我们通过<code>{{ form }}</code>模板语言，简单地将表单渲染到HTML页面中了，实际上，有更多的方式：</p> 
+ <ul> 
+  <li><code>{{ form.as_table }}</code> 将表单渲染成一个表格元素，每个输入框作为一个<code>&lt;tr&gt;</code>标签</li> 
+  <li><code>{{ form.as_p }}</code> 将表单的每个输入框包裹在一个<code>&lt;p&gt;</code>标签内 tags</li> 
+  <li><code>{{ form.as_ul }}</code> 将表单渲染成一个列表元素，每个输入框作为一个<code>&lt;li&gt;</code>标签</li> 
+ </ul> 
+ <p>注意：你要自己手动编写<code>&lt;table&gt;</code>和<code>&lt;ul&gt;</code>标签。</p> 
+ <p>下面是将上面的ContactForm作为<code>{{ form.as_p }}</code>的例子：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="p">&lt;</span><span class="nt">p</span><span class="p">&gt;&lt;</span><span class="nt">label</span> <span class="na">for</span><span class="o">=</span><span class="s">"id_subject"</span><span class="p">&gt;</span>Subject:<span class="p">&lt;/</span><span class="nt">label</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">input</span> <span class="na">id</span><span class="o">=</span><span class="s">"id_subject"</span> <span class="na">type</span><span class="o">=</span><span class="s">"text"</span> <span class="na">name</span><span class="o">=</span><span class="s">"subject"</span> <span class="na">maxlength</span><span class="o">=</span><span class="s">"100"</span> <span class="na">required</span> <span class="p">/&gt;&lt;/</span><span class="nt">p</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">p</span><span class="p">&gt;&lt;</span><span class="nt">label</span> <span class="na">for</span><span class="o">=</span><span class="s">"id_message"</span><span class="p">&gt;</span>Message:<span class="p">&lt;/</span><span class="nt">label</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">textarea</span> <span class="na">name</span><span class="o">=</span><span class="s">"message"</span> <span class="na">id</span><span class="o">=</span><span class="s">"id_message"</span> <span class="na">required</span><span class="p">&gt;&lt;/</span><span class="nt">textarea</span><span class="p">&gt;&lt;/</span><span class="nt">p</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">p</span><span class="p">&gt;&lt;</span><span class="nt">label</span> <span class="na">for</span><span class="o">=</span><span class="s">"id_sender"</span><span class="p">&gt;</span>Sender:<span class="p">&lt;/</span><span class="nt">label</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">input</span> <span class="na">type</span><span class="o">=</span><span class="s">"email"</span> <span class="na">name</span><span class="o">=</span><span class="s">"sender"</span> <span class="na">id</span><span class="o">=</span><span class="s">"id_sender"</span> <span class="na">required</span> <span class="p">/&gt;&lt;/</span><span class="nt">p</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">p</span><span class="p">&gt;&lt;</span><span class="nt">label</span> <span class="na">for</span><span class="o">=</span><span class="s">"id_cc_myself"</span><span class="p">&gt;</span>Cc myself:<span class="p">&lt;/</span><span class="nt">label</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">input</span> <span class="na">type</span><span class="o">=</span><span class="s">"checkbox"</span> <span class="na">name</span><span class="o">=</span><span class="s">"cc_myself"</span> <span class="na">id</span><span class="o">=</span><span class="s">"id_cc_myself"</span> <span class="p">/&gt;&lt;/</span><span class="nt">p</span><span class="p">&gt;</span>
+</pre>
+ </div> 
+ <p>注意：Django自动为每个input元素设置了一个id名称，对应label的for参数。</p> 
+ <h3>2.手动渲染表单字段</h3> 
+ <p>直接<code>{{ form }}</code>虽然好，啥都不用操心，但是往往并不是你想要的，比如你要使用CSS和JS，比如你要引入Bootstarps框架，这些都需要对表单内的input元素进行额外控制，那怎么办呢？手动渲染字段就可以了。</p> 
+ <p>可以通过<code>{{ form.name_of_field }}</code>获取每一个字段，然后分别渲染，如下例所示：</p> 
+ <div class="codehilite">
+  <pre><span></span>{{ form.non_field_errors }}
+<span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"fieldWrapper"</span><span class="p">&gt;</span>
+    {{ form.subject.errors }}
+    <span class="p">&lt;</span><span class="nt">label</span> <span class="na">for</span><span class="o">=</span><span class="s">"{{ form.subject.id_for_label }}"</span><span class="p">&gt;</span>Email subject:<span class="p">&lt;/</span><span class="nt">label</span><span class="p">&gt;</span>
+    {{ form.subject }}
+<span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"fieldWrapper"</span><span class="p">&gt;</span>
+    {{ form.message.errors }}
+    <span class="p">&lt;</span><span class="nt">label</span> <span class="na">for</span><span class="o">=</span><span class="s">"{{ form.message.id_for_label }}"</span><span class="p">&gt;</span>Your message:<span class="p">&lt;/</span><span class="nt">label</span><span class="p">&gt;</span>
+    {{ form.message }}
+<span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"fieldWrapper"</span><span class="p">&gt;</span>
+    {{ form.sender.errors }}
+    <span class="p">&lt;</span><span class="nt">label</span> <span class="na">for</span><span class="o">=</span><span class="s">"{{ form.sender.id_for_label }}"</span><span class="p">&gt;</span>Your email address:<span class="p">&lt;/</span><span class="nt">label</span><span class="p">&gt;</span>
+    {{ form.sender }}
+<span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"fieldWrapper"</span><span class="p">&gt;</span>
+    {{ form.cc_myself.errors }}
+    <span class="p">&lt;</span><span class="nt">label</span> <span class="na">for</span><span class="o">=</span><span class="s">"{{ form.cc_myself.id_for_label }}"</span><span class="p">&gt;</span>CC yourself?<span class="p">&lt;/</span><span class="nt">label</span><span class="p">&gt;</span>
+    {{ form.cc_myself }}
+<span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+</pre>
+ </div> 
+ <p>其中的label标签甚至可以用<code>label_tag()</code>方法来生成，于是可以简写成下面的样子:</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"fieldWrapper"</span><span class="p">&gt;</span>
+    {{ form.subject.errors }}
+    {{ form.subject.label_tag }}
+    {{ form.subject }}
+<span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+</pre>
+ </div> 
+ <p>这样子是不是更加灵活了呢？但是灵活的代价就是我们要写更多的代码，又偏向原生的HTML代码多了一点。</p> 
+ <h3>3. <strong>渲染表单错误信息：</strong></h3> 
+ <p>注意上面的例子中，我们使用<code>{{ form.name_of_field.errors }}</code>模板语法，在表单里处理错误信息。对于每一个表单字段的错误，它其实会实际生成一个无序列表，参考下面的样子：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="p">&lt;</span><span class="nt">ul</span> <span class="na">class</span><span class="o">=</span><span class="s">"errorlist"</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">li</span><span class="p">&gt;</span>Sender is required.<span class="p">&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">ul</span><span class="p">&gt;</span>
+</pre>
+ </div> 
+ <p>这个列表有个默认的CSS样式类<code>errorlist</code>，如果你想进一步定制这个样式，可以循环错误列表里的内容，然后单独设置样式：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{%</span> <span class="k">if</span> <span class="nv">form.subject.errors</span> <span class="cp">%}</span>
+    <span class="nt">&lt;ol&gt;</span>
+    <span class="cp">{%</span> <span class="k">for</span> <span class="nv">error</span> <span class="k">in</span> <span class="nv">form.subject.errors</span> <span class="cp">%}</span>
+        <span class="nt">&lt;li&gt;&lt;strong&gt;</span><span class="cp">{{</span> <span class="nv">error</span><span class="o">|</span><span class="nf">escape</span> <span class="cp">}}</span><span class="nt">&lt;/strong&gt;&lt;/li&gt;</span>
+    <span class="cp">{%</span> <span class="k">endfor</span> <span class="cp">%}</span>
+    <span class="nt">&lt;/ol&gt;</span>
+<span class="cp">{%</span> <span class="k">endif</span> <span class="cp">%}</span>
+</pre>
+ </div> 
+ <p>一切非字段的错误信息，比如表单的错误，隐藏字段的错误都保存在<code>{{ form.non_field_errors }}</code>中，上面的例子，我们把它放在了表单的外围上面，它将被按下面的HTML和CSS格式渲染：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="p">&lt;</span><span class="nt">ul</span> <span class="na">class</span><span class="o">=</span><span class="s">"errorlist nonfield"</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">li</span><span class="p">&gt;</span>Generic validation error<span class="p">&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">ul</span><span class="p">&gt;</span>
+</pre>
+ </div> 
+ <h3>4. <strong>循环表单的字段：</strong></h3> 
+ <p>如果你的表单字段有相同格式的HMTL表现，那么完全可以循环生成，不必要手动的编写每个字段，减少冗余和重复代码，只需要使用模板语言中的<code>{% for %}</code>循环，如下所示：</p> 
+ <div class="codehilite">
+  <pre><span></span>{% for field in form %}
+    <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"fieldWrapper"</span><span class="p">&gt;</span>
+        {{ field.errors }}
+        {{ field.label_tag }} {{ field }}
+        {% if field.help_text %}
+        <span class="p">&lt;</span><span class="nt">p</span> <span class="na">class</span><span class="o">=</span><span class="s">"help"</span><span class="p">&gt;</span>{{ field.help_text|safe }}<span class="p">&lt;/</span><span class="nt">p</span><span class="p">&gt;</span>
+        {% endif %}
+    <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+{% endfor %}
+</pre>
+ </div> 
+ <p>下表是<code>{{ field }}</code>中非常有用的属性，这些都是Django内置的模板语言给我们提供的方便：</p> 
+ <table> 
+  <thead> 
+   <tr> 
+    <th>属性</th> 
+    <th>说明</th> 
+   </tr> 
+  </thead> 
+  <tbody> 
+   <tr> 
+    <td><code>{{ field.label }}</code></td> 
+    <td>字段对应的label信息</td> 
+   </tr> 
+   <tr> 
+    <td><code>{{ field.label_tag }}</code></td> 
+    <td>自动生成字段的label标签，注意与<code>{{ field.label }}</code>的区别。</td> 
+   </tr> 
+   <tr> 
+    <td><code>{{ field.id_for_label }}</code></td> 
+    <td>自定义字段标签的id</td> 
+   </tr> 
+   <tr> 
+    <td><code>{{ field.value }}</code></td> 
+    <td>当前字段的值，比如一个Email字段的值<code>someone@example.com</code></td> 
+   </tr> 
+   <tr> 
+    <td><code>{{ field.html_name }}</code></td> 
+    <td>指定字段生成的input标签中name属性的值</td> 
+   </tr> 
+   <tr> 
+    <td><code>{{ field.help_text }}</code></td> 
+    <td>字段的帮助信息</td> 
+   </tr> 
+   <tr> 
+    <td><code>{{ field.errors }}</code></td> 
+    <td>包含错误信息的元素</td> 
+   </tr> 
+   <tr> 
+    <td><code>{{ field.is_hidden }}</code></td> 
+    <td>用于判断当前字段是否为隐藏的字段，如果是，返回True</td> 
+   </tr> 
+   <tr> 
+    <td><code>{{ field.field }}</code></td> 
+    <td>返回字段的参数列表。例如<code>{{ char_field.field.max_length }}</code></td> 
+   </tr> 
+  </tbody> 
+ </table> 
+ <h3>5. <strong>不可见字段的特殊处理：</strong></h3> 
+ <p>很多时候，我们的表单中会有一些隐藏的不可见的字段，比如honeypot。我们需要让它在任何时候都仿佛不存在一般，比如有错误的时候，如果你在页面上显示了不可见字段的错误信息，那么用户会很迷惑，这是哪来的呢？所以，通常我们是不显示不可见字段的错误信息的。</p> 
+ <p>Django提供了两种独立的方法，用于循环那些不可见的和可见的字段，<code>hidden_fields()</code>和<code>visible_fields()</code>。这里，我们可以稍微修改一下前面的例子：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="c">{# 循环那些不可见的字段 #}</span>
+<span class="cp">{%</span> <span class="k">for</span> <span class="nv">hidden</span> <span class="k">in</span> <span class="nv">form.hidden_fields</span> <span class="cp">%}</span>
+<span class="cp">{{</span> <span class="nv">hidden</span> <span class="cp">}}</span>
+<span class="cp">{%</span> <span class="k">endfor</span> <span class="cp">%}</span>
+<span class="c">{# 循环可见的字段 #}</span>
+<span class="cp">{%</span> <span class="k">for</span> <span class="nv">field</span> <span class="k">in</span> <span class="nv">form.visible_fields</span> <span class="cp">%}</span>
+    <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">"fieldWrapper"</span><span class="nt">&gt;</span>
+        <span class="cp">{{</span> <span class="nv">field.errors</span> <span class="cp">}}</span>
+        <span class="cp">{{</span> <span class="nv">field.label_tag</span> <span class="cp">}}</span> <span class="cp">{{</span> <span class="nv">field</span> <span class="cp">}}</span>
+    <span class="nt">&lt;/div&gt;</span>
+<span class="cp">{%</span> <span class="k">endfor</span> <span class="cp">%}</span>
+</pre>
+ </div> 
+ <h3>6. <strong>重用表单模板</strong></h3> 
+ <p>如果你在自己的HTML文件中，多次使用同一种表单模板，那么你完全可以把表单模板存成一个独立的HTML文件，然后在别的HTML文件中通过include模板语法将其包含进来，如下例所示：</p> 
+ <div class="codehilite">
+  <pre><span></span># 实际的页面文件中:
+<span class="cp">{%</span> <span class="k">include</span> <span class="s2">"form_snippet.html"</span> <span class="cp">%}</span>
+
+-----------------------------------------------------
+
+# 单独的表单模板文件form_snippet.html:
+<span class="cp">{%</span> <span class="k">for</span> <span class="nv">field</span> <span class="k">in</span> <span class="nv">form</span> <span class="cp">%}</span>
+    <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">"fieldWrapper"</span><span class="nt">&gt;</span>
+        <span class="cp">{{</span> <span class="nv">field.errors</span> <span class="cp">}}</span>
+        <span class="cp">{{</span> <span class="nv">field.label_tag</span> <span class="cp">}}</span> <span class="cp">{{</span> <span class="nv">field</span> <span class="cp">}}</span>
+    <span class="nt">&lt;/div&gt;</span>
+<span class="cp">{%</span> <span class="k">endfor</span> <span class="cp">%}</span>
+</pre>
+ </div> 
+ <p>如果你的页面同时引用了好几个不同的表单模板，那么为了防止冲突，你可以使用with参数，给每个表单模板取个别名，如下所示：</p> 
+ <div class="codehilite">
+  <pre><span></span>{% include "form_snippet.html" with form=comment_form %}
+</pre>
+ </div> 
+ <p>在使用的时候就是：</p> 
+ <div class="codehilite">
+  <pre><span></span>{% for field in comment_form %}
+......
+</pre>
+ </div> 
+ <p>如果你经常做这些重用的工作，建议你考虑自定义一个内联标签，这已经是Django最高级的用法了。</p> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/151"> <i class="fa fa-arrow-left"></i>&nbsp;第四章：Django表单</a> 
+  <a class="float-right" href="/course/django/153"> Django表单API详解&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 9</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/152">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva1.sinaimg.cn/crop.0.0.180.180.50/59bd64d7jw1e8qgp5bmzyj2050050aa8.jpg?KID=imgbed,tva&amp;Expires=1584225549&amp;ssig=O86c6IWBUo" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>这个不是特别的好用，不如直接写html代码来得方便 另外：“该属性是以个字典类型数据”应该是“该属性是一个字典类型数据”</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 定期换名字啦啦 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年3月15日 03:41</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1963">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.0.0.996.996.50/006xIWURly8gehjmghiqfj30ro0roq53.jpg?KID=imgbed,tva&amp;Expires=1591289035&amp;ssig=NX%2BU5OBrH%2F" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>前端的东西，尽量交给前端框架完成，这样更灵活，效果更好。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 蔷薇-Nina &nbsp;&nbsp;回复&nbsp;&nbsp; 定期换名字啦啦 </span> 
+      <em>2020年6月11日 23:06</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2113">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif?KID=imgbed,tva&amp;Expires=1576215682&amp;ssig=6n8tVEU7XY" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>请问一下&lt;div class="fieldWrapper"&gt;这个类是定义在哪里的呀</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; Noob5200 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年12月13日 10:41</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1761">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1577334347&amp;ssig=QyjwpbGyW9" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>fieldWrapper放在这里属于装饰用途，让代码片段看起来像那么回事，实际并不重要。文章的核心是form的用法。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; Noob5200 </span> 
+      <em>2019年12月26日 10:27</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1797">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tp1.sinaimg.cn/3975881956/50/5692559610/0" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>如果感觉前端也使用了一些框架，配合django渲染老感觉很不方便</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 木比白1997 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年5月28日 18:52</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1360">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.1080.1080.50/006xIWURly8g3w3jk5kmcj30u00u03zs.jpg?Expires=1562507709&amp;ssig=ZhQEgD7Ax2&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>是的</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 蔷薇-Nina &nbsp;&nbsp;回复&nbsp;&nbsp; 木比白1997 </span> 
+      <em>2019年7月13日 22:50</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1452">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.54.640.640.50/bea7ec73jw8ebqlevnqsbj20hs0ksdh7.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>url.py这个文件的路径怎么配置？ forms.py----&gt;view.py---get_name-----前端</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 可靠的你不知道的事 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年4月24日 14:30</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1283">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.996.996.50/006xIWURly8fo72mpzt8ej30ro0rogmj.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>讲真的，感觉Django表单限制很多，不如直接写HTML来得爽、灵活。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 蔷薇-Nina </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年2月8日 22:09</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/211">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.996.996.50/006xIWURly8fo72mpzt8ej30ro0rogmj.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>博主你好，单选按钮如何实现？ forms.CharField(widget=forms.RadioSelect)不显示任何结果。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 蔷薇-Nina </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年2月8日 21:55</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/210">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

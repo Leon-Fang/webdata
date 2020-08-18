@@ -1,0 +1,300 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>1. 搭建项目环境</h1> 
+ <small>阅读:&nbsp;72391&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：11 </small> 
+ <hr> 
+ <h2>一、创建工程</h2> 
+ <p>当前，较新的Pycharm版本都支持同时创建虚拟环境和Django工程。所以我们下面的操作都在Pycharm中进行。</p> 
+ <p>首先打开Pycharm，进入创建工程的对话框，注意下面的红框提示：</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/103-1.png"></p> 
+ <ul> 
+  <li>在Location处选择工程目录</li> 
+  <li>在New environment using处选择Virtualenv（这可能需要你提前pip install virtualenv进行虚拟工具virtualenv的安装）。通常情况下，虚拟环境会以venv的名字，自动在工程目录下生成。</li> 
+  <li>在Base interpreter处，选择你要使用的Python解释器</li> 
+  <li>下面两个单选框，根据需要自行选择</li> 
+  <li>如果想使用现成的解释器或者虚拟环境，请选择Existing interpreter</li> 
+ </ul> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/103-2.png"></p> 
+ <p>再点开下方的More Settings：</p> 
+ <ul> 
+  <li>Template language选择使用的模板语言，默认Django就行，可选Jinjia。</li> 
+  <li>Templates folder：Pycharm安利给我们的功能，额外创建一个工程级别的模板文件的保存目录，可以不设置，空着，这里使用默认设置吧。</li> 
+  <li>启用Admin，一般勾上。</li> 
+ </ul> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/103-3.png"></p> 
+ <p>没什么问题了，就点击Create吧。</p> 
+ <p>下面就是一段时间的等待，Pycharm会帮助我们自动创建虚拟环境，以及安装最新版本的Django。</p> 
+ <p>创建完成之后，进入Pycharm的设置菜单，可以看到当前Django版本是最新的2.2版本。如果你要指定过去的版本，比如2.1、1.11等，那就不能这么操作了，需要在命令行下自己创建虚拟环境并安装django。或者在这里先删除Django，再安装你想要的指定版本。</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/103-4.png"></p> 
+ <p>看下我们当前的状态，注意venv这个虚拟环境目录，以及我们额外创建的templats目录：</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/103-5.png"></p> 
+ <h2>二、创建app</h2> 
+ <p>点击Pycharm最下方工具栏中的Terminal按钮，进入终端界面，可以看到，我们已经在工程的根目录下，并且自动进入了虚拟环境内。（如果你不是通过Pycharm创建的虚拟环境，那么在这里，你可能需要手动激活虚拟环境。）</p> 
+ <p>使用<code>where python</code>和<code>python -V</code>查看一下环境：</p> 
+ <div class="codehilite">
+  <pre><span></span>(venv) D:\work\2019\for_test\mysite&gt;where python
+D:\work\2019\for_test\mysite\venv\Scripts\python.exe
+C:\Program Files\Python37\python.exe
+C:\Program Files\Python36\python.exe
+C:\Users\feixuelym\Anaconda3\python.exe
+
+(venv) D:\work\2019\for_test\mysite&gt;python -V
+Python 3.7.3
+</pre>
+ </div> 
+ <p>接下来运行<code>python manage.py startapp login</code>创建login这个app。</p> 
+ <p>按照上面的步骤操作完后，login应用就创建成功了，让我们看一下Pycharm中的目录结构：</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/103-6.png"></p> 
+ <h2>三、 设置时区和语言</h2> 
+ <p>Django默认使用美国时间和英语，在项目的settings文件中，如下所示：</p> 
+ <div class="codehilite">
+  <pre><span></span># Internationalization
+# https://docs.djangoproject.com/en/1.11/topics/i18n/
+
+LANGUAGE_CODE = 'en-us'
+
+TIME_ZONE = 'UTC'
+
+USE_I18N = True
+
+USE_L10N = True
+
+USE_TZ = True
+</pre>
+ </div> 
+ <p>我们把它改为<code>亚洲/上海</code>时间和中文（别问我为什么没有北京时间，也别把语言写成<code>zh-CN</code>），注意USE_TZ 改成False了。</p> 
+ <div class="codehilite">
+  <pre><span></span># Internationalization
+# https://docs.djangoproject.com/en/1.11/topics/i18n/
+
+LANGUAGE_CODE = 'zh-hans'     # 这里修改了
+
+TIME_ZONE = 'Asia/Shanghai'    # 这里修改了
+
+USE_I18N = True
+
+USE_L10N = True
+
+USE_TZ = False    # 这里修改了
+</pre>
+ </div> 
+ <h2>四、 启动开发服务器</h2> 
+ <p>现在，我们可以启动一下开发服务器，测试一下我们的工程了。</p> 
+ <p>在Pycharm的<code>Run/Debug Configurations</code>配置界面里，将HOST设置为<code>127.0.0.1</code>，Port保持原样的<code>8000</code>，确定后，点击绿色三角，走你！</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/103-7.png"></p> 
+ <p>在本机的浏览器中访问<code>http://127.0.0.1:8000/</code>，或者点击Pycharm界面里的链接：</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/103-8.png"></p> 
+ <p>顺利的话，在浏览器中，你可以看到如下的欢迎界面：</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/103-9.png"></p> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/102"> <i class="fa fa-arrow-left"></i>&nbsp;实战一：基于Django2.2可重用登录与注册系统</a> 
+  <a class="float-right" href="/course/django/104"> 2. 设计数据模型&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 11</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/103">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.512.512.50/005zpa13ly8fujgzewe7kj30e80e874n.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>在虚拟环境下装了2.0版本的，在命令行运行python manage.py makemigrations时报错 ImportError: cannot import name 'path' 什么原因？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 候期不遇 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年9月12日 18:56</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/727">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.0.996.996.50/684b4357jw8f6i1rp6013j20ro0romyl.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>如果使用pycharm进行django工程的创建的话，即使你的环境中已经安装了指定版本的django，但是在创建时依然会继续安装最新版本的django，这一点真是 太坑了。我没有使用博主推荐的virtualenv的方法，不过也很类似，我使用了anaconda进行环境管理。 所以大家如果使用最新的django ==2.0.5的话那无所谓了，如果使用低版本的django，建议还是使用命令一步一步创建project和app吧</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 带着寂寞闯天涯 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年7月20日 16:09</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/625">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.180.180.50/8049250ejw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>这里会自动安装Django的最新版本，使用下面的方法安装指定版本 https://blog.csdn.net/weixin_42305814/article/details/80742090</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> D_今夕何夕 &nbsp;&nbsp;回复&nbsp;&nbsp; 带着寂寞闯天涯 </span> 
+      <em>2018年8月15日 15:05</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/686">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.960.960.50/006xIWURly8fo9wxo24vzj30qo0qoaaz.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>Error creating Django application: Error on python side. Exit code: 1, err: CommandError: 'logsite' conflicts with the name of an existing Python module and cannot be used as a project name. Please try another name. 请问高手，怎么解决？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 蔷薇-Nina </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年3月10日 14:30</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/256">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.960.960.50/006xIWURly8fo9wxo24vzj30qo0qoaaz.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>问题已解决。。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 蔷薇-Nina &nbsp;&nbsp;回复&nbsp;&nbsp; 蔷薇-Nina </span> 
+      <em>2018年3月10日 16:20</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/257">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.1080.1080.50/5ec2a85bjw8eh4ja956ryj20u00u0abc.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>virtualenv --no-site_packages mysite_env,应该是no-site-packages吧,就在第一章下面搭建虚拟环境的代码..</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 秋秋秋秋方 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年3月5日 14:57</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/245">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>已经修改</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 秋秋秋秋方 </span> 
+      <em>2018年3月5日 15:02</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/246">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.29.72.151.151.50/c345a2c6jw1egex1o75ogj205c071mx9.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>因为，django官方文档给的时间表里只有上海时间啊，zh也分多种，简体就是这种的</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 世外就是TaoYuan </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年1月22日 10:19</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/147">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>这应该是一个历史遗留问题。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 世外就是TaoYuan </span> 
+      <em>2018年1月22日 21:58</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/150">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.426.66.1066.1066.50/005EMUrrly8flohkwuo2uj31hc0xce81.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>文章中写到： 验证一下Python版本，虽然是3.6.1，但使用where python查看一下，就会发现python命令指向的并不是我们建立的虚拟环境。 这句话会为新手认为：C:\Python36\python.exe I:\Anaconda3\python.exe 这两句话，看出python命令指向的并不是我们建立的虚拟环境. 实际上因为： F:\Django_course\mysite（没指向虚拟环境） (mysite_env) F:\Django_course\mysite（指向虚拟环境） 我新手，请谅解！找了半天原因</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; wenlei890929 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2017年11月24日 19:47</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/62">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>....</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; wenlei890929 </span> 
+      <em>2017年11月24日 21:27</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/63">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

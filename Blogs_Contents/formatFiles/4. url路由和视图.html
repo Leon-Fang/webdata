@@ -1,0 +1,350 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>4. url路由和视图</h1> 
+ <small>阅读:&nbsp;51605&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：10 </small> 
+ <hr> 
+ <p>前面我们已经创建好数据模型了，并且在admin后台中添加了一些测试用户。下面我们就要设计好站点的url路由、对应的处理视图函数以及使用的前端模板了。</p> 
+ <h2>一、 路由设计</h2> 
+ <p>我们初步设想需要下面的四个URL：</p> 
+ <table> 
+  <thead> 
+   <tr> 
+    <th>URL</th> 
+    <th>视图</th> 
+    <th>模板</th> 
+    <th>说明</th> 
+   </tr> 
+  </thead> 
+  <tbody> 
+   <tr> 
+    <td>/index/</td> 
+    <td>login.views.index</td> 
+    <td>index.html</td> 
+    <td>主页</td> 
+   </tr> 
+   <tr> 
+    <td>/login/</td> 
+    <td>login.views.login</td> 
+    <td>login.html</td> 
+    <td>登录</td> 
+   </tr> 
+   <tr> 
+    <td>/register/</td> 
+    <td>login.views.register</td> 
+    <td>register.html</td> 
+    <td>注册</td> 
+   </tr> 
+   <tr> 
+    <td>/logout/</td> 
+    <td>login.views.logout</td> 
+    <td>无需专门的页面</td> 
+    <td>登出</td> 
+   </tr> 
+  </tbody> 
+ </table> 
+ <p>重要说明：由于本项目目的是打造一个针对管理系统、应用程序等需求下的可重用的登录/注册app，而不是门户网站、免费博客等无需登录即可访问的网站，所以在url路由、跳转策略和文件结构的设计上都是尽量自成体系。具体访问的策略如下：</p> 
+ <ul> 
+  <li>未登录人员，不论是访问index还是login和logout，全部跳转到login界面</li> 
+  <li>已登录人员，访问login会自动跳转到index页面</li> 
+  <li>已登录人员，不允许直接访问register页面，需先logout</li> 
+  <li>登出后，自动跳转到login界面</li> 
+ </ul> 
+ <p>考虑到登录注册系统属于站点的一级功能，为了直观和更易于接受，这里没有采用二级路由的方式，而是在根路由下直接编写路由条目，同样也没有使用反向解析名（name参数）。所以，在重用本app的时候，一定要按照app使用说明，加入相应的url路由。</p> 
+ <p>根据上面的策划，打开<code>mysite/urls.py</code>文件，写入下面的代码：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.contrib</span> <span class="kn">import</span> <span class="n">admin</span>
+<span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">path</span>
+<span class="kn">from</span> <span class="nn">login</span> <span class="kn">import</span> <span class="n">views</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'admin/'</span><span class="p">,</span> <span class="n">admin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">urls</span><span class="p">),</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'index/'</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">index</span><span class="p">),</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'login/'</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">login</span><span class="p">),</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'register/'</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">register</span><span class="p">),</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'logout/'</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">logout</span><span class="p">),</span>
+<span class="p">]</span>
+</pre>
+ </div> 
+ <p>注意要先从login导入views模块。</p> 
+ <h2>二、 架构初步视图</h2> 
+ <p>路由写好了，就进入<code>login/views.py</code>文件编写视图的框架，代码如下：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.shortcuts</span> <span class="kn">import</span> <span class="n">render</span>
+<span class="kn">from</span> <span class="nn">django.shortcuts</span> <span class="kn">import</span> <span class="n">redirect</span>
+
+<span class="c1"># Create your views here.</span>
+
+
+<span class="k">def</span> <span class="nf">index</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">pass</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/index.html'</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">login</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">pass</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/login.html'</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">register</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">pass</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/register.html'</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">logout</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">pass</span>
+    <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s2">"/login/"</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>我们先不着急完成视图内部的具体细节，而是把框架先搭建起来。</p> 
+ <p>注意：</p> 
+ <ul> 
+  <li>在顶部额外导入了<code>redirect</code>，用于logout后，页面重定向到‘/login/’这个url，当然你也可以重定向到别的页面；</li> 
+  <li>另外三个视图都返回一个render调用，render方法接收request作为第一个参数，要渲染的页面为第二个参数，以及需要传递给页面的数据字典作为第三个参数（可以为空），表示根据请求的部分，以渲染的HTML页面为主体，使用模板语言将数据字典填入，然后返回给用户的浏览器。</li> 
+  <li>渲染的对象为login目录下的html文件，这是一种安全可靠的文件组织方式，我们现在还没有创建这些文件。</li> 
+ </ul> 
+ <h2>三、 创建HTML页面文件</h2> 
+ <p>在项目根路径的login目录中创建一个templates目录，再在templates目录里创建一个login目录。这么做有助于app复用，防止命名冲突，能更有效地组织大型工程，具体说明请参考教程前面的相关章节。</p> 
+ <p>在<code>login/templates/login</code>目录中创建三个文件<code>index.html</code>、<code>login.html</code>以及<code>register.html</code> ，并写入如下的代码：</p> 
+ <p><strong><code>index.html</code>:</strong></p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">&lt;!DOCTYPE html&gt;</span>
+<span class="p">&lt;</span><span class="nt">html</span> <span class="na">lang</span><span class="o">=</span><span class="s">"en"</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">head</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">meta</span> <span class="na">charset</span><span class="o">=</span><span class="s">"UTF-8"</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">title</span><span class="p">&gt;</span>首页<span class="p">&lt;/</span><span class="nt">title</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">head</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">body</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">h1</span><span class="p">&gt;</span>这仅仅是一个主页模拟！请根据实际情况接入正确的主页！<span class="p">&lt;/</span><span class="nt">h1</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">body</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">html</span><span class="p">&gt;</span>
+</pre>
+ </div> 
+ <p><strong><code>login.html</code>:</strong></p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">&lt;!DOCTYPE html&gt;</span>
+<span class="p">&lt;</span><span class="nt">html</span> <span class="na">lang</span><span class="o">=</span><span class="s">"en"</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">head</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">meta</span> <span class="na">charset</span><span class="o">=</span><span class="s">"UTF-8"</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">title</span><span class="p">&gt;</span>登录<span class="p">&lt;/</span><span class="nt">title</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">head</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">body</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">h1</span><span class="p">&gt;</span>登录页面<span class="p">&lt;/</span><span class="nt">h1</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">body</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">html</span><span class="p">&gt;</span>
+</pre>
+ </div> 
+ <p><strong><code>register.html</code></strong>:</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">&lt;!DOCTYPE html&gt;</span>
+<span class="p">&lt;</span><span class="nt">html</span> <span class="na">lang</span><span class="o">=</span><span class="s">"en"</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">head</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">meta</span> <span class="na">charset</span><span class="o">=</span><span class="s">"UTF-8"</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">title</span><span class="p">&gt;</span>注册<span class="p">&lt;/</span><span class="nt">title</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">head</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">body</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">h1</span><span class="p">&gt;</span>注册页面<span class="p">&lt;/</span><span class="nt">h1</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">body</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">html</span><span class="p">&gt;</span>
+</pre>
+ </div> 
+ <p>到目前为止，我们的工程目录结构如下图所示：</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/106-1.png"></p> 
+ <h2>四、 测试路由和视图</h2> 
+ <p>启动服务器，在浏览器访问<code>http://127.0.0.1:8000/index/</code>等页面，如果能正常显示，说明一切OK！</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/106-2.png"></p> 
+ <p>现在，我们整个项目的基本框架已经搭建起来了！</p> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/105"> <i class="fa fa-arrow-left"></i>&nbsp;3. admin后台</a> 
+  <a class="float-right" href="/course/django/107"> 5. 前端页面设计&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 10</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/106">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif?KID=imgbed,tva&amp;Expires=1590661250&amp;ssig=XxCOvAhsFm" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>刘老师，你好，这里设置的访问策略是：“未登录人员，不论是访问index还是login和logout，全部跳转到login界面”，但是我的index页面未登陆没有跳转到login界面的设置呀，我使用@login_required这个也没法跳转。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; caibaofei </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年5月28日 15:31</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2081">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif?KID=imgbed,tva&amp;Expires=1590661250&amp;ssig=XxCOvAhsFm" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>好吧，后面的章节有讲。。。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> caibaofei &nbsp;&nbsp;回复&nbsp;&nbsp; caibaofei </span> 
+      <em>2020年5月28日 15:37</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2082">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax3.sinaimg.cn/crop.0.0.664.664.50/8767e316ly8gdnxsr9cidj20ig0ig75d.jpg?KID=imgbed,tva&amp;Expires=1589295158&amp;ssig=C43iKRIpBN" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>按照这里配置的路由，在后面点击登录那些都404了，是什么原因啊</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; elivlialin </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年5月12日 19:58</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2062">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva4.sinaimg.cn/crop.0.0.640.640.50/bc9d8f2ajw8ey1yyq7d6tj20hs0hsaar.jpg?KID=imgbed,tva&amp;Expires=1581765822&amp;ssig=GNtSjdriSd" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>刘老师，我在创建HTML页面文件时显示template not found:html file是什么原因呢</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 李子润_ </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年2月15日 16:30</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1899">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1581829799&amp;ssig=YezXiSXfSr" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>在前面的模板章节有django的模板组织规则，理解后你就能排查了。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 李子润_ </span> 
+      <em>2020年2月16日 10:15</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1904">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva3.sinaimg.cn/crop.0.0.180.180.50/56d50a4ejw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>刘老师，我在本机 return render(request, 'login/index.html')这样写，提示模板找不到，后面login，才能跑起来</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; Hope重生 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年9月15日 17:28</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/731">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva3.sinaimg.cn/crop.0.0.180.180.50/56d50a4ejw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>可以了，我目录放错了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> Hope重生 &nbsp;&nbsp;回复&nbsp;&nbsp; Hope重生 </span> 
+      <em>2018年9月15日 21:41</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/732">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.960.960.50/006xIWURly8fo9wxo24vzj30qo0qoaaz.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>OK</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 蔷薇-Nina </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年3月10日 21:21</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/260">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>美女啊</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> happyin666 &nbsp;&nbsp;回复&nbsp;&nbsp; 蔷薇-Nina </span> 
+      <em>2018年9月18日 15:15</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/735">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.0.0.959.959.50/005YXjbgly1g6o99zo7yqj30qn0qnjtx.jpg?KID=imgbed,tva&amp;Expires=1569951163&amp;ssig=iZO1%2BOF2tc" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>靓女又怎么样 我是个读书人</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 泡不到妞的丶可怜虫 &nbsp;&nbsp;回复&nbsp;&nbsp; happyin666 </span> 
+      <em>2019年10月1日 22:33</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1646">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

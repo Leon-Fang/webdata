@@ -1,0 +1,938 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>9. session会话</h1> 
+ <small>阅读:&nbsp;39999&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：42 </small> 
+ <hr> 
+ <p>因为因特网HTTP协议的特性，每一次来自于用户浏览器的请求（request）都是无状态的、独立的。通俗地说，就是无法保存用户状态，后台服务器根本就不知道当前请求和以前及以后请求是否来自同一用户。对于静态网站，这可能不是个问题，而对于动态网站，尤其是京东、天猫、银行等购物或金融网站，无法识别用户并保持用户状态是致命的，根本就无法提供服务。你可以尝试将浏览器的cookie功能关闭，你会发现将无法在京东登录和购物。</p> 
+ <p>为了实现连接状态的保持功能，网站会通过用户的浏览器在用户机器内被限定的硬盘位置中写入一些数据，也就是所谓的Cookie。通过Cookie可以保存一些诸如用户名、浏览记录、表单记录、登录和注销等各种数据。但是这种方式非常不安全，因为Cookie保存在用户的机器上，如果Cookie被伪造、篡改或删除，就会造成极大的安全威胁，因此，现代网站设计通常将Cookie用来保存一些不重要的内容，实际的用户数据和状态还是以Session会话的方式保存在服务器端。</p> 
+ <p>但是，必须清楚的是<strong>Session依赖Cookie</strong>！不同的地方在于Session将所有的数据都放在服务器端，用户浏览器的Cookie中只会保存一个非明文的识别信息，比如哈希值。</p> 
+ <p>Django提供了一个通用的Session框架，并且可以使用多种session数据的保存方式：</p> 
+ <ul> 
+  <li>保存在数据库内</li> 
+  <li>保存到缓存</li> 
+  <li>保存到文件内</li> 
+  <li>保存到cookie内</li> 
+ </ul> 
+ <p>通常情况，没有特别需求的话，请使用保存在数据库内的方式，尽量不要保存到Cookie内。</p> 
+ <p>Django的session框架默认启用，并已经注册在app设置内，如果真的没有启用，那么参考下面的内容添加有说明的那两行，再执行migrate命令创建数据表，就可以使用session了。</p> 
+ <div class="codehilite">
+  <pre><span></span># Application definition
+
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',    # 这一行
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+]
+
+MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',  # 这一行
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+</pre>
+ </div> 
+ <p>当session启用后，传递给视图request参数的HttpRequest对象将包含一个session属性，就像一个字典对象一样。你可以在Django的任何地方读写<code>request.session</code>属性，或者多次编辑使用它。</p> 
+ <p>下面是session使用参考：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="k">class</span> <span class="nc">backends</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">SessionBase</span>
+        <span class="c1"># 这是所有会话对象的基类，包含标准的字典方法:</span>
+        <span class="fm">__getitem__</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="n">Example</span><span class="p">:</span> <span class="n">fav_color</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="p">[</span><span class="s1">'fav_color'</span><span class="p">]</span>
+        <span class="fm">__setitem__</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+            <span class="n">Example</span><span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="p">[</span><span class="s1">'fav_color'</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'blue'</span>
+        <span class="fm">__delitem__</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="n">Example</span><span class="p">:</span> <span class="k">del</span> <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="p">[</span><span class="s1">'fav_color'</span><span class="p">]</span>  <span class="c1"># 如果不存在会抛出异常</span>
+        <span class="fm">__contains__</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="n">Example</span><span class="p">:</span> <span class="s1">'fav_color'</span> <span class="ow">in</span> <span class="n">request</span><span class="o">.</span><span class="n">session</span>
+        <span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
+            <span class="n">Example</span><span class="p">:</span> <span class="n">fav_color</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'fav_color'</span><span class="p">,</span> <span class="s1">'red'</span><span class="p">)</span>
+        <span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">__not_given</span><span class="p">)</span>
+            <span class="n">Example</span><span class="p">:</span> <span class="n">fav_color</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">'fav_color'</span><span class="p">,</span> <span class="s1">'blue'</span><span class="p">)</span>
+</pre>
+ </div> 
+ <div class="codehilite">
+  <pre><span></span>        # 类似字典数据类型的内置方法
+        keys()
+        items()
+        setdefault()
+        clear()
+
+
+        # 它还有下面的方法：
+        flush()
+            # 删除当前的会话数据和会话cookie。经常用在用户退出后，删除会话。
+
+        set_test_cookie()
+            # 设置一个测试cookie，用于探测用户浏览器是否支持cookies。由于cookie的工作机制，你只有在下次用户请求的时候才可以测试。
+        test_cookie_worked()
+            # 返回True或者False，取决于用户的浏览器是否接受测试cookie。你必须在之前先调用set_test_cookie()方法。
+        delete_test_cookie()
+            # 删除测试cookie。
+        set_expiry(value)
+            # 设置cookie的有效期。可以传递不同类型的参数值：
+        • 如果值是一个整数，session将在对应的秒数后失效。例如request.session.set_expiry(300) 将在300秒后失效.
+        • 如果值是一个datetime或者timedelta对象, 会话将在指定的日期失效
+        • 如果为0，在用户关闭浏览器后失效
+        • 如果为None，则将使用全局会话失效策略
+        失效时间从上一次会话被修改的时刻开始计时。
+
+        get_expiry_age()
+            # 返回多少秒后失效的秒数。对于没有自定义失效时间的会话，这等同于SESSION_COOKIE_AGE.
+            # 这个方法接受2个可选的关键字参数
+        • modification:会话的最后修改时间（datetime对象）。默认是当前时间。
+        •expiry: 会话失效信息，可以是datetime对象，也可以是int或None
+
+        get_expiry_date()
+            # 和上面的方法类似，只是返回的是日期
+
+        get_expire_at_browser_close()
+            # 返回True或False，根据用户会话是否是浏览器关闭后就结束。
+
+        clear_expired()
+            # 删除已经失效的会话数据。
+        cycle_key()
+            # 创建一个新的会话秘钥用于保持当前的会话数据。django.contrib.auth.login() 会调用这个方法。
+</pre>
+ </div> 
+ <p>基本上背下来上面的内容，Django的session你就可以信手拈来了。</p> 
+ <h2>一、使用session</h2> 
+ <p>下面结合我们的项目实战，使用session。</p> 
+ <p>首先，修改<code>login/views.py</code>中的login()视图函数：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="k">def</span> <span class="nf">login</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'is_login'</span><span class="p">,</span> <span class="bp">None</span><span class="p">):</span>  <span class="c1"># 不允许重复登录</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'/index/'</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s1">'POST'</span><span class="p">:</span>
+        <span class="n">login_form</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">UserForm</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="p">)</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="s1">'请检查填写的内容！'</span>
+        <span class="k">if</span> <span class="n">login_form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">():</span>
+            <span class="n">username</span> <span class="o">=</span> <span class="n">login_form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'username'</span><span class="p">)</span>
+            <span class="n">password</span> <span class="o">=</span> <span class="n">login_form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'password'</span><span class="p">)</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">user</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">username</span><span class="p">)</span>
+            <span class="k">except</span> <span class="p">:</span>
+                <span class="n">message</span> <span class="o">=</span> <span class="s1">'用户不存在！'</span>
+                <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/login.html'</span><span class="p">,</span> <span class="nb">locals</span><span class="p">())</span>
+
+            <span class="k">if</span> <span class="n">user</span><span class="o">.</span><span class="n">password</span> <span class="o">==</span> <span class="n">password</span><span class="p">:</span>
+                <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="p">[</span><span class="s1">'is_login'</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
+                <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="p">[</span><span class="s1">'user_id'</span><span class="p">]</span> <span class="o">=</span> <span class="n">user</span><span class="o">.</span><span class="n">id</span>
+                <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="p">[</span><span class="s1">'user_name'</span><span class="p">]</span> <span class="o">=</span> <span class="n">user</span><span class="o">.</span><span class="n">name</span>
+                <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'/index/'</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">message</span> <span class="o">=</span> <span class="s1">'密码不正确！'</span>
+                <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/login.html'</span><span class="p">,</span> <span class="nb">locals</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/login.html'</span><span class="p">,</span> <span class="nb">locals</span><span class="p">())</span>
+
+    <span class="n">login_form</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">UserForm</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/login.html'</span><span class="p">,</span> <span class="nb">locals</span><span class="p">())</span>
+</pre>
+ </div> 
+ <p>通过下面的if语句，我们不允许重复登录：</p> 
+ <div class="codehilite">
+  <pre><span></span>if request.session.get('is_login',None):
+    return redirect("/index/")
+</pre>
+ </div> 
+ <p>通过下面的语句，我们往session字典内写入用户状态和数据：</p> 
+ <div class="codehilite">
+  <pre><span></span>request.session['is_login'] = True
+request.session['user_id'] = user.id
+request.session['user_name'] = user.name
+</pre>
+ </div> 
+ <p>你完全可以往里面写任何数据，不仅仅限于用户相关！</p> 
+ <p>既然有了session记录用户登录状态，那么就可以完善我们的登出视图函数了：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="k">def</span> <span class="nf">logout</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'is_login'</span><span class="p">,</span> <span class="bp">None</span><span class="p">):</span>
+        <span class="c1"># 如果本来就未登录，也就没有登出一说</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s2">"/login/"</span><span class="p">)</span>
+    <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+    <span class="c1"># 或者使用下面的方法</span>
+    <span class="c1"># del request.session['is_login']</span>
+    <span class="c1"># del request.session['user_id']</span>
+    <span class="c1"># del request.session['user_name']</span>
+    <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s2">"/login/"</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>flush()方法是比较安全的一种做法，而且一次性将session中的所有内容全部清空，确保不留后患。但也有不好的地方，那就是如果你在session中夹带了一点‘私货’，会被一并删除，这一点一定要注意。</p> 
+ <h2>二、在index页面中验证登录</h2> 
+ <p>有了用户状态，就可以根据用户登录与否，展示不同的页面，比如在index页面中显示当前用户的名称：</p> 
+ <p>修改index.html的代码：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">&lt;!DOCTYPE html&gt;</span>
+<span class="p">&lt;</span><span class="nt">html</span> <span class="na">lang</span><span class="o">=</span><span class="s">"en"</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">head</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">meta</span> <span class="na">charset</span><span class="o">=</span><span class="s">"UTF-8"</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">title</span><span class="p">&gt;</span>首页<span class="p">&lt;/</span><span class="nt">title</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">head</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">body</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">h1</span><span class="p">&gt;</span>{{ request.session.user_name }}!  欢迎回来！<span class="p">&lt;/</span><span class="nt">h1</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">p</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">"/logout/"</span><span class="p">&gt;</span>登出<span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">p</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">body</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">html</span><span class="p">&gt;</span>
+</pre>
+ </div> 
+ <p>注意其中的模板语言，<code>{{ request }}</code>这个变量会被默认传入模板中，可以通过圆点的调用方式，获取它内部的<code>{{ request.session }}</code>，再进一步的获取session中的内容。其实<code>{{ request }}</code>中的数据远不止此，例如<code>{{ request.path }}</code>就可以获取先前的url地址。</p> 
+ <p>重新启动服务器，进行登录和登出测试：</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/111-1.png"></p> 
+ <p>可以看出，在已经login的状态下，手动从浏览器地址栏中访问/login/也依然进入的是index页面。在logout的状态下，都会跳转到login页面。但是，需要注意的是，我们目前还没有编写index未登录限制访问的代码。</p> 
+ <p>修改index视图函数，添加相关限制：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="k">def</span> <span class="nf">index</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'is_login'</span><span class="p">,</span> <span class="bp">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'/login/'</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/index.html'</span><span class="p">)</span>
+</pre>
+ </div> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/110"> <i class="fa fa-arrow-left"></i>&nbsp;8. 图片验证码</a> 
+  <a class="float-right" href="/course/django/112"> 10. 注册视图&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 42</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/111">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva2.sinaimg.cn/crop.0.0.996.996.50/83ef5549jw8fc7ba7zvgsj20ro0rojt8.jpg?KID=imgbed,tva&amp;Expires=1574924267&amp;ssig=6tZCC9YBvU" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我的报'UserForm' object has no attribute 'POST'错误</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 小小Dx </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年11月28日 12:03</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1734">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax3.sinaimg.cn/crop.0.0.512.512.50/6cc41f5ely8g76zx4pgzgj20e80e8dga.jpg?KID=imgbed,tva&amp;Expires=1571510111&amp;ssig=%2FCkjqQCNwz" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>'WSGIRequest' object has no attribute 'sessions' 如何解决？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; Yanner22 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年10月19日 23:39</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1673">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1577334347&amp;ssig=QyjwpbGyW9" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>是session。你多写了个s</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; Yanner22 </span> 
+      <em>2019年12月26日 09:44</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1790">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.512.512.50/9d6c4f6bly8g51wi33t0lj20e80e8aab.jpg?Expires=1565756476&amp;ssig=KEqyilB2A3&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>按照教程写了登录及退出view，没有注册功能，通过admin控制台添加用户，不过添加的用户保存的密码是明文，createsuperuser创建的admin用户密码是密文，admin用户登录一直提示密码错误，通过admin控制台添加的保存为明文密码的用户，可以正常登录。请问这是什么原因？能让admin控制台添加的用户密码存储也是密文吗？admin用户怎么能让它也可以正常登录系统呢？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 南南南南南极姑娘 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年8月14日 11:24</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1550">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?Expires=1566005137&amp;ssig=WT35MhxJ6H&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>后面有注册相关的章节，介绍了密码加密的问题</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 南南南南南极姑娘 </span> 
+      <em>2019年8月17日 08:46</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1561">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax3.sinaimg.cn/crop.0.0.750.750.50/006A6V6aly8futr61lmgbj30ku0kuq3h.jpg?KID=imgbed,tva&amp;Expires=1575565607&amp;ssig=XfhN2%2BYC7Y" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>请问如果是这种情况，不做注册，直接在后台添加用户怎么实现登录呢。保证普通用户和超级用户都可以登录，这样怎么能实现呢？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 迷途你可知 &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2019年12月5日 22:08</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1743">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax3.sinaimg.cn/crop.0.0.750.750.50/006A6V6aly8futr61lmgbj30ku0kuq3h.jpg?KID=imgbed,tva&amp;Expires=1575565607&amp;ssig=XfhN2%2BYC7Y" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>请问如果是这种情况，不做注册，直接在后台添加用户怎么实现登录呢。保证普通用户和超级用户都可以登录，你实现了么？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 迷途你可知 &nbsp;&nbsp;回复&nbsp;&nbsp; 南南南南南极姑娘 </span> 
+      <em>2019年12月5日 22:07</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1742">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.0.0.996.996.50/007FOjP8ly8g110pu8dzvj30ro0ron0h.jpg?Expires=1563186805&amp;ssig=XLBxjaNWiS&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我们验证的用户是从models里验证还是 forms表里验证</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 墨古_10734 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年7月15日 17:34</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1457">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?Expires=1563275830&amp;ssig=bpp9YzPFp%2F&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>验证放在哪一步取决于你自己。可以放在视图里，也可以在form表单，model里也是可以的。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 墨古_10734 </span> 
+      <em>2019年7月16日 18:26</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1468">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.112.0.1818.1818.50/41d0b31dgw1ei5nu2qceoj21hs2004qq.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>博主你好！如果生产环境是多个Django部署的，比如是4个uwsgi，那这4个django进程的session共享吗？有么有可能用户在第一个django进程登录了，下一个请求在第二个django被认为未登录？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 飚aa彪aa </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年6月13日 14:14</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1400">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>这是一个伪命题，因为我们不会这么部署Django的，也不会同时使用4个uwsgi。如果你非要这么做，那么带来的麻烦和风险，远不是session的问题了。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 飚aa彪aa </span> 
+      <em>2019年6月13日 19:03</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1402">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.112.0.1818.1818.50/41d0b31dgw1ei5nu2qceoj21hs2004qq.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>部署的时候gunicorn加上参数 -w 8 --threads 4 ， 这样做会有什么麻烦和风险吗？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 飚aa彪aa &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2019年6月14日 11:16</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1403">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva4.sinaimg.cn/crop.0.0.996.996.50/0067EgkHjw8f9kh359497j30ro0rptao.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>这样做会导致无法多用户登录吗？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户5609827251 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年6月5日 10:16</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1384">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>一个session对应一个用户。各个用户之间是隔离的。不会有影响。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 用户5609827251 </span> 
+      <em>2019年6月6日 10:22</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1390">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax3.sinaimg.cn/crop.155.0.311.311.50/0072KVQIly8g0iv12e9p9j30dw08omxq.jpg?KID=imgbed,tva&amp;Expires=1576990048&amp;ssig=uMzNTFozgH" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>一个客户端（ie、chrome）相当于一个用户，你自己可以试试，多用户登录没问题的</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 用户6289766272 &nbsp;&nbsp;回复&nbsp;&nbsp; 用户5609827251 </span> 
+      <em>2019年12月22日 10:48</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1777">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>AttributeError: 'UserForm' object has no attribute 'is_vaild',登录的时候报这个错是什么原因啊</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户5251132804 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年5月17日 10:49</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1334">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>打错了，尴尬</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 用户5251132804 &nbsp;&nbsp;回复&nbsp;&nbsp; 用户5251132804 </span> 
+      <em>2019年5月17日 10:52</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1335">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.512.512.50/006CsP2fly8g0iesi26dqj30e80e8dg1.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>按照你的教程，可是明明登陆了，切换成index页面还是提醒登录，应该不用再登陆的，这是怎么回事？难道request.session.get('is_login', None)一直是false？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 熊宝QQ6065167127 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年5月14日 15:31</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1331">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.664.664.50/0063SrZUly8fq47s5oawvj30ig0igmxn.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>怎么实现，不同的用户角色，进入的页面不同，比如，老师和同学登陆，进入的是不同的页面，但登陆界面是一样的</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 小灰灰你真胖 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年3月28日 12:57</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1189">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>方法有很多种，比如在视图中根据身份的不同，跳转到不同的页面。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 小灰灰你真胖 </span> 
+      <em>2019年4月1日 08:20</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1203">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.512.512.50/006elX6bly8feijgmeyc8j30e80e8wfd.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>博主，我登陆时的用户名密码只能用admin的超级管理员用户，我要怎么用学生表的学号密码来登陆呢</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> t念汐 &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2019年4月10日 21:22</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1241">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 12em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.0.0.1002.1002.50/006fkdMwly8g1nlbmr81ej30ru0ru753.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>这个问题我也遇到过， 可以修改ModelBackend</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> Henry_C-3 &nbsp;&nbsp;回复&nbsp;&nbsp; t念汐 </span> 
+      <em>2019年4月28日 16:02</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1298">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.996.996.50/6689ecf1ly8fu0fucveboj20ro0ro3ys.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>根据用户登录与否，导航条展示不同内容，为什么只有index页面正常，而在自己写的其他界面就不正常了呢？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; WZYFT哦啦 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年3月19日 13:53</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1163">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.996.996.50/6689ecf1ly8fu0fucveboj20ro0ro3ys.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>不好意思打扰了，已经解决了，谢谢</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> WZYFT哦啦 &nbsp;&nbsp;回复&nbsp;&nbsp; WZYFT哦啦 </span> 
+      <em>2019年3月19日 14:18</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1164">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>有些用点，比如类似user.id；但有些又要括号，user.id()，有些是user.id[]这样的，还有就是有些是id(user)。不单是说user和id。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 真司仪 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年12月20日 12:28</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/965">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>点号通常用作去类类面查找它的属性或者方法；小括号代表执行左边的东西；方括号说明左边是一个可查找内部元素的对象，比如列表和字典。这些都是Python基本语法里的内容，再复习一下吧。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 真司仪 </span> 
+      <em>2019年1月1日 11:19</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/994">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva4.sinaimg.cn/crop.0.0.180.180.50/a147e4a3jw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>.是使用属性，.()是调用方法</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 正面小青年 &nbsp;&nbsp;回复&nbsp;&nbsp; 真司仪 </span> 
+      <em>2019年1月24日 10:35</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1031">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.178.0.293.293.50/006AaVVsly8fw7tz0rufaj30ho085qbx.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>1. bare except except User.DoesNotExist: message = "用户不存在！" 2. 少了一句login_form = UserForm()导致第一次打开界面没有输入框</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 为了给笛子点赞才找回密码 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年11月12日 19:27</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/849">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.0.0.512.512.50/75d0c22bly8fmg316ns34j20e80e8748.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>同问，老哥你解决了吗</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> Teddy_code &nbsp;&nbsp;回复&nbsp;&nbsp; 为了给笛子点赞才找回密码 </span> 
+      <em>2018年11月30日 16:25</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/910">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.0.0.512.512.50/75d0c22bly8fmg316ns34j20e80e8748.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>已解决 就是少那一句</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> Teddy_code &nbsp;&nbsp;回复&nbsp;&nbsp; Teddy_code </span> 
+      <em>2018年11月30日 21:02</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/911">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 12em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.116.50.268.268.50/006AaVVsly8fy1wglvqjmj30dg09ugqs.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我写的就是修改提议啦</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 为了给笛子点赞才找回密码 &nbsp;&nbsp;回复&nbsp;&nbsp; Teddy_code </span> 
+      <em>2018年12月10日 21:49</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/934">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.85.2.250.250.50/a2371b8cly8fqq3gqamohj20ci071aaz.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>就感觉request.session.user_name没有传过去</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 高等游民阿蛋 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年10月27日 20:19</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/805">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva4.sinaimg.cn/crop.0.0.720.720.50/6851a488jw8ecz7mum8wvj20k00k0403.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>views中的index函数中return加locals()</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 浅浅丶未央 &nbsp;&nbsp;回复&nbsp;&nbsp; 高等游民阿蛋 </span> 
+      <em>2019年5月5日 22:08</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1312">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.4.272.681.681.50/006IGSB9ly8fghn7478iqj30j60y2wfa.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>视图中最后一个return错位了 应该在往前一个tab</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 软妹不太软QAQ </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年10月10日 14:34</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/767">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.180.180.50/88d81163jw8f3lpqro6w3j2050050wer.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>首先感谢博主的Django教程，很不错的入门教程，赞一个。 我是完全照着教程做的，不知道为什么出错了。 打开 http://127.0.0.1/login/ 报错：ValueError: The view login.views.login didn't return an HttpResponse object. It returned None instead 将 login/views.py 中的 login() 视图函数修改成如下就好了： if request.method == "POST": ...... else: login_form = forms.UserForm() return render(request, 'login/login.html', locals())</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; DuoyiChen </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年9月13日 21:17</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/728">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.1328.1328.50/006KZ60ily8fe8dud0coyj310w10wgrc.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>实际项目中一般是用什么方式 判断登陆与否并呈现不同界面的？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; UpheRainown </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年7月15日 22:24</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/587">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.6.109.109.50/af935783ly8fij0cldy3hj203203ct8h.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>改成这样就可以了： username = login_form.cleaned_data['username'] password = login_form.cleaned_data['password'] try: user = models.User.objects.get(username=username) if user.check_password(password): request.session['is_login'] = True request.session['user_id'] = user.id request.session['user_name'] = user.username return redirect('/index/') else: message = "密码不正确！" except Exception as e: message = "用户不存在: %s" % e</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 点点嘟嘟嘟 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年5月3日 11:39</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/426">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>本实战项目使用的是自定义的用户，而不是Django内置的auth系统哦，这一点一定要搞清楚。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 点点嘟嘟嘟 </span> 
+      <em>2018年5月3日 15:08</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/427">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.996.996.50/e5156edcly8fj6i7xfvh5j20ro0rodhm.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>def login(request): if request.session.get('is_login',None): return redirect("/index/") if request.method == "POST": login_form = forms.UserForm(request.POST) message = "请检查填写的内容！" if login_form.is_valid(): username = login_form.cleaned_data['username'] password = login_form.cleaned_data['password'] try: user = models.User.objects.get(name=username) if user.password == password: 找不到objects 啊</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; wind2018陌陌 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年4月26日 22:01</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/415">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.960.960.50/006xIWURly8fo9wxo24vzj30qo0qoaaz.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>session除了is_login还有其他字典值吗？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 蔷薇-Nina </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年3月11日 21:47</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/286">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>比如session['今天您吃了吗？'] = '吃了'</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 蔷薇-Nina </span> 
+      <em>2018年3月12日 11:38</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/293">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.960.960.50/006xIWURly8fo9wxo24vzj30qo0qoaaz.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>明白了。谢谢博主。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 蔷薇-Nina &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2018年3月12日 19:39</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/295">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

@@ -1,0 +1,316 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>自定义标签和过滤器</h1> 
+ <small>阅读:&nbsp;16402&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：3 </small> 
+ <hr> 
+ <p>Django虽然为我们内置了二十多种标签和六十多种过滤器，但是需求是各种各样的，总有一款你cover不到。Django为我们提供了自定义的机制，可以通过使用Python代码，自定义标签和过滤器来扩展模板引擎，然后使用{% load %}标签。</p> 
+ <h2>一、前置步骤</h2> 
+ <p>Django对于自定义标签和过滤器是有前置要求的，首先一条就是代码布局和文件组织。</p> 
+ <p>你可以为你的自定义标签和过滤器新开一个app，也可以在原有的某个app中添加。</p> 
+ <p>不管怎么样，<strong>第一步，在app中新建一个<code>templatetags</code>包</strong>（名字固定，不能变，只能是这个），和views.py、models.py等文件处于同一级别目录下。这是一个包！<strong>不要忘记创建<code>__init__.py</code>文件以使得该目录可以作为Python的包。</strong></p> 
+ <p>在添加templatetags包后，需要重新启动服务器，然后才能在模板中使用标签或过滤器。</p> 
+ <ul> 
+  <li> <p>将你自定义的标签和过滤器将放在templatetags包下的一个模块里。</p> </li> 
+  <li> <p>这个模块的名字是后面载入标签时使用的标签名，所以要谨慎的选择名字以防与其他应用下的自定义标签和过滤器名字冲突，当然更不能与Django内置的冲突。</p> </li> 
+ </ul> 
+ <p>假设你自定义的标签/过滤器在一个名为<code>poll_extras.py</code>的文件中，那么你的app目录结构看起来应该是这样的：</p> 
+ <div class="codehilite">
+  <pre><span></span>polls/
+    __init__.py
+    models.py
+    templatetags/
+        __init__.py
+        poll_extras.py
+    views.py
+</pre>
+ </div> 
+ <p>为了让<code>{% load xxx %}</code>标签正常工作，包含自定义标签的app必须在<code>INSTALLED_APPS</code>中注册。然后你就可以在模板中像如下这样使用：</p> 
+ <div class="codehilite">
+  <pre><span></span>{% load poll_extras %}
+</pre>
+ </div> 
+ <p>在templatetags包中放多少个模块没有限制。只需要记住<code>{% load xxx %}</code>将会载入给定模块名中的标签/过滤器，而不是app中所有的标签和过滤器。</p> 
+ <p>要在模块内自定义标签，首先，<strong>这个模块必须包含一个名为<code>register</code>的变量，它是<code>template.Library</code>的一个实例</strong>，所有的标签和过滤器都是在其中注册的。 所以把如下的内容放在你的模块的顶部：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django</span> <span class="kn">import</span> <span class="n">template</span>
+
+<span class="n">register</span> <span class="o">=</span> <span class="n">template</span><span class="o">.</span><span class="n">Library</span><span class="p">()</span>
+</pre>
+ </div> 
+ <p>友情提示：可以阅读Django的默认过滤器和标记的源代码。它们分别位于<code>django/template/defaultfilters.py</code>和<code>django/template/defaulttags.py</code>中。它们是最好的范例！</p> 
+ <h2>二、自定义模板过滤器</h2> 
+ <h3>1. 编写过滤器</h3> 
+ <p><strong>自定义过滤器就是一个带有一个或两个参数的Python函数</strong>：</p> 
+ <p><strong>注意：这个Python函数的第一个参数是你要过滤的对象，第二个参数才是你自定义的参数。而且最多总共只能有两个参数，所以你只能自定义一个参数！</strong>这是过滤器的先天限制。</p> 
+ <ul> 
+  <li>变量的值：不一定是字符串形式。</li> 
+  <li>参数的值：可以有一个初始值，或者完全不要这个参数。</li> 
+ </ul> 
+ <p>例如，在<code>{{ var|foo:"bar" }}</code>中，foo过滤器应当传入变量var和参数"bar"。</p> 
+ <p>由于模板语言没有提供异常处理，任何从过滤器中抛出的异常都将会显示为服务器错误。 </p> 
+ <p>下面是一个定义过滤器的例子：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="k">def</span> <span class="nf">cut</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">arg</span><span class="p">):</span>
+    <span class="sd">"""将value中的所有arg部分切除掉"""</span>
+    <span class="k">return</span> <span class="n">value</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="s1">''</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>下面是这个过滤器的使用方法：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{{</span> <span class="nv">somevariable</span><span class="o">|</span><span class="nf">cut</span><span class="s2">:"0"</span> <span class="cp">}}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>大多数过滤器没有参数，在这种情况下，你的过滤器函数不带额外的参数即可，但基本的value参数是必带的。例如：</p> 
+ <div class="codehilite">
+  <pre><span></span>def lower(value): # Only one argument.
+    """Converts a string into all lowercase"""
+    return value.lower()
+</pre>
+ </div> 
+ <h3>2. 注册过滤器</h3> 
+ <p>类原型：django.template.Library.filter()</p> 
+ <p>一旦你写好了过滤器函数，就需要注册它，方法是调用<code>register.filter</code>，比如：</p> 
+ <div class="codehilite">
+  <pre><span></span>register.filter('cut', cut)
+register.filter('lower', lower)
+</pre>
+ </div> 
+ <p><code>Library.filter()</code>方法需要两个参数：</p> 
+ <ul> 
+  <li>过滤器的名称：一个字符串对象</li> 
+  <li>编译的函数 :你刚才写的过滤器函数</li> 
+ </ul> 
+ <p>还可以把<code>register.filter()</code>用作装饰器，以如下的方式注册过滤器：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="nd">@register.filter</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">'cut'</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">cut</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">arg</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">value</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="s1">''</span><span class="p">)</span>
+
+<span class="nd">@register.filter</span>
+<span class="k">def</span> <span class="nf">lower</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">value</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+</pre>
+ </div> 
+ <p>上面第二个例子没有声明name参数，Django将使用函数名作为过滤器的名字。</p> 
+ <p>自定义过滤器就是这么简单，使用起来也和普通的过滤器没什么区别。我们用Python的方式解决了HTML的问题。</p> 
+ <h2>三、自定义模板标签</h2> 
+ <p>标签比过滤器更复杂，因为标签可以做任何事情。Django提供了大量的快捷方式，使得编写标签比较容易。 对于我们一般的自定义标签来说，<code>simple_tag</code>是最重要的，它帮助你将一个Python函数注册为一个简单的模版标签。</p> 
+ <h3>1. simple_tag</h3> 
+ <p>原型：django.template.Library.simple_tag()</p> 
+ <p>为了简单化模版标签的创建，Django提供一个辅助函数<code>simple_tag</code>，这个函数是<code>django.template.Library</code>的一个方法。</p> 
+ <p>比如，我们想编写一个返回当前时间的模版标签，那么<code>current_time</code>函数从而可以这样写︰</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">from</span> <span class="nn">django</span> <span class="kn">import</span> <span class="n">template</span>
+
+<span class="n">register</span> <span class="o">=</span> <span class="n">template</span><span class="o">.</span><span class="n">Library</span><span class="p">()</span>
+
+<span class="nd">@register.simple_tag</span>
+<span class="k">def</span> <span class="nf">current_time</span><span class="p">(</span><span class="n">format_string</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">format_string</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>关于simple_tag函数有几件值得注意的事项︰</p> 
+ <p><strong>如果不需要额外的转义</strong>，可以使用<code>mark_safe()</code>让输出不进行转义，前提是你绝对确保代码中不包含XSS漏洞。 如果要创建小型HTML片段，强烈建议使用<code>format_html()</code>而不是<code>mark_safe()</code>。</p> 
+ <p><strong>如果你的模板标签需要访问当前上下文</strong>，可以在注册标签时使用<code>takes_context</code>参数︰</p> 
+ <div class="codehilite">
+  <pre><span></span>@register.simple_tag(takes_context=True)
+def current_time(context, format_string):
+    timezone = context['timezone']
+    return your_get_current_time_method(timezone, format_string)
+</pre>
+ </div> 
+ <p>请注意，第一个参数必须称作context!</p> 
+ <p><strong>如果你需要重命名你的标签</strong>，可以给它提供自定义的名称︰</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="n">register</span><span class="o">.</span><span class="n">simple_tag</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">'minusone'</span><span class="p">)</span>
+
+<span class="nd">@register.simple_tag</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">'minustwo'</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">some_function</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">value</span> <span class="o">-</span> <span class="mi">2</span>
+</pre>
+ </div> 
+ <p><strong>simple_tag函数可以接受任意数量的位置参数和关键字参数</strong>。 像这样：</p> 
+ <div class="codehilite">
+  <pre><span></span>@register.simple_tag
+def my_tag(a, b, *args, **kwargs):
+    warning = kwargs['warning']
+    profile = kwargs['profile']
+    ...
+    return ...
+</pre>
+ </div> 
+ <p>然后在模板中，可以将任意数量的由空格分隔的参数传递给模板标签。像在Python中一样，关键字参数的值使用等号（"="）赋予，并且必须在位置参数之后提供。 例子：</p> 
+ <div class="codehilite">
+  <pre><span></span>{% my_tag 123 "abcd" book.title warning=message|lower profile=user.profile %}
+</pre>
+ </div> 
+ <p>可以将标签结果存储在模板变量中，而不是直接输出。这是通过使用as参数后跟变量名来实现的： </p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{%</span> <span class="k">current_time</span> <span class="s2">"%Y-%m-%d %I:%M %p"</span> <span class="k">as</span> <span class="nv">the_time</span> <span class="cp">%}</span>
+<span class="nt">&lt;p&gt;</span>The time is <span class="cp">{{</span> <span class="nv">the_time</span> <span class="cp">}}</span>.<span class="nt">&lt;/p&gt;</span>
+</pre>
+ </div> 
+ <h2>2. inclusion_tag()</h2> 
+ <p>原型：django.template.Library.inclusion_tag()</p> 
+ <p>另一种常见类型的模板标签是通过渲染一个模板来显示一些数据。例如，Django的Admin界面使用自定义模板标签显示"添加/更改"表单页面底部的按钮。这些按钮看起来总是相同，但链接的目标却是根据正在编辑的对象而变化的。 </p> 
+ <p>这种类型的标签被称为"Inclusion 标签"。</p> 
+ <p>下面，展示一个根据给定的tutorials中创建的Poll对象输出一个选项列表的自定义Inclusion标签。在模版中它是这么调用的：</p> 
+ <div class="codehilite">
+  <pre><span></span>{% show_results poll %}
+</pre>
+ </div> 
+ <p>而输出是这样的：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="nt">&lt;ul&gt;</span>
+  <span class="nt">&lt;li&gt;</span>First choice<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;</span>Second choice<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;</span>Third choice<span class="nt">&lt;/li&gt;</span>
+<span class="nt">&lt;/ul&gt;</span>
+</pre>
+ </div> 
+ <p>具体的编写方法：</p> 
+ <p>首先，编写Python函数：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="k">def</span> <span class="nf">show_results</span><span class="p">(</span><span class="n">poll</span><span class="p">):</span>
+    <span class="n">choices</span> <span class="o">=</span> <span class="n">poll</span><span class="o">.</span><span class="n">choice_set</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s1">'choices'</span><span class="p">:</span> <span class="n">choices</span><span class="p">}</span>
+</pre>
+ </div> 
+ <p>接下来，创建用于标签渲染的模板results.html︰</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="nt">&lt;ul&gt;</span>
+<span class="cp">{%</span> <span class="k">for</span> <span class="nv">choice</span> <span class="k">in</span> <span class="nv">choices</span> <span class="cp">%}</span>
+    <span class="nt">&lt;li&gt;</span> <span class="cp">{{</span> <span class="nv">choice</span> <span class="cp">}}</span> <span class="nt">&lt;/li&gt;</span>
+<span class="cp">{%</span> <span class="k">endfor</span> <span class="cp">%}</span>
+<span class="nt">&lt;/ul&gt;</span>
+</pre>
+ </div> 
+ <p>最后，通过调用Library对象的<code>inclusion_tag()</code>装饰器方法创建并注册Inclusion标签︰</p> 
+ <div class="codehilite">
+  <pre><span></span>@register.inclusion_tag('results.html')
+def show_results(poll):
+    ...
+</pre>
+ </div> 
+ <p>或者使用<code>django.template.Template</code>实例注册Inclusion标签︰</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.template.loader</span> <span class="kn">import</span> <span class="n">get_template</span>
+<span class="n">t</span> <span class="o">=</span> <span class="n">get_template</span><span class="p">(</span><span class="s1">'results.html'</span><span class="p">)</span>
+<span class="n">register</span><span class="o">.</span><span class="n">inclusion_tag</span><span class="p">(</span><span class="n">t</span><span class="p">)(</span><span class="n">show_results</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p><strong>inclusion_tag函数可以接受任意数量的位置参数和关键字参数</strong>。像这样：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="nd">@register.inclusion_tag</span><span class="p">(</span><span class="s1">'my_template.html'</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">my_tag</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="n">warning</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">'warning'</span><span class="p">]</span>
+    <span class="n">profile</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">'profile'</span><span class="p">]</span>
+    <span class="o">...</span>
+    <span class="k">return</span> <span class="o">...</span>
+</pre>
+ </div> 
+ <p>然后在模板中，可以将任意数量的由空格分隔的参数传递给模板标签。像在Python中一样，关键字参数的值的设置使用等号（"="） ，并且必须在位置参数之后提供。例如：</p> 
+ <div class="codehilite">
+  <pre><span></span>{% my_tag 123 "abcd" book.title warning=message|lower profile=user.profile %}
+</pre>
+ </div> 
+ <hr> 
+ <p><strong>可以在标签中传递上下文中的参数</strong>。比如说,当你想要将上下文context中的<code>home_link</code>和<code>home_title</code>这两个变量传递给模版。 如下所示:</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="nd">@register.inclusion_tag</span><span class="p">(</span><span class="s1">'link.html'</span><span class="p">,</span> <span class="n">takes_context</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">jump_link</span><span class="p">(</span><span class="n">context</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s1">'link'</span><span class="p">:</span> <span class="n">context</span><span class="p">[</span><span class="s1">'home_link'</span><span class="p">],</span>
+        <span class="s1">'title'</span><span class="p">:</span> <span class="n">context</span><span class="p">[</span><span class="s1">'home_title'</span><span class="p">],</span>
+    <span class="p">}</span>
+</pre>
+ </div> 
+ <p>注意函数的第一个参数必须叫做context。context必须是一个字典类型。</p> 
+ <p>在<code>register.inclusion_tag()</code>这一行，我们指定了<code>takes_context=True</code>和模板的名字。模板<code>link.html</code>很简单，如下所示：</p> 
+ <div class="codehilite">
+  <pre><span></span>Jump directly to <span class="nt">&lt;a</span> <span class="na">href=</span><span class="s">"</span><span class="cp">{{</span> <span class="nv">link</span> <span class="cp">}}</span><span class="s">"</span><span class="nt">&gt;</span><span class="cp">{{</span> <span class="nv">title</span> <span class="cp">}}</span><span class="nt">&lt;/a&gt;</span>.
+</pre>
+ </div> 
+ <p>然后，当任何时候你想调用这个自定义的标签时，只需要load它本身，不需要添加任何参数，<code>{{ link }}</code>和<code>{{ title }}</code>会自动从标签中获取参数值。像这样：</p> 
+ <div class="codehilite">
+  <pre><span></span>{% jump_link %}
+</pre>
+ </div> 
+ <p>使用<code>takes_context=True</code>，就表示不需要传递参数给这个模板标签。它会自己去获取上下文。</p> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/149"> <i class="fa fa-arrow-left"></i>&nbsp;人类可读性</a> 
+  <a class="float-right" href="/course/django/151"> 第四章：Django表单&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 3</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/150">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.1080.1080.50/006xIWURly8g3w3jk5kmcj30u00u03zs.jpg?Expires=1562507709&amp;ssig=ZhQEgD7Ax2&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>注册：template.Library()</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 蔷薇-Nina </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年7月12日 22:52</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1450">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.996.996.50/006xIWURly8fo72mpzt8ej30ro0rogmj.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>博主你好，自定义过滤器和标签在实际开发中常用吗？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 蔷薇-Nina </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年2月7日 23:12</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/206">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.180.180.50/67179639jw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>按需啦,客制化</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 孤竹孙 &nbsp;&nbsp;回复&nbsp;&nbsp; 蔷薇-Nina </span> 
+      <em>2018年5月5日 20:54</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/446">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

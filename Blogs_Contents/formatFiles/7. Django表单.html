@@ -1,0 +1,853 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>7. Django表单</h1> 
+ <small>阅读:&nbsp;52578&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：36 </small> 
+ <hr> 
+ <p>我们前面都是手工在HTML文件中编写表单form元素，然后在views.py的视图函数中接收表单中的用户数据，再编写验证代码进行验证，最后使用ORM进行数据库的增删改查。这样费时费力，整个过程比较复杂，而且有可能写得不太恰当，数据验证也比较麻烦。设想一下，如果我们的表单拥有几十上百个数据字段，有不同的数据特点，如果也使用手工的方式，其效率和正确性都将无法得到保障。有鉴于此，Django在内部集成了一个表单功能，以面向对象的方式，直接使用Python代码生成HTML表单代码，专门帮助我们快速处理表单相关的内容。</p> 
+ <p>Django的表单给我们提供了下面三个主要功能：</p> 
+ <ul> 
+  <li>准备和重构数据用于页面渲染；</li> 
+  <li>为数据创建HTML表单元素；</li> 
+  <li>接收和处理用户从表单发送过来的数据。</li> 
+ </ul> 
+ <p>编写Django的form表单，非常类似我们在模型系统里编写一个模型。在模型中，一个字段代表数据表的一列，而form表单中的一个字段代表<code>&lt;form&gt;</code>中的一个<code>&lt;input&gt;</code>元素。</p> 
+ <h2>一、创建表单模型</h2> 
+ <p>在项目根目录的login文件夹下，新建一个<code>forms.py</code>文件，也就是<code>/login/forms.py</code>，又是我们熟悉的Django组织文件的套路，一个app一套班子！</p> 
+ <p>在<code>/login/forms.py</code>中写入下面的代码，是不是有一种编写数据model模型的既视感？</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django</span> <span class="kn">import</span> <span class="n">forms</span>
+
+
+<span class="k">class</span> <span class="nc">UserForm</span><span class="p">(</span><span class="n">forms</span><span class="o">.</span><span class="n">Form</span><span class="p">):</span>
+    <span class="n">username</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">"用户名"</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">128</span><span class="p">)</span>
+    <span class="n">password</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">"密码"</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span> <span class="n">widget</span><span class="o">=</span><span class="n">forms</span><span class="o">.</span><span class="n">PasswordInput</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>说明：</p> 
+ <ul> 
+  <li>顶部要先导入forms模块</li> 
+  <li>所有的表单类都要继承forms.Form类</li> 
+  <li>每个表单字段都有自己的字段类型比如CharField，它们分别对应一种HTML语言中<code>&lt;form&gt;</code>内的一个input元素。这一点和Django模型系统的设计非常相似。</li> 
+  <li>label参数用于设置<code>&lt;label&gt;</code>标签</li> 
+  <li><code>max_length</code>限制字段输入的最大长度。它同时起到两个作用，一是在浏览器页面限制用户输入不可超过字符数，二是在后端服务器验证用户输入的长度也不可超过。</li> 
+  <li><code>widget=forms.PasswordInput</code>用于指定该字段在form表单里表现为<code>&lt;input type='password' /&gt;</code>，也就是密码输入框。</li> 
+ </ul> 
+ <h2>二、修改视图</h2> 
+ <p>使用了Django的表单后，就要在视图中进行相应的修改：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="c1"># login/views.py</span>
+
+<span class="kn">from</span> <span class="nn">django.shortcuts</span> <span class="kn">import</span> <span class="n">render</span>
+<span class="kn">from</span> <span class="nn">django.shortcuts</span> <span class="kn">import</span> <span class="n">redirect</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">models</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">forms</span>
+<span class="c1"># Create your views here.</span>
+
+
+<span class="k">def</span> <span class="nf">index</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">pass</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/index.html'</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">login</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s1">'POST'</span><span class="p">:</span>
+        <span class="n">login_form</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">UserForm</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="p">)</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="s1">'请检查填写的内容！'</span>
+        <span class="k">if</span> <span class="n">login_form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">():</span>
+            <span class="n">username</span> <span class="o">=</span> <span class="n">login_form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'username'</span><span class="p">)</span>
+            <span class="n">password</span> <span class="o">=</span> <span class="n">login_form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'password'</span><span class="p">)</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">user</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">username</span><span class="p">)</span>
+            <span class="k">except</span> <span class="p">:</span>
+                <span class="n">message</span> <span class="o">=</span> <span class="s1">'用户不存在！'</span>
+                <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/login.html'</span><span class="p">,</span> <span class="nb">locals</span><span class="p">())</span>
+
+            <span class="k">if</span> <span class="n">user</span><span class="o">.</span><span class="n">password</span> <span class="o">==</span> <span class="n">password</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'/index/'</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">message</span> <span class="o">=</span> <span class="s1">'密码不正确！'</span>
+                <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/login.html'</span><span class="p">,</span> <span class="nb">locals</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/login.html'</span><span class="p">,</span> <span class="nb">locals</span><span class="p">())</span>
+
+    <span class="n">login_form</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">UserForm</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/login.html'</span><span class="p">,</span> <span class="nb">locals</span><span class="p">())</span>
+
+
+<span class="k">def</span> <span class="nf">register</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">pass</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/register.html'</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">logout</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">pass</span>
+    <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s2">"/login/"</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>说明：</p> 
+ <ul> 
+  <li>在顶部要导入我们写的forms模块:<code>from . import forms</code></li> 
+  <li>对于非POST方法发送数据时，比如GET方法请求页面，返回空的表单，让用户可以填入数据；</li> 
+  <li>对于POST方法，接收表单数据，并验证；</li> 
+  <li>使用表单类自带的<code>is_valid()</code>方法一步完成数据验证工作；</li> 
+  <li>验证成功后可以从表单对象的<code>cleaned_data</code>数据字典中获取表单的具体值；</li> 
+  <li>如果验证不通过，则返回一个包含先前数据的表单给前端页面，方便用户修改。也就是说，它会帮你保留先前填写的数据内容，而不是返回一个空表！</li> 
+ </ul> 
+ <p>另外，这里使用了一个小技巧，Python内置了一个locals()函数，它返回当前所有的本地变量字典，我们可以偷懒的将这作为render函数的数据字典参数值，就不用费劲去构造一个形如<code>{'message':message, 'login_form':login_form}</code>的字典了。这样做的好处当然是大大方便了我们，但是同时也可能往模板传入了一些多余的变量数据，造成数据冗余降低效率。</p> 
+ <h2>三、 修改login页面</h2> 
+ <p>Django的表单很重要的一个功能就是自动生成HTML的form表单内容。现在，我们需要修改一下原来的<code>login.html</code>文件：</p> 
+ <div class="codehilite">
+  <pre><span></span>{% load static %}
+<span class="cp">&lt;!doctype html&gt;</span>
+<span class="p">&lt;</span><span class="nt">html</span> <span class="na">lang</span><span class="o">=</span><span class="s">"en"</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">head</span><span class="p">&gt;</span>
+    <span class="c">&lt;!-- Required meta tags --&gt;</span>
+    <span class="p">&lt;</span><span class="nt">meta</span> <span class="na">charset</span><span class="o">=</span><span class="s">"utf-8"</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">meta</span> <span class="na">name</span><span class="o">=</span><span class="s">"viewport"</span> <span class="na">content</span><span class="o">=</span><span class="s">"width=device-width, initial-scale=1, shrink-to-fit=no"</span><span class="p">&gt;</span>
+    <span class="c">&lt;!-- 上述meta标签*必须*放在最前面，任何其他内容都*必须*跟随其后！ --&gt;</span>
+    <span class="c">&lt;!-- Bootstrap CSS --&gt;</span>
+    <span class="p">&lt;</span><span class="nt">link</span> <span class="na">href</span><span class="o">=</span><span class="s">"https://cdn.bootcss.com/twitter-bootstrap/4.3.1/css/bootstrap.min.css"</span> <span class="na">rel</span><span class="o">=</span><span class="s">"stylesheet"</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">link</span> <span class="na">href</span><span class="o">=</span><span class="s">"{% static 'login/css/login.css' %}"</span> <span class="na">rel</span><span class="o">=</span><span class="s">"stylesheet"</span><span class="p">/&gt;</span>
+    <span class="p">&lt;</span><span class="nt">title</span><span class="p">&gt;</span>登录<span class="p">&lt;/</span><span class="nt">title</span><span class="p">&gt;</span>
+  <span class="p">&lt;/</span><span class="nt">head</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">body</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"container"</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"col"</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="nt">form</span> <span class="na">class</span><span class="o">=</span><span class="s">"form-login"</span> <span class="na">action</span><span class="o">=</span><span class="s">"/login/"</span> <span class="na">method</span><span class="o">=</span><span class="s">"post"</span><span class="p">&gt;</span>
+                  {% if message %}
+                    <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"alert alert-warning"</span><span class="p">&gt;</span>{{ message }}<span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+                  {% endif %}
+                  {% csrf_token %}
+                  <span class="p">&lt;</span><span class="nt">h3</span> <span class="na">class</span><span class="o">=</span><span class="s">"text-center"</span><span class="p">&gt;</span>欢迎登录<span class="p">&lt;/</span><span class="nt">h3</span><span class="p">&gt;</span>
+
+                  {{ login_form }}
+
+                  <span class="p">&lt;</span><span class="nt">div</span><span class="p">&gt;</span>
+                      <span class="p">&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">"/register/"</span> <span class="na">class</span><span class="o">=</span><span class="s">"text-success "</span> <span class="p">&gt;&lt;</span><span class="nt">ins</span><span class="p">&gt;</span>新用户注册<span class="p">&lt;/</span><span class="nt">ins</span><span class="p">&gt;&lt;/</span><span class="nt">a</span><span class="p">&gt;</span>
+                      <span class="p">&lt;</span><span class="nt">button</span> <span class="na">type</span><span class="o">=</span><span class="s">"submit"</span> <span class="na">class</span><span class="o">=</span><span class="s">"btn btn-primary float-right"</span><span class="p">&gt;</span>登录<span class="p">&lt;/</span><span class="nt">button</span><span class="p">&gt;</span>
+                  <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="nt">form</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span> <span class="c">&lt;!-- /container --&gt;</span>
+
+    <span class="c">&lt;!-- Optional JavaScript --&gt;</span>
+    <span class="c">&lt;!-- jQuery first, then Popper.js, then Bootstrap JS --&gt;</span>
+    {#    以下三者的引用顺序是固定的#}
+    <span class="p">&lt;</span><span class="nt">script</span> <span class="na">src</span><span class="o">=</span><span class="s">"https://cdn.bootcss.com/jquery/3.3.1/jquery.js"</span><span class="p">&gt;&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">script</span> <span class="na">src</span><span class="o">=</span><span class="s">"https://cdn.bootcss.com/popper.js/1.15.0/umd/popper.js"</span><span class="p">&gt;&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">script</span> <span class="na">src</span><span class="o">=</span><span class="s">"https://cdn.bootcss.com/twitter-bootstrap/4.3.1/js/bootstrap.min.js"</span><span class="p">&gt;&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+
+  <span class="p">&lt;/</span><span class="nt">body</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">html</span><span class="p">&gt;</span>
+</pre>
+ </div> 
+ <p>上面贴了一个完整版的代码，方便大家对比参考。</p> 
+ <p>说明：</p> 
+ <ul> 
+  <li>你没有看错！一个<code>{{ login_form }}</code>就直接完成了表单内容的生成工作！<code>login_form</code>这个名称来自你在视图函数中生成的form实例的变量名！</li> 
+  <li>但是，它不会生成<code>&lt;form&gt;...&lt;/form&gt;</code>标签，这个要自己写；</li> 
+  <li>使用POST的方法时，必须添加<code>{% csrf_token %}</code>标签，用于处理csrf安全机制；</li> 
+  <li>Django自动为每个input元素设置了一个id名称，对应label的for参数</li> 
+  <li>注册链接和登录按钮需要自己写，Django不会帮你生成！</li> 
+ </ul> 
+ <p>我们到浏览器中，看下实际生成的html源码是什么：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="p">&lt;</span><span class="nt">form</span> <span class="na">class</span><span class="o">=</span><span class="s">"form-login"</span> <span class="na">action</span><span class="o">=</span><span class="s">"/login/"</span> <span class="na">method</span><span class="o">=</span><span class="s">"post"</span><span class="p">&gt;</span> 
+
+  <span class="p">&lt;</span><span class="nt">input</span> <span class="na">type</span><span class="o">=</span><span class="s">"hidden"</span> <span class="na">name</span><span class="o">=</span><span class="s">"csrfmiddlewaretoken"</span> <span class="na">value</span><span class="o">=</span><span class="s">"5oJMX0z8PkUXY7RPDPGjaD2Q28CndXKeKWlftJD6s0XM1NIUEi7a0iET1NCYikUw"</span><span class="p">&gt;</span> 
+  <span class="p">&lt;</span><span class="nt">h3</span> <span class="na">class</span><span class="o">=</span><span class="s">"text-center"</span><span class="p">&gt;</span>欢迎登录<span class="p">&lt;/</span><span class="nt">h3</span><span class="p">&gt;</span>
+
+  <span class="p">&lt;</span><span class="nt">tr</span><span class="p">&gt;&lt;</span><span class="nt">th</span><span class="p">&gt;&lt;</span><span class="nt">label</span> <span class="na">for</span><span class="o">=</span><span class="s">"id_username"</span><span class="p">&gt;</span>用户名:<span class="p">&lt;/</span><span class="nt">label</span><span class="p">&gt;&lt;/</span><span class="nt">th</span><span class="p">&gt;&lt;</span><span class="nt">td</span><span class="p">&gt;&lt;</span><span class="nt">input</span> <span class="na">type</span><span class="o">=</span><span class="s">"text"</span> <span class="na">name</span><span class="o">=</span><span class="s">"username"</span> <span class="na">maxlength</span><span class="o">=</span><span class="s">"128"</span> <span class="na">required</span> <span class="na">id</span><span class="o">=</span><span class="s">"id_username"</span><span class="p">&gt;&lt;/</span><span class="nt">td</span><span class="p">&gt;&lt;/</span><span class="nt">tr</span><span class="p">&gt;</span> 
+  <span class="p">&lt;</span><span class="nt">tr</span><span class="p">&gt;&lt;</span><span class="nt">th</span><span class="p">&gt;&lt;</span><span class="nt">label</span> <span class="na">for</span><span class="o">=</span><span class="s">"id_password"</span><span class="p">&gt;</span>密码:<span class="p">&lt;/</span><span class="nt">label</span><span class="p">&gt;&lt;/</span><span class="nt">th</span><span class="p">&gt;&lt;</span><span class="nt">td</span><span class="p">&gt;&lt;</span><span class="nt">input</span> <span class="na">type</span><span class="o">=</span><span class="s">"password"</span> <span class="na">name</span><span class="o">=</span><span class="s">"password"</span> <span class="na">maxlength</span><span class="o">=</span><span class="s">"256"</span> <span class="na">required</span> <span class="na">id</span><span class="o">=</span><span class="s">"id_password"</span><span class="p">&gt;&lt;/</span><span class="nt">td</span><span class="p">&gt;&lt;/</span><span class="nt">tr</span><span class="p">&gt;</span> 
+  <span class="p">&lt;</span><span class="nt">div</span><span class="p">&gt;</span> 
+    <span class="p">&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">"[/register/](http://127.0.0.1:8000/register/)"</span> <span class="na">class</span><span class="o">=</span><span class="s">"text-success "</span> <span class="p">&gt;&lt;</span><span class="nt">ins</span><span class="p">&gt;</span>新用户注册<span class="p">&lt;/</span><span class="nt">ins</span><span class="p">&gt;&lt;/</span><span class="nt">a</span><span class="p">&gt;</span> 
+    <span class="p">&lt;</span><span class="nt">button</span> <span class="na">type</span><span class="o">=</span><span class="s">"submit"</span> <span class="na">class</span><span class="o">=</span><span class="s">"btn btn-primary float-right"</span><span class="p">&gt;</span>登录<span class="p">&lt;/</span><span class="nt">button</span><span class="p">&gt;</span>
+  <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span> 
+<span class="p">&lt;/</span><span class="nt">form</span><span class="p">&gt;</span> 
+</pre>
+ </div> 
+ <p>也就是说，Django的form表单功能，帮你自动生成了下面部分的代码：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="p">&lt;</span><span class="nt">tr</span><span class="p">&gt;&lt;</span><span class="nt">th</span><span class="p">&gt;&lt;</span><span class="nt">label</span> <span class="na">for</span><span class="o">=</span><span class="s">"id_username"</span><span class="p">&gt;</span>用户名:<span class="p">&lt;/</span><span class="nt">label</span><span class="p">&gt;&lt;/</span><span class="nt">th</span><span class="p">&gt;&lt;</span><span class="nt">td</span><span class="p">&gt;&lt;</span><span class="nt">input</span> <span class="na">type</span><span class="o">=</span><span class="s">"text"</span> <span class="na">name</span><span class="o">=</span><span class="s">"username"</span> <span class="na">maxlength</span><span class="o">=</span><span class="s">"128"</span> <span class="na">required</span> <span class="na">id</span><span class="o">=</span><span class="s">"id_username"</span><span class="p">&gt;&lt;/</span><span class="nt">td</span><span class="p">&gt;&lt;/</span><span class="nt">tr</span><span class="p">&gt;</span> 
+  <span class="p">&lt;</span><span class="nt">tr</span><span class="p">&gt;&lt;</span><span class="nt">th</span><span class="p">&gt;&lt;</span><span class="nt">label</span> <span class="na">for</span><span class="o">=</span><span class="s">"id_password"</span><span class="p">&gt;</span>密码:<span class="p">&lt;/</span><span class="nt">label</span><span class="p">&gt;&lt;/</span><span class="nt">th</span><span class="p">&gt;&lt;</span><span class="nt">td</span><span class="p">&gt;&lt;</span><span class="nt">input</span> <span class="na">type</span><span class="o">=</span><span class="s">"password"</span> <span class="na">name</span><span class="o">=</span><span class="s">"password"</span> <span class="na">maxlength</span><span class="o">=</span><span class="s">"256"</span> <span class="na">required</span> <span class="na">id</span><span class="o">=</span><span class="s">"id_password"</span><span class="p">&gt;&lt;/</span><span class="nt">td</span><span class="p">&gt;&lt;/</span><span class="nt">tr</span><span class="p">&gt;</span> 
+</pre>
+ </div> 
+ <p>这看起来好像一个<code>&lt;table&gt;</code>标签啊？没错，就是<code>&lt;table&gt;</code>标签，而且是不带<code>&lt;table&gt;&lt;/table&gt;</code>的，捂脸！</p> 
+ <p>实际上除了通过<code>{{ login_form }}</code>简单地将表单渲染到HTML页面中了，还有下面几种方式：</p> 
+ <ul> 
+  <li><code>{{ login_form.as_table }}</code> 将表单渲染成一个表格元素，每个输入框作为一个<code>&lt;tr&gt;</code>标签</li> 
+  <li><code>{{ login_form.as_p }}</code> 将表单的每个输入框包裹在一个<code>&lt;p&gt;</code>标签内</li> 
+  <li><code>{{ login_form.as_ul }}</code> 将表单渲染成一个列表元素，每个输入框作为一个<code>&lt;li&gt;</code>标签</li> 
+ </ul> 
+ <p>注意：上面的渲染方法中都要自己手动编写<code>&lt;table&gt;</code>或者<code>&lt;ul&gt;</code>标签。</p> 
+ <p>重新启动服务器，刷新页面，如下图所示：</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/109-1.png"></p> 
+ <h2>四、手动渲染表单字段</h2> 
+ <p>直接<code>{{ login_form }}</code>虽然好，啥都不用操心，但是界面真的很丑，并且我们先前使用的Bootstraps4都没了。因为这些都需要对表单内的input元素进行额外控制，那怎么办呢？手动渲染字段就可以了！</p> 
+ <p>可以通过<code>{{ login_form.name_of_field }}</code>获取每一个字段，然后分别渲染，如下例所示：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"form-group"</span><span class="p">&gt;</span>
+  {{ login_form.username.label_tag }}
+  {{ login_form.username}}
+<span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"form-group"</span><span class="p">&gt;</span>
+  {{ login_form.password.label_tag }}
+  {{ login_form.password }}
+<span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+</pre>
+ </div> 
+ <p>其中的label标签可以用<code>label_tag</code>方法来生成。这样子更加灵活了,但是灵活的代价就是我们要写更多的代码，又偏向原生的HTML代码多了一点。</p> 
+ <p>但是问题又...又...又来了！刷新登录页面，却是下图的样子：</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/109-2.png"></p> 
+ <p>好像Bootstrap4没有生效呀！仔细查看最终生成的页面源码，你会发现，input元素里少了<code>form-control</code>的class，以及placeholder和autofocus，这可咋办？</p> 
+ <p>在form类里添加attr属性即可，如下所示修改<code>login/forms.py</code></p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django</span> <span class="kn">import</span> <span class="n">forms</span>
+
+
+<span class="k">class</span> <span class="nc">UserForm</span><span class="p">(</span><span class="n">forms</span><span class="o">.</span><span class="n">Form</span><span class="p">):</span>
+    <span class="n">username</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">"用户名"</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span> <span class="n">widget</span><span class="o">=</span><span class="n">forms</span><span class="o">.</span><span class="n">TextInput</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s1">'class'</span><span class="p">:</span> <span class="s1">'form-control'</span><span class="p">,</span> <span class="s1">'placeholder'</span><span class="p">:</span> <span class="s2">"Username"</span><span class="p">,</span><span class="s1">'autofocus'</span><span class="p">:</span> <span class="s1">''</span><span class="p">}))</span>
+    <span class="n">password</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">"密码"</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span> <span class="n">widget</span><span class="o">=</span><span class="n">forms</span><span class="o">.</span><span class="n">PasswordInput</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s1">'class'</span><span class="p">:</span> <span class="s1">'form-control'</span><span class="p">,</span><span class="s1">'placeholder'</span><span class="p">:</span> <span class="s2">"Password"</span><span class="p">}))</span>
+</pre>
+ </div> 
+ <p>再次刷新页面，我们熟悉的Bootstrap4框架UI又回来了！</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/109-3.png"></p> 
+ <p>实际上，Django针对<code>{{ login_form }}</code>表单，提供了很多灵活的模板语法，可以循环，可以取值，可以针对可见和不可见的部分单独控制，详细内容可以参考教程前面的章节。</p> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/108"> <i class="fa fa-arrow-left"></i>&nbsp;6. 登录视图</a> 
+  <a class="float-right" href="/course/django/110"> 8. 图片验证码&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 36</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/109">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva1.sinaimg.cn/crop.0.0.180.180.50/59bd64d7jw1e8qgp5bmzyj2050050aa8.jpg?KID=imgbed,tva&amp;Expires=1585481095&amp;ssig=Bc3M6W%2BwBF" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>不太喜欢Django提供的form</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 定期换名字啦啦 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年3月29日 17:03</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1988">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif?KID=imgbed,tva&amp;Expires=1572359705&amp;ssig=XcQOYkzdqQ" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>二、修改视图 使用了Django的表单后，就要在视图中进行相应的修改： # login/views.py from django.shortcuts import render from django.shortcuts import redirect from . import models from . import forms # Create your views here. def index(request): pass return render(request, 'login/index.html') def login(request): if request.method == 'POST': login_form = forms.UserForm(request.POST) message = '请检查填写的内容！' if login_form.is_valid(): ###这的is_valid是属性还是方法呀，有括号会报错的，去掉括号就正常。 username = login_form.cleaned_data.get('username') password = login_form.cleaned_data.get('password')</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户6155916027 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年10月29日 19:38</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1681">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif?KID=imgbed,tva&amp;Expires=1572359705&amp;ssig=XcQOYkzdqQ" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>遇到报错“'login_form' object has no attribute 'cleaned_data'”，就去掉原文 if login_form.is_valid():的括号就好了。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 用户6155916027 &nbsp;&nbsp;回复&nbsp;&nbsp; 用户6155916027 </span> 
+      <em>2019年10月29日 19:45</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1682">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.0.0.751.751.50/94bdeb1fly8fyrabns1ywj20kv0kv3zd.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>刘老师，请问下，我首次今天login页面，form表单不显示，点击登录按钮后就显示了，</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 你看-天是蓝的 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年6月19日 16:10</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1409">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif?KID=imgbed,tva&amp;Expires=1584508559&amp;ssig=oCq372F1qi" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>def login(request): login_form = forms.UserForm() # userform要先实例化， if request.method == "POST": login_form = forms.UserForm(request.POST)</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 用户5973071695 &nbsp;&nbsp;回复&nbsp;&nbsp; 你看-天是蓝的 </span> 
+      <em>2020年3月18日 10:17</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1966">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.512.512.50/006CsP2fly8g0iesi26dqj30e80e8dg1.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>两个label ：用户名和密码没有显示，不知道为啥？？？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 熊宝QQ6065167127 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年5月15日 09:43</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1333">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.1080.1080.50/005XW4cljw8eq332r08hqj30u00u010z.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>按照上面的代码修改了完后，不显示用户名，密码的输入框啊，应该是表单传输失败了，有解决了的吗？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户5466307149 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年4月2日 16:30</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1210">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva4.sinaimg.cn/crop.0.0.996.996.50/0067EgkHjw8f9kh359497j30ro0rptao.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我也是额 你解决了吗</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 用户5609827251 &nbsp;&nbsp;回复&nbsp;&nbsp; 用户5466307149 </span> 
+      <em>2019年5月5日 00:13</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1309">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva4.sinaimg.cn/crop.0.0.996.996.50/0067EgkHjw8f9kh359497j30ro0rptao.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>是在 return中 少了一个 local()</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 用户5609827251 &nbsp;&nbsp;回复&nbsp;&nbsp; 用户5609827251 </span> 
+      <em>2019年5月5日 00:22</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1310">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax4.sinaimg.cn/crop.0.0.640.640.50/006QcvObly8fpxkkxvqoqj30hs0hs756.jpg?KID=imgbed,tva&amp;Expires=1585140568&amp;ssig=3U6QSGiRgb" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>请问你怎么解决的呀</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 凯拉的猫 &nbsp;&nbsp;回复&nbsp;&nbsp; 用户5466307149 </span> 
+      <em>2020年3月25日 17:53</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1978">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva3.sinaimg.cn/crop.41.24.186.186.50/ee34327fjw8enwjlxadtoj207p09b3zc.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>步骤到这里，登录功能不行了，点击登录，就单纯刷新而已，页面上一直提示那个message消息：请检查填写的内容！。。。。没有跳转到首页，见了鬼了，到底是怎么回事 @csrf_exempt def login(request): if request.session.get('is_login', None): return redirect("/index/") if request.method == "POST": login_form = forms.UserForm(request.POST) message = "请检查填写的内容！" if login_form.is_valid(): username = login_form.cleaned_data['username'] password = login_form.cleaned_data['password'] try: user = User.objects.get(name=username) if user.password == password: request.session['is_login'] = True request.session['user_id'] = user.id request.session['user_name'] = user.name return redirect('/index/') else: message = "密码不正确！" except: message = "用户不存在！" return render(request, 'main/login.html', locals()) login_form = forms.UserForm() return render(request, 'main/login.html', locals()) ----------------------------------------- &lt;form class='form-login' action="/login/" method="post"&gt; {% if message %} &lt;div class="alert alert-warning"&gt;{{ message }}&lt;/div&gt; {% endif %} {% csrf_token %} &lt;h2 class="text-center"&gt;欢迎登录&lt;/h2&gt; {# &lt;div class="form-group"&gt;#} {# &lt;label for="id_username"&gt;用户名：&lt;/label&gt;#} {# &lt;input type="text" name='username' class="form-control" id="id_username" placeholder="Username" autofocus required&gt;#} {# &lt;/div&gt;#} {# &lt;div class="form-group"&gt;#} {# &lt;label for="id_password"&gt;密码：&lt;/label&gt;#} {# &lt;input type="password" name='password' class="form-control" id="id_password" placeholder="Password" required&gt;#} {# &lt;/div&gt;#} &lt;div class="form-group"&gt; {{ login_form.username.label_tag }} {{ login_form.username}} &lt;/div&gt; &lt;div class="form-group"&gt; {{ login_form.password.label_tag }} {{ login_form.password }} &lt;/div&gt; {# &lt;div class="form-group"&gt;#} {# {{ login_form.captcha.errors }}#} {# {{ login_form.captcha.label_tag }}#} {# {{ login_form.captcha }}#} {# &lt;/div&gt;#} &lt;button type="reset" class="btn btn-default pull-left"&gt;重置&lt;/button&gt; &lt;button type="submit" class="btn btn-primary pull-right"&gt;提交&lt;/button&gt; &lt;/form&gt; &lt;/div&gt; &lt;/div&gt; &lt;!-- /container --&gt;</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 陈镜子先生 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年3月8日 17:46</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1123">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.0.0.1125.1125.50/005zxlPQly8fr0itieo6tj30v90v9gnl.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>解决了吗 我也有这个问题</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> IvanRakitic &nbsp;&nbsp;回复&nbsp;&nbsp; 陈镜子先生 </span> 
+      <em>2019年4月13日 20:35</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1252">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>username = forms.CharField(label='用户名', max_length=128, widget=forms.TextInput(attrs={'class': 'form-control'}))； username = forms.CharField(label='用户名:', max_length=128, widget=forms.TextInput(attrs={'class': 'form-control'}))； 如果写为label='用户名',页面不会显示label，就只有输入框，用户名后面接":"，template就会有。password也是一样。 并且我的现实方式也和上一章的一样，是label和input是上下结构，不是这章的左右结构。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 真司仪 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年12月19日 18:06</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/963">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>换成Django表单后焦点没了，光标不能直接定位到username上了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; Barry1970_87683 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年12月8日 08:44</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/924">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>该问题在启动时没有报错。问题是数据没有通过验证就可以直接登陆，而且message中的提示信息也没有显示出来，推断是post的表单出了问题，但是一直没有找到到底是哪里出了问题，就算复制过来用也还是不行。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; chekenuo </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年8月23日 10:35</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/707">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>后面的程序写全就有了。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> Barry1970_87683 &nbsp;&nbsp;回复&nbsp;&nbsp; chekenuo </span> 
+      <em>2018年12月8日 08:45</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/925">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.2.0.1237.1237.50/7074e05fly8fiwh6mvd7dj20yi0yd40r.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>NameError at /login/ name 'forms' is not defined</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; parc_de </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年7月25日 15:02</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/637">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>class UserForm(forms.ModelForm): class Meta: model = User fields = ["name", "password",] labels = {"name": "用户名", "password": "密码"}</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 当太祖遇见太祖 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年7月18日 14:55</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/603">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.104.45.384.384.50/948f4af0gw1egbeqmi59yj20hs0dcdi2.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>在 login.html 文件中，用{{ login_form }} 替换了原来的// &lt;tr&gt;&lt;th&gt;&lt;label for="id_username"&gt;用户名:&lt;/label&gt;&lt;/th&gt;&lt;td&gt;&lt;input type="text" name="username" value="jack" maxlength="128" required id="id_username" /&gt;&lt;/td&gt;&lt;/tr&gt; &lt;tr&gt;&lt;th&gt;&lt;label for="id_password"&gt;密码:&lt;/label&gt;&lt;/th&gt;&lt;td&gt;&lt;input type="password" name="password" maxlength="256" required id="id_password" /&gt;&lt;/td&gt;&lt;/tr&gt;// 这两行生成填写用户名跟密码的表单后，没有内容。 也没有报错 ？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 她她她--迷人 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年7月13日 16:09</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/577">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.104.45.384.384.50/948f4af0gw1egbeqmi59yj20hs0dcdi2.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>[13/Jul/2018 15:59:48] "GET /login/ HTTP/1.1" 200 2927 [13/Jul/2018 15:59:48] "GET /static/css/login.css HTTP/1.1" 304 0 [13/Jul/2018 15:59:48] "GET /login/js/bootstrap.min.js HTTP/1.1" 200 2927</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 她她她--迷人 &nbsp;&nbsp;回复&nbsp;&nbsp; 她她她--迷人 </span> 
+      <em>2018年7月13日 16:10</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/578">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.104.45.384.384.50/948f4af0gw1egbeqmi59yj20hs0dcdi2.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>views文件中login函数返回少了一个locals（） 方法。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 她她她--迷人 &nbsp;&nbsp;回复&nbsp;&nbsp; 她她她--迷人 </span> 
+      <em>2018年7月13日 16:30</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/580">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.0.0.996.996.50/e8c16cf6ly8frqc56ezo3j20ro0ro0u3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>不知道怎么办，求老师给看一下 错误： Traceback (most recent call last): File "C:/Users/abc/PycharmProjects/demo1/books/views.py", line 6, in &lt;module&gt; from books.models import User File "C:\Users\abc\PycharmProjects\demo1\books\models.py", line 13, in &lt;module&gt; class User(models.Model): File "C:\Users\abc\AppData\Local\Programs\Python\Python36\lib\site-packages\django\db\models\base.py", line 100, in __new__ app_config = apps.get_containing_app_config(module) File "C:\Users\abc\AppData\Local\Programs\Python\Python36\lib\site-packages\django\apps\registry.py", line 244, in get_containing_app_config self.check_apps_ready() File "C:\Users\abc\AppData\Local\Programs\Python\Python36\lib\site-packages\django\apps\registry.py", line 127, in check_apps_ready raise AppRegistryNotReady("Apps aren't loaded yet.") django.core.exceptions.AppRegistryNotReady: Apps aren't loaded yet.</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 早早csz </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年6月12日 20:19</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/537">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>class UserForm(forms.Form): username = forms.CharField(label="用户名", max_length=128) password = forms.CharField(label="密码", max_length=256, widget=forms.PasswordInput) 没有 class 你的css 是以 class来加样式的</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 方便面得味道 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年3月13日 16:58</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/304">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>module 'django.forms' has no attribute 'UserForm'，是怎么回事</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户6399391019 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年3月8日 14:29</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/255">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva3.sinaimg.cn/crop.0.0.199.199.50/b4c49327gw1eef76iyxk2j205k05kjrd.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>module 'django.forms' has no attribute 'UserForm'</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 礁石hjw &nbsp;&nbsp;回复&nbsp;&nbsp; 用户6399391019 </span> 
+      <em>2018年4月12日 16:41</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/374">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>from login import forms</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 小龙虾好吃_7913 &nbsp;&nbsp;回复&nbsp;&nbsp; 礁石hjw </span> 
+      <em>2018年6月7日 18:05</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/529">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.0.0.996.996.50/e8c16cf6ly8frqc56ezo3j20ro0ro0u3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>改过还是不行，能问一下怎么解决的吗</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 早早csz &nbsp;&nbsp;回复&nbsp;&nbsp; 用户6399391019 </span> 
+      <em>2018年6月14日 16:23</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/539">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>from . import models</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> Barry1970_87683 &nbsp;&nbsp;回复&nbsp;&nbsp; 早早csz </span> 
+      <em>2018年12月8日 08:47</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/926">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我是forms.py文件名错了，错写成form.py，少了个字母s。把文件名改过来就好了。 就这个小错误，查了一下午时间也没查出来，都快崩溃了，第二天早上，仔细阅读原文，突然发现问题所在。是昨天下午太心急，没仔细阅读原文。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> ANXIN-2018 &nbsp;&nbsp;回复&nbsp;&nbsp; 用户6399391019 </span> 
+      <em>2019年5月9日 08:45</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1321">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.664.664.50/006XuMcxly8fkbv84zbcij30ig0igt95.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>像文中代码&lt;form action="/login/"... 这个/login/表示的是什么意思呢？是指URL？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; GoodMorningYY </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年2月28日 23:36</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/227">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>是的</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; GoodMorningYY </span> 
+      <em>2018年3月1日 09:08</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/228">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.0.0.996.996.50/c03258a4ly8fnp49819f8j20ro0rpgod.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>使用forms.ModelForm渲染表单元素，name字段没有被渲染。我加了其他字段，也只有password字段渲染出来，这是什么情况？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 王蕾-wl </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年2月8日 15:14</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/209">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva3.sinaimg.cn/crop.0.1.750.750.50/9167379bjw8f2wdcinwqpj20ku0kxdgj.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>用{{login_form.user.lable.tag}}的时候，lable标签的class属性也丢失了，这样只能在外链样式表里修改吗？我想在forms表单模型里修改可以吗？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; lip-on </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2017年12月15日 15:17</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/94">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.79.114.313.313.50/a33d1690jw8eqgfhcx55fj20c80fogmy.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>{{ login_form }} 贴了这个 提交和重置不好用了 不知道问题出在哪</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 氷湗de心 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2017年12月14日 14:42</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/90">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.79.114.313.313.50/a33d1690jw8eqgfhcx55fj20c80fogmy.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>找到问题了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 氷湗de心 &nbsp;&nbsp;回复&nbsp;&nbsp; 氷湗de心 </span> 
+      <em>2017年12月14日 15:36</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/91">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>在 froms 中加 calss 样式，</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 方便面得味道 &nbsp;&nbsp;回复&nbsp;&nbsp; 氷湗de心 </span> 
+      <em>2018年3月13日 16:56</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/303">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

@@ -1,0 +1,256 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>路由转发</h1> 
+ <small>阅读:&nbsp;26869&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：5 </small> 
+ <hr> 
+ <h2>一、路由转发</h2> 
+ <p>通常，我们会在每个app里，各自创建一个urls.py路由模块，然后从根路由出发，将app所属的url请求，全部转发到相应的urls.py模块中。</p> 
+ <p>例如，下面是Django网站本身的URLconf节选。 它包含许多其它URLconf：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">include</span><span class="p">,</span> <span class="n">path</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="c1"># ... 省略...</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'community/'</span><span class="p">,</span> <span class="n">include</span><span class="p">(</span><span class="s1">'aggregator.urls'</span><span class="p">)),</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'contact/'</span><span class="p">,</span> <span class="n">include</span><span class="p">(</span><span class="s1">'contact.urls'</span><span class="p">)),</span>
+    <span class="c1"># ... 省略 ...</span>
+<span class="p">]</span>
+</pre>
+ </div> 
+ <p>路由转发使用的是include()方法，需要提前导入，它的参数是转发目的地路径的字符串，路径以圆点分割。</p> 
+ <p>每当Django 遇到<code>include()</code>时，它会去掉URL中匹配的部分并将剩下的字符串发送给include的URLconf做进一步处理，也就是转发到二级路由去。</p> 
+ <p>另外一种转发其它URL模式的方式是使用一个path()实例的列表。 例如，下面的URLconf：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">include</span><span class="p">,</span> <span class="n">path</span>
+
+<span class="kn">from</span> <span class="nn">apps.main</span> <span class="kn">import</span> <span class="n">views</span> <span class="k">as</span> <span class="n">main_views</span>
+<span class="kn">from</span> <span class="nn">credit</span> <span class="kn">import</span> <span class="n">views</span> <span class="k">as</span> <span class="n">credit_views</span>
+
+<span class="n">extra_patterns</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'reports/'</span><span class="p">,</span> <span class="n">credit_views</span><span class="o">.</span><span class="n">report</span><span class="p">),</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'reports/&lt;int:id&gt;/'</span><span class="p">,</span> <span class="n">credit_views</span><span class="o">.</span><span class="n">report</span><span class="p">),</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'charge/'</span><span class="p">,</span> <span class="n">credit_views</span><span class="o">.</span><span class="n">charge</span><span class="p">),</span>
+<span class="p">]</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">''</span><span class="p">,</span> <span class="n">main_views</span><span class="o">.</span><span class="n">homepage</span><span class="p">),</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'help/'</span><span class="p">,</span> <span class="n">include</span><span class="p">(</span><span class="s1">'apps.help.urls'</span><span class="p">)),</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'credit/'</span><span class="p">,</span> <span class="n">include</span><span class="p">(</span><span class="n">extra_patterns</span><span class="p">)),</span>
+<span class="p">]</span>
+</pre>
+ </div> 
+ <p>在此示例中，<code>/credit/reports/</code>URL将由<code>credit_views.report()</code>视图处理。这种做法，相当于把二级路由模块内的代码写到根路由模块里一起了，不是很推荐。</p> 
+ <p>再看下面的URLconf：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">path</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">views</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'&lt;page_slug&gt;-&lt;page_id&gt;/history/'</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">history</span><span class="p">),</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'&lt;page_slug&gt;-&lt;page_id&gt;/edit/'</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">edit</span><span class="p">),</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'&lt;page_slug&gt;-&lt;page_id&gt;/discuss/'</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">discuss</span><span class="p">),</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'&lt;page_slug&gt;-&lt;page_id&gt;/permissions/'</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">permissions</span><span class="p">),</span>
+<span class="p">]</span>
+</pre>
+ </div> 
+ <p>上面的路由写得不好，我们可以改进它，只需要声明共同的路径前缀一次，并将后面的部分分组转发：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">include</span><span class="p">,</span> <span class="n">path</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">views</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'&lt;page_slug&gt;-&lt;page_id&gt;/'</span><span class="p">,</span> <span class="n">include</span><span class="p">([</span>
+        <span class="n">path</span><span class="p">(</span><span class="s1">'history/'</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">history</span><span class="p">),</span>
+        <span class="n">path</span><span class="p">(</span><span class="s1">'edit/'</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">edit</span><span class="p">),</span>
+        <span class="n">path</span><span class="p">(</span><span class="s1">'discuss/'</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">discuss</span><span class="p">),</span>
+        <span class="n">path</span><span class="p">(</span><span class="s1">'permissions/'</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">permissions</span><span class="p">),</span>
+    <span class="p">])),</span>
+<span class="p">]</span>
+</pre>
+ </div> 
+ <p>这样就优雅多了，也清爽多了，但前提是你要理解这种做法。</p> 
+ <h2>二、捕获参数</h2> 
+ <p>目的地URLconf会收到来自父URLconf捕获的所有参数，看下面的例子：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="c1"># In settings/urls/main.py</span>
+<span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">include</span><span class="p">,</span> <span class="n">path</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'&lt;username&gt;/blog/'</span><span class="p">,</span> <span class="n">include</span><span class="p">(</span><span class="s1">'foo.urls.blog'</span><span class="p">)),</span>
+<span class="p">]</span>
+
+<span class="c1"># In foo/urls/blog.py</span>
+<span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">path</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">views</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">''</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">blog</span><span class="o">.</span><span class="n">index</span><span class="p">),</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'archive/'</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">blog</span><span class="o">.</span><span class="n">archive</span><span class="p">),</span>
+<span class="p">]</span>
+</pre>
+ </div> 
+ <p>在上面的例子中，捕获的"username"变量将被传递给include()指向的URLconf，再进一步传递给对应的视图。</p> 
+ <h2>三、向视图传递额外的参数</h2> 
+ <p>URLconfs具有一个钩子（hook），允许你传递一个Python字典作为额外的关键字参数给视图函数，像下面这样：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">path</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">views</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'blog/&lt;int:year&gt;/'</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">year_archive</span><span class="p">,</span> <span class="p">{</span><span class="s1">'foo'</span><span class="p">:</span> <span class="s1">'bar'</span><span class="p">}),</span>
+<span class="p">]</span>
+</pre>
+ </div> 
+ <p>在上面的例子中，对于<code>/blog/2005/</code>请求，Django将调<code>用views.year_archive(request, year='2005', foo='bar')</code>。理论上，你可以在这个字典里传递任何你想要的传递的东西。但是要注意，URL模式捕获的命名关键字参数和在字典中传递的额外参数有可能具有相同的名称，这会发生冲突，要避免。 </p> 
+ <h2>四、传递额外的参数给include()</h2> 
+ <p>类似上面，也可以传递额外的参数给include()。参数会传递给include指向的urlconf中的每一行。</p> 
+ <p>例如，下面两种URLconf配置方式在功能上完全相同：</p> 
+ <p>配置一：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="c1"># main.py</span>
+<span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">include</span><span class="p">,</span> <span class="n">path</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'blog/'</span><span class="p">,</span> <span class="n">include</span><span class="p">(</span><span class="s1">'inner'</span><span class="p">),</span> <span class="p">{</span><span class="s1">'blog_id'</span><span class="p">:</span> <span class="mi">3</span><span class="p">}),</span>
+<span class="p">]</span>
+
+<span class="c1"># inner.py</span>
+<span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">path</span>
+<span class="kn">from</span> <span class="nn">mysite</span> <span class="kn">import</span> <span class="n">views</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'archive/'</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">archive</span><span class="p">),</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'about/'</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">about</span><span class="p">),</span>
+<span class="p">]</span>
+</pre>
+ </div> 
+ <p>配置二：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="c1"># main.py</span>
+<span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">include</span><span class="p">,</span> <span class="n">path</span>
+<span class="kn">from</span> <span class="nn">mysite</span> <span class="kn">import</span> <span class="n">views</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'blog/'</span><span class="p">,</span> <span class="n">include</span><span class="p">(</span><span class="s1">'inner'</span><span class="p">)),</span>
+<span class="p">]</span>
+
+<span class="c1"># inner.py</span>
+<span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">path</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'archive/'</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">archive</span><span class="p">,</span> <span class="p">{</span><span class="s1">'blog_id'</span><span class="p">:</span> <span class="mi">3</span><span class="p">}),</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'about/'</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">about</span><span class="p">,</span> <span class="p">{</span><span class="s1">'blog_id'</span><span class="p">:</span> <span class="mi">3</span><span class="p">}),</span>
+<span class="p">]</span>
+</pre>
+ </div> 
+ <p>注意，只有当你确定被include的URLconf中的每个视图都接收你传递给它们的额外的参数时才有意义，否则其中一个以上视图不接收该参数都将导致错误异常。</p> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/134"> <i class="fa fa-arrow-left"></i>&nbsp;URL路由基础</a> 
+  <a class="float-right" href="/course/django/136"> 反向解析和命名空间&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 5</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/135">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif?KID=imgbed,tva&amp;Expires=1594913554&amp;ssig=Ut%2B60uUVVG" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>路由转发能从一个APP转到另一个APP吗？比如我自己新建了一个question的APP，在login APP后，登录后，我想转到question中去怎么实现呢</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户4902705245 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年7月16日 21:54</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2139">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1595566769&amp;ssig=qVeSsp06gY" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>直接url跳转</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 用户4902705245 </span> 
+      <em>2020年7月24日 10:08</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2156">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.180.180.50/67179639jw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>urlconf只有一级的匹配, 细化分发到view的参数,由查询字符串获得(request.GET.get(xx) / request.POST.get(xx) ), 配置更灵活,而且保护了网站的逻辑结构. 刘大大,怎么看呢?</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 孤竹孙 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年5月5日 19:23</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/443">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.996.996.50/006EOKhYly8fhshcco7p6j30ro0romya.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>老师 这个怎么理解啊？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; WEI丶weiksjsks </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年1月31日 20:18</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/176">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>在本节的例子中，它本身的含义并不重要。重要的是通过include将类似额一组url打包在了一起。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; WEI丶weiksjsks </span> 
+      <em>2018年1月31日 22:37</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/179">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

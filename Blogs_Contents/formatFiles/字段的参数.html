@@ -1,0 +1,238 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>字段的参数</h1> 
+ <small>阅读:&nbsp;47444&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：4 </small> 
+ <hr> 
+ <p>所有的模型字段都可以接收一定数量的参数，比如CharField至少需要一个max_length参数。下面的这些参数是所有字段都可以使用的，并且是可选的。</p> 
+ <h3>null</h3> 
+ <p>该值为True时，Django在数据库用NULL保存空值。默认值为False。对于保存字符串类型数据的字段，请尽量避免将此参数设为True，那样会导致两种‘没有数据’的情况，一种是NULL，另一种是‘空字符串’。</p> 
+ <h3>blank</h3> 
+ <p>True时，字段可以为空。默认False。和null参数不同的是，null是纯数据库层面的，而blank是验证相关的，它与表单验证是否允许输入框内为空有关，与数据库无关。所以要小心一个null为False，blank为True的字段接收到一个空值可能会出bug或异常。</p> 
+ <h3>choices</h3> 
+ <p>用于页面上的选择框标签，需要先提供一个二维的二元元组，第一个元素表示存在数据库内真实的值，第二个表示页面上显示的具体内容。在浏览器页面上将显示第二个元素的值。例如：</p> 
+ <div class="codehilite">
+  <pre><span></span>    YEAR_IN_SCHOOL_CHOICES = (
+        ('FR', 'Freshman'),
+        ('SO', 'Sophomore'),
+        ('JR', 'Junior'),
+        ('SR', 'Senior'),
+        ('GR', 'Graduate'),
+    )
+</pre>
+ </div> 
+ <p>一般来说，最好将选项定义在类里，并取一个直观的名字，如下所示：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
+
+<span class="k">class</span> <span class="nc">Student</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">FRESHMAN</span> <span class="o">=</span> <span class="s1">'FR'</span>
+    <span class="n">SOPHOMORE</span> <span class="o">=</span> <span class="s1">'SO'</span>
+    <span class="n">JUNIOR</span> <span class="o">=</span> <span class="s1">'JR'</span>
+    <span class="n">SENIOR</span> <span class="o">=</span> <span class="s1">'SR'</span>
+    <span class="n">YEAR_IN_SCHOOL_CHOICES</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="p">(</span><span class="n">FRESHMAN</span><span class="p">,</span> <span class="s1">'Freshman'</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">SOPHOMORE</span><span class="p">,</span> <span class="s1">'Sophomore'</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">JUNIOR</span><span class="p">,</span> <span class="s1">'Junior'</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">SENIOR</span><span class="p">,</span> <span class="s1">'Senior'</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">year_in_school</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
+        <span class="n">max_length</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="n">choices</span><span class="o">=</span><span class="n">YEAR_IN_SCHOOL_CHOICES</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="n">FRESHMAN</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">is_upperclass</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">year_in_school</span> <span class="ow">in</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">JUNIOR</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">SENIOR</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>要获取一个choices的第二元素的值，可以使用<code>get_FOO_display()</code>方法，其中的FOO用字段名代替。对于下面的例子：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
+
+<span class="k">class</span> <span class="nc">Person</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">SHIRT_SIZES</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="p">(</span><span class="s1">'S'</span><span class="p">,</span> <span class="s1">'Small'</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">'M'</span><span class="p">,</span> <span class="s1">'Medium'</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">'L'</span><span class="p">,</span> <span class="s1">'Large'</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">60</span><span class="p">)</span>
+    <span class="n">shirt_size</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="n">SHIRT_SIZES</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>使用方法：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; p = Person(name="Fred Flintstone", shirt_size="L")
+&gt;&gt;&gt; p.save()
+&gt;&gt;&gt; p.shirt_size
+'L'
+&gt;&gt;&gt; p.get_shirt_size_display()
+'Large'
+</pre>
+ </div> 
+ <h3>db_column</h3> 
+ <p>该参数用于定义当前字段在数据表内的列名。如果未指定，Django将使用字段名作为列名。</p> 
+ <h3>db_index</h3> 
+ <p>该参数接收布尔值。如果为True，数据库将为该字段创建索引。</p> 
+ <h3>db_tablespace</h3> 
+ <p>用于字段索引的数据库表空间的名字，前提是当前字段设置了索引。默认值为工程的<code>DEFAULT_INDEX_TABLESPACE</code>设置。如果使用的数据库不支持表空间，该参数会被忽略。</p> 
+ <h3>default</h3> 
+ <p>字段的默认值，可以是值或者一个可调用对象。如果是可调用对象，那么每次创建新对象时都会调用。设置的默认值不能是一个可变对象，比如列表、集合等等。lambda匿名函数也不可用于default的调用对象，因为匿名函数不能被migrations序列化。</p> 
+ <p>注意：在某种原因不明的情况下将default设置为None，可能会引发<code>intergyerror：not null constraint failed</code>，即非空约束失败异常，导致<code>python manage.py migrate</code>失败，此时可将None改为False或其它的值，只要不是None就行。</p> 
+ <h3>editable</h3> 
+ <p>如果设为False，那么当前字段将不会在admin后台或者其它的ModelForm表单中显示，同时还会被模型验证功能跳过。参数默认值为True。</p> 
+ <h3>error_messages</h3> 
+ <p>用于自定义错误信息。参数接收字典类型的值。字典的键可以是<code>null</code>、 <code>blank</code>、 <code>invalid</code>、 <code>invalid_choice</code>、 <code>unique</code>和<code>unique_for_date</code>其中的一个。</p> 
+ <h3>help_text</h3> 
+ <p>额外显示在表单部件上的帮助文本。使用时请注意转义为纯文本，防止脚本攻击。</p> 
+ <h3>primary_key</h3> 
+ <p>如果你没有给模型的任何字段设置这个参数为True，Django将自动创建一个AutoField自增字段，名为‘id’，并设置为主键。也就是<code>id = models.AutoField(primary_key=True)</code>。</p> 
+ <p>如果你为某个字段设置了primary_key=True，则当前字段变为主键，并关闭Django自动生成id主键的功能。</p> 
+ <p><strong><code>primary_key=True</code>隐含<code>null=False</code>和<code>unique=True</code>的意思。一个模型中只能有一个主键字段！</strong> </p> 
+ <p>另外，主键字段不可修改，如果你给某个对象的主键赋个新值实际上是创建一个新对象，并不会修改原来的对象。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
+<span class="k">class</span> <span class="nc">Fruit</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="c1">###############    </span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">fruit</span> <span class="o">=</span> <span class="n">Fruit</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">'Apple'</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">fruit</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">'Pear'</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">fruit</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Fruit</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">values_list</span><span class="p">(</span><span class="s1">'name'</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="p">[</span><span class="s1">'Apple'</span><span class="p">,</span> <span class="s1">'Pear'</span><span class="p">]</span>
+</pre>
+ </div> 
+ <h3>unique</h3> 
+ <p>设为True时，在整个数据表内该字段的数据不可重复。</p> 
+ <p>注意：对于ManyToManyField和OneToOneField关系类型，该参数无效。</p> 
+ <p>注意： 当unique=True时，db_index参数无须设置，因为unqiue隐含了索引。</p> 
+ <p>注意：自1.11版本后，unique参数可以用于FileField字段。</p> 
+ <h3>unique_for_date</h3> 
+ <p>日期唯一。可能不太好理解。举个栗子，如果你有一个名叫title的字段，并设置了参数<code>unique_for_date="pub_date"</code>，那么Django将不允许有两个模型对象具备同样的title和pub_date。有点类似联合约束。</p> 
+ <h3>unique_for_month</h3> 
+ <p>同上，只是月份唯一。</p> 
+ <h3>unique_for_year</h3> 
+ <p>同上，只是年份唯一。</p> 
+ <h3>verbose_name</h3> 
+ <p>为字段设置一个人类可读，更加直观的别名。</p> 
+ <p>对于每一个字段类型，除了<code>ForeignKey</code>、<code>ManyToManyField</code>和<code>OneToOneField</code>这三个特殊的关系类型，其第一可选位置参数都是<code>verbose_name</code>。如果没指定这个参数，Django会利用字段的属性名自动创建它，并将下划线转换为空格。</p> 
+ <p>下面这个例子的<code>verbose name</code>是"person’s first name":</p> 
+ <div class="codehilite">
+  <pre><span></span>first_name = models.CharField("person's first name", max_length=30)
+</pre>
+ </div> 
+ <p>下面这个例子的<code>verbose name</code>是"first name":</p> 
+ <div class="codehilite">
+  <pre><span></span>first_name = models.CharField(max_length=30)
+</pre>
+ </div> 
+ <p>对于外键、多对多和一对一字字段，由于第一个参数需要用来指定关联的模型，因此必须用关键字参数<code>verbose_name</code>来明确指定。如下：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="n">poll</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+    <span class="n">Poll</span><span class="p">,</span>
+    <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">,</span>
+    <span class="n">verbose_name</span><span class="o">=</span><span class="s2">"the related poll"</span><span class="p">,</span>
+    <span class="p">)</span>
+<span class="n">sites</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span><span class="n">Site</span><span class="p">,</span> <span class="n">verbose_name</span><span class="o">=</span><span class="s2">"list of sites"</span><span class="p">)</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">OneToOneField</span><span class="p">(</span>
+    <span class="n">Place</span><span class="p">,</span>
+    <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">,</span>
+    <span class="n">verbose_name</span><span class="o">=</span><span class="s2">"related place"</span><span class="p">,</span>
+<span class="p">)</span>
+</pre>
+ </div> 
+ <p>另外，你无须大写<code>verbose_name</code>的首字母，Django自动为你完成这一工作。</p> 
+ <h3>validators</h3> 
+ <p>运行在该字段上的验证器的列表。</p> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/96"> <i class="fa fa-arrow-left"></i>&nbsp;关系类型字段</a> 
+  <a class="float-right" href="/course/django/98"> 多对多中间表详解&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 4</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/97">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva3.sinaimg.cn/crop.115.2.313.313.50/64b09935tw1e9bv1s3iedj20bx08taar.jpg?KID=imgbed,tva&amp;Expires=1576940346&amp;ssig=nadI3d27xq" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>shirt_size = models.CharField(max_length=1, choices=SHIRT_SIZES) 似乎通不过，应该加上默认值，如下： shirt_size = models.CharField(max_length=1, choices=SHIRT_SIZES,default='L') 不知道我说的对不对。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 京华秋雨 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年12月21日 19:59</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1775">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1577334347&amp;ssig=QyjwpbGyW9" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>在django3.0上测试了一下，没有default也是可以的，去官网看了一下，也没有强调必须要有这个default参数。 但是为choices提供一个default值是比较好的做法，我一般都会提供。 事实上，作为经验之谈，为一切字段考虑blank、null、default等参数的设定，是防止以后数据库翻车的良好习惯。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 京华秋雨 </span> 
+      <em>2019年12月26日 10:01</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1791">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.180.180.50/67179639jw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>最后一段 validators,感觉是开发中比较重要的一环呢, 按需求自定义验证器,望刘大大阐释一下机理啊~~!</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 孤竹孙 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年5月5日 11:32</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/436">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.0.0.996.996.50/006xIWURly8gehjmghiqfj30ro0roq53.jpg?KID=imgbed,tva&amp;Expires=1591289035&amp;ssig=NX%2BU5OBrH%2F" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>赞同</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 蔷薇-Nina &nbsp;&nbsp;回复&nbsp;&nbsp; 孤竹孙 </span> 
+      <em>2020年6月6日 20:53</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2101">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

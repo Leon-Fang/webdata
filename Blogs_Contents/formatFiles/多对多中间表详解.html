@@ -1,0 +1,531 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>多对多中间表详解</h1> 
+ <small>阅读:&nbsp;47373&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：20 </small> 
+ <hr> 
+ <p>我们都知道对于ManyToMany字段，Django采用的是第三张中间表的方式。通过这第三张表，来关联ManyToMany的双方。下面我们根据一个具体的例子，详细解说中间表的使用。</p> 
+ <h2>一、默认中间表</h2> 
+ <p>首先，模型是这样的：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="k">class</span> <span class="nc">Person</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">128</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
+
+
+<span class="k">class</span> <span class="nc">Group</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">128</span><span class="p">)</span>
+    <span class="n">members</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span><span class="n">Person</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
+</pre>
+ </div> 
+ <p>在Group模型中，通过members字段，以ManyToMany方式与Person模型建立了关系。</p> 
+ <p>让我们到数据库内看一下实际的内容，Django为我们创建了三张数据表，其中的app1是应用名。</p> 
+ <p><img alt="image.png-6.4kB" src="http://static.zybuluo.com/feixuelove1009/ce9q6hq63vz6769bg5qe85id/image.png"></p> 
+ <p>然后我在数据库中添加了下面的Person对象：</p> 
+ <p><img alt="image.png-16.7kB" src="http://static.zybuluo.com/feixuelove1009/ygwped2iv1l14jm1mlz3otsd/image.png"></p> 
+ <p>再添加下面的Group对象：</p> 
+ <p><img alt="image.png-13.9kB" src="http://static.zybuluo.com/feixuelove1009/9dhr7a33ixgyl8qimq5reyth/image.png"></p> 
+ <p>让我们来看看，中间表是个什么样子的：</p> 
+ <p><img alt="image.png-23.7kB" src="http://static.zybuluo.com/feixuelove1009/s02nszzgk1h824gg32qg7zok/image.png"></p> 
+ <p>首先有一列id，这是Django默认添加的，没什么好说的。然后是Group和Person的id列，这是默认情况下，Django关联两张表的方式。如果你要设置关联的列，可以使用to_field参数。</p> 
+ <p>可见在中间表中，并不是将两张表的数据都保存在一起，而是通过id的关联进行映射。</p> 
+ <h2>二、自定义中间表</h2> 
+ <p>一般情况，普通的多对多已经够用，无需自己创建第三张关系表。但是某些情况可能更复杂一点，比如如果你想保存某个人加入某个分组的时间呢？想保存进组的原因呢？</p> 
+ <p>Django提供了一个<code>through</code>参数，用于指定中间模型，你可以将类似进组时间，邀请原因等其他字段放在这个中间模型内。例子如下：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
+
+<span class="k">class</span> <span class="nc">Person</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">128</span><span class="p">)</span>
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> 
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
+
+<span class="k">class</span> <span class="nc">Group</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">128</span><span class="p">)</span>
+    <span class="n">members</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span><span class="n">Person</span><span class="p">,</span> <span class="n">through</span><span class="o">=</span><span class="s1">'Membership'</span><span class="p">)</span>
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> 
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
+
+<span class="k">class</span> <span class="nc">Membership</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">person</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Person</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
+    <span class="n">group</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Group</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
+    <span class="n">date_joined</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateField</span><span class="p">()</span>        <span class="c1"># 进组时间</span>
+    <span class="n">invite_reason</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">64</span><span class="p">)</span>  <span class="c1"># 邀请原因</span>
+</pre>
+ </div> 
+ <p>在中间表中，我们至少要编写两个外键字段，分别指向关联的两个模型。在本例中就是‘Person’和‘group’。 这里，我们额外增加了‘date_joined’字段，用于保存人员进组的时间，‘invite_reason’字段用于保存邀请进组的原因。</p> 
+ <p>下面我们依然在数据库中实际查看一下（应用名为app2）：</p> 
+ <p><img alt="image.png-3.8kB" src="http://static.zybuluo.com/feixuelove1009/93oeamp9p6cybhwke0nnhtr7/image.png"></p> 
+ <p>注意中间表的名字已经变成“app2_membership”了。</p> 
+ <p><img alt="image.png-16.5kB" src="http://static.zybuluo.com/feixuelove1009/5tmg0nekzfc2gv4dteixw6ja/image.png"></p> 
+ <p><img alt="image.png-13.8kB" src="http://static.zybuluo.com/feixuelove1009/o2mr6uco7xnsyvoq0bq40m83/image.png"></p> 
+ <p>Person和Group没有变化。</p> 
+ <p><img alt="image.png-42.6kB" src="http://static.zybuluo.com/feixuelove1009/wqzlms0kni4hz91x8bxjcou3/image.png"></p> 
+ <p>但是中间表就截然不同了！它完美的保存了我们需要的内容。</p> 
+ <h2>三、使用中间表</h2> 
+ <p>针对上面的中间表，下面是一些使用例子（以欧洲著名的甲壳虫乐队成员为例）：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="o">&gt;&gt;&gt;</span> <span class="n">ringo</span> <span class="o">=</span> <span class="n">Person</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"Ringo Starr"</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">paul</span> <span class="o">=</span> <span class="n">Person</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"Paul McCartney"</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">beatles</span> <span class="o">=</span> <span class="n">Group</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"The Beatles"</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">m1</span> <span class="o">=</span> <span class="n">Membership</span><span class="p">(</span><span class="n">person</span><span class="o">=</span><span class="n">ringo</span><span class="p">,</span> <span class="n">group</span><span class="o">=</span><span class="n">beatles</span><span class="p">,</span>
+<span class="o">...</span> <span class="n">date_joined</span><span class="o">=</span><span class="n">date</span><span class="p">(</span><span class="mi">1962</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">16</span><span class="p">),</span>
+<span class="o">...</span> <span class="n">invite_reason</span><span class="o">=</span><span class="s2">"Needed a new drummer."</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">m1</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">beatles</span><span class="o">.</span><span class="n">members</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+<span class="o">&lt;</span><span class="n">QuerySet</span> <span class="p">[</span><span class="o">&lt;</span><span class="n">Person</span><span class="p">:</span> <span class="n">Ringo</span> <span class="n">Starr</span><span class="o">&gt;</span><span class="p">]</span><span class="o">&gt;</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">ringo</span><span class="o">.</span><span class="n">group_set</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+<span class="o">&lt;</span><span class="n">QuerySet</span> <span class="p">[</span><span class="o">&lt;</span><span class="n">Group</span><span class="p">:</span> <span class="n">The</span> <span class="n">Beatles</span><span class="o">&gt;</span><span class="p">]</span><span class="o">&gt;</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">m2</span> <span class="o">=</span> <span class="n">Membership</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">person</span><span class="o">=</span><span class="n">paul</span><span class="p">,</span> <span class="n">group</span><span class="o">=</span><span class="n">beatles</span><span class="p">,</span>
+<span class="o">...</span> <span class="n">date_joined</span><span class="o">=</span><span class="n">date</span><span class="p">(</span><span class="mi">1960</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+<span class="o">...</span> <span class="n">invite_reason</span><span class="o">=</span><span class="s2">"Wanted to form a band."</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">beatles</span><span class="o">.</span><span class="n">members</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+<span class="o">&lt;</span><span class="n">QuerySet</span> <span class="p">[</span><span class="o">&lt;</span><span class="n">Person</span><span class="p">:</span> <span class="n">Ringo</span> <span class="n">Starr</span><span class="o">&gt;</span><span class="p">,</span> <span class="o">&lt;</span><span class="n">Person</span><span class="p">:</span> <span class="n">Paul</span> <span class="n">McCartney</span><span class="o">&gt;</span><span class="p">]</span><span class="o">&gt;</span>
+</pre>
+ </div> 
+ <p>与普通的多对多不一样，使用自定义中间表的多对多不能使用add(), create(),remove(),和set()方法来创建、删除关系，看下面：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; # 无效
+&gt;&gt;&gt; beatles.members.add(john)
+&gt;&gt;&gt; # 无效
+&gt;&gt;&gt; beatles.members.create(name="George Harrison")
+&gt;&gt;&gt; # 无效
+&gt;&gt;&gt; beatles.members.set([john, paul, ringo, george])
+</pre>
+ </div> 
+ <p>为什么？因为上面的方法无法提供加入时间、邀请原因等中间模型需要的字段内容。唯一的办法只能是通过创建中间模型的实例来创建这种类型的多对多关联。但是，clear()方法是有效的，它能清空所有的多对多关系。</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; # 甲壳虫乐队解散了
+&gt;&gt;&gt; beatles.members.clear()
+&gt;&gt;&gt; # 删除了中间模型的对象
+&gt;&gt;&gt; Membership.objects.all()
+&lt;QuerySet []&gt;
+</pre>
+ </div> 
+ <p>一旦你通过创建中间模型实例的方法建立了多对多的关联，你立刻就可以像普通的多对多那样进行查询操作：</p> 
+ <div class="codehilite">
+  <pre><span></span># 查找组内有Paul这个人的所有的组（以Paul开头的名字）
+&gt;&gt;&gt; Group.objects.filter(members__name__startswith='Paul')
+&lt;QuerySet [&lt;Group: The Beatles&gt;]&gt;
+</pre>
+ </div> 
+ <p>可以使用中间模型的属性进行查询：</p> 
+ <div class="codehilite">
+  <pre><span></span># 查找甲壳虫乐队中加入日期在1961年1月1日之后的成员
+&gt;&gt;&gt; Person.objects.filter(
+... group__name='The Beatles',
+... membership__date_joined__gt=date(1961,1,1))
+&lt;QuerySet [&lt;Person: Ringo Starr]&gt;
+</pre>
+ </div> 
+ <p>可以像普通模型一样使用中间模型：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; ringos_membership = Membership.objects.get(group=beatles, person=ringo)
+&gt;&gt;&gt; ringos_membership.date_joined
+datetime.date(1962, 8, 16)
+&gt;&gt;&gt; ringos_membership.invite_reason
+'Needed a new drummer.'
+&gt;&gt;&gt; ringos_membership = ringo.membership_set.get(group=beatles)
+&gt;&gt;&gt; ringos_membership.date_joined
+datetime.date(1962, 8, 16)
+&gt;&gt;&gt; ringos_membership.invite_reason
+'Needed a new drummer.'
+</pre>
+ </div> 
+ <p>这一部分内容，需要结合后面的模型query，如果暂时看不懂，没有关系。</p> 
+ <hr> 
+ <p>对于中间表，有一点要注意（在前面章节已经介绍过，再次重申一下），默认情况下，中间模型只能包含一个指向源模型的外键关系，上面例子中，也就是在Membership中只能有Person和Group外键关系各一个，不能多。否则，你必须显式的通过<code>ManyToManyField.through_fields</code>参数指定关联的对象。参考下面的例子：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
+
+<span class="k">class</span> <span class="nc">Person</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">Group</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">128</span><span class="p">)</span>
+    <span class="n">members</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span>
+    <span class="n">Person</span><span class="p">,</span>
+    <span class="n">through</span><span class="o">=</span><span class="s1">'Membership'</span><span class="p">,</span>
+    <span class="n">through_fields</span><span class="o">=</span><span class="p">(</span><span class="s1">'group'</span><span class="p">,</span> <span class="s1">'person'</span><span class="p">),</span>
+    <span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">Membership</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">group</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Group</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
+    <span class="n">person</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Person</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
+    <span class="n">inviter</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+    <span class="n">Person</span><span class="p">,</span>
+    <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">,</span>
+    <span class="n">related_name</span><span class="o">=</span><span class="s2">"membership_invites"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">invite_reason</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">64</span><span class="p">)</span>
+</pre>
+ </div> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/97"> <i class="fa fa-arrow-left"></i>&nbsp;字段的参数</a> 
+  <a class="float-right" href="/course/django/99"> 模型的元数据Meta&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 20</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/98">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif?KID=imgbed,tva&amp;Expires=1594913554&amp;ssig=Ut%2B60uUVVG" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>中间表不能在admin里面看到他具体的字段吗？我试着注册后，发现在admin里，点开一个中间模型对象，就会显示访问出错诶</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户4902705245 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年7月18日 10:20</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2141">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1595566769&amp;ssig=qVeSsp06gY" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>中间表也可以查看。你再检查下自己的代码。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 用户4902705245 </span> 
+      <em>2020年7月24日 10:07</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2155">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax2.sinaimg.cn/crop.0.0.664.664.50/006cYjHely8gbx94bp6ufj30ig0igt97.jpg?KID=imgbed,tva&amp;Expires=1586457601&amp;ssig=ZOvin4iBGA" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>请问博主，数据表的可视化是在哪里看的？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; haha_071 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年4月9日 23:41</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2015">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1586851613&amp;ssig=EAgcKENHyi" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>pycharm内置的一个数据库可视化工具，一半停留在界面右边侧边栏的上部。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; haha_071 </span> 
+      <em>2020年4月14日 13:45</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2032">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.0.0.996.996.50/005KbX7ely8fpuuaetiusj30ro0ro41w.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>博主，您好！我在进行第一步“默认中间表”时遇到了一个问题，我在postgresql中为person和group添加了几个对象，但是中间表group_members并未自动生成表项，请问是什么原因啊？小白求教。。。。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; yoyorachelw </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年4月18日 14:29</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1265">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.0.0.996.996.50/005KbX7ely8fpuuaetiusj30ro0ro41w.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>是我忘记添加了。。。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> yoyorachelw &nbsp;&nbsp;回复&nbsp;&nbsp; yoyorachelw </span> 
+      <em>2019年4月18日 15:17</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1266">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>from django.db import models # Create your models here. class Person(models.Model): name = models.CharField(max_length=128) def __str__(self): return self.name class Group(models.Model): name = models.CharField(max_length=128) members = models.ManyToManyField(Person,through='Membership') def __str__(self): return self.name class Membership(models.Model): person = models.ForeignKey(Person,on_delete=models.CASCADE) group = models.ForeignKey(Group,on_delete=models.CASCADE) data_join=models.DateField() invite_reason = models.CharField(max_length=200)</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 亮亮跄跄only </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年12月17日 23:33</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/958">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>ValueError: Cannot alter field mo.Group.members into mo.Group.members - they are not compatible types (you cannot alter to or from M2M fields, or add or remove through= on M2M field s)</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 亮亮跄跄only </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年12月17日 23:26</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/957">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.100.100.50/005XOIPwjw8eorwus7su0j302s02s3yc.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>111</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 123cun1 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年11月14日 15:21</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/859">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>pycharm中有一个数据库访问工具，需要额外安装一些插件。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 123cun1 </span> 
+      <em>2018年11月15日 19:05</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/865">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.720.720.50/c1b446bbjw8eh3ipz350ej20k00k0acc.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>from datetime import date 然后下面的才能运行 m2 = Membership.objects.create(person=paul, group=beatles,date_joined=date(1960, 8, 1),invite_reason="Wanted to form a band.")</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; who抢了我的昵称 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年10月8日 17:42</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/760">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva1.sinaimg.cn/crop.60.0.279.279.50/8e6d9e12gw1eht36fd7m4j20dw07tjsj.jpg?KID=imgbed,tva&amp;Expires=1566887613&amp;ssig=%2FyKmMaoPi9" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>谢谢 我也遇到这个问题</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 小易062 &nbsp;&nbsp;回复&nbsp;&nbsp; who抢了我的昵称 </span> 
+      <em>2019年8月28日 11:42</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1601">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.996.996.50/dc82ebfcly8fo7vm6esqgj20ro0ro41n.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>ringo.membership_set.get(group=beatles) 这个是怎么实现的，明明会提示'Membership' object has no attribute 'membership_set'</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 陈翔的小丽丽 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年5月4日 13:25</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/428">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.1328.1328.50/006KZ60ily8fe8dud0coyj310w10wgrc.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>ringo应该是Person</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> UpheRainown &nbsp;&nbsp;回复&nbsp;&nbsp; 陈翔的小丽丽 </span> 
+      <em>2018年7月12日 11:26</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/568">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.0.2.1125.1125.50/006ag9fjly8fngkfmdwz8j30v90vejuq.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>请问博主，如果我的需要建立多对多关系的两个表均有几千甚至上万条数据时，该如何添加数据呢？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; Littlesoldier1996 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年3月30日 01:26</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/347">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>如果是类似excel、cvs等格式化数据，那方便得很，有现成的工具。 如果是非格式化数据，甚至不完整的数据，那就自己想办法了，最差的情况就是手工录入。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; Littlesoldier1996 </span> 
+      <em>2018年3月30日 09:14</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/348">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.0.2.1125.1125.50/006ag9fjly8fngkfmdwz8j30v90vejuq.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>博主你好，我是EXCEL格式的数据 请问应该用什么工具呢</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> Littlesoldier1996 &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2018年3月30日 17:23</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/350">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.18.375.375.50/006WUN9ngy1fjmcr4doi8j30ai0aywem.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>pip install django-import-export 了解下</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> jingwangnet &nbsp;&nbsp;回复&nbsp;&nbsp; Littlesoldier1996 </span> 
+      <em>2018年6月21日 16:39</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/541">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva4.sinaimg.cn/crop.0.0.720.720.50/e0ac1f96jw8ev2ejdhfjqj20k00k0js9.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>可能练习的比较少,有没有比较系统的django的orm的crud操作练习一下</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 无聊总是没完没了的 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年2月10日 14:18</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/213">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.29.72.151.151.50/c345a2c6jw1egex1o75ogj205c071mx9.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>这里看起来挺复杂的，不过还不算模糊，算是初识吧，看懂了，用的不熟</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 世外就是TaoYuan </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年1月17日 16:51</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/133">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

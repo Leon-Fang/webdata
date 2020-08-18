@@ -1,0 +1,1569 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>Part 3：视图和模板</h1> 
+ <small>阅读:&nbsp;117091&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：76 </small> 
+ <hr> 
+ <h2>一、概述</h2> 
+ <p>一个视图就是一个页面，通常提供特定的功能，使用特定的模板。例如：在一个博客应用中，你可能会看到下列视图：</p> 
+ <ul> 
+  <li>博客主页：显示最新发布的一些内容</li> 
+  <li>每篇博客的详细页面：博客的永久链接</li> 
+  <li>基于年的博客页面：显示指定年内的所有博客文章</li> 
+  <li>基于月的博客页面：显示指定月内的所有博客文章</li> 
+  <li>基于天的博客页面：显示指定日内的所有博客文章</li> 
+  <li>发布评论：处理针对某篇博客发布的评论</li> 
+ </ul> 
+ <p>在我们的投票应用中，我们将建立下面的视图：</p> 
+ <ul> 
+  <li>问卷“index”页：显示最新的一些问卷</li> 
+  <li>问卷“detail”页面：显示一个问卷的详细文本内容，没有调查结果但是有一个投票或调查表单。</li> 
+  <li>问卷“results”页面：显示某个问卷的投票或调查结果。</li> 
+  <li>投票动作页面：处理针对某个问卷的某个选项的投票动作。</li> 
+ </ul> 
+ <p>在Django中，网页和其它的一些内容都是通过视图来处理的。视图其实就是一个简单的Python函数（在基于类的视图中称为方法）。Django通过对比请求的URL地址来选择对应的视图。</p> 
+ <p>在你上网的过程中，很可能看见过像这样的 URL： "ME2/Sites/dirmod.asp?sid=&amp;type=gen&amp;mod=Core+Pages&amp;gid=A6CD4967199A42D9B65B1B" 。别担心，Django 里的 URL规则要比这优雅的多！</p> 
+ <p>一个 URL 模式定义了一种 URL 的基本格式，比如：<code>/newsarchive/&lt;year&gt;/&lt;month&gt;/</code>。</p> 
+ <p>为了将 URL 和视图关联起来，Django 使用了 'URLconfs' 来配置。URLconf 将 URL 模式映射到视图。</p> 
+ <h2>二、编写视图</h2> 
+ <p>下面，打开<code>polls/views.py</code>文件，输入下列代码：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="k">def</span> <span class="nf">detail</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">question_id</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="s2">"You're looking at question </span><span class="si">%s</span><span class="s2">."</span> <span class="o">%</span> <span class="n">question_id</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">results</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">question_id</span><span class="p">):</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="s2">"You're looking at the results of question </span><span class="si">%s</span><span class="s2">."</span>
+    <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="n">response</span> <span class="o">%</span> <span class="n">question_id</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">vote</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">question_id</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="s2">"You're voting on question </span><span class="si">%s</span><span class="s2">."</span> <span class="o">%</span> <span class="n">question_id</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>然后，在<code>polls/urls.py</code>文件中加入下面的url模式，将其映射到我们上面新增的视图。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">path</span>
+
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">views</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="c1"># ex: /polls/</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">''</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">'index'</span><span class="p">),</span>
+    <span class="c1"># ex: /polls/5/</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'&lt;int:question_id&gt;/'</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">detail</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">'detail'</span><span class="p">),</span>
+    <span class="c1"># ex: /polls/5/results/</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'&lt;int:question_id&gt;/results/'</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">results</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">'results'</span><span class="p">),</span>
+    <span class="c1"># ex: /polls/5/vote/</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'&lt;int:question_id&gt;/vote/'</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">vote</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">'vote'</span><span class="p">),</span>
+<span class="p">]</span>
+</pre>
+ </div> 
+ <p>现在去浏览器中访问<code>/polls/34/</code>（注意：这里省略了域名。另外，使用了二级路由后，url中都要添加字符串<code>polls</code>前缀，参考前面的章节），它将调用<code>detail()</code>函数，然后在页面中显示你在url里提供的ID。访问<code>/polls/34/results/</code>和<code>/polls/34/vote/</code>，将分别显示预定义的伪结果和投票页面。(PS:这里就不贴图了，请大家务必自己动手测试，多实践。）</p> 
+ <p>上面访问的路由过程如下：当有人访问<code>/polls/34/</code>地址时，Django将首先加载<code>mysite.urls</code>模块，因为它是settings文件里设置的根URL配置文件。在该文件里，Django发现了<code>urlpatterns</code>变量，于是在其内按顺序进行匹配。当它匹配上了<code>polls/</code>，就裁去url中匹配的文本<code>polls/</code>，然后将剩下的文本“34/”，传递给<code>polls.urls</code>进行下一步的处理。在<code>polls.urls</code>中，又匹配到了<code>&lt;int:question_id&gt;/</code>，最终结果就是调用该模式对应的detail()视图，也就是下面的函数：</p> 
+ <div class="codehilite">
+  <pre><span></span>detail(request=&lt;HttpRequest object&gt;, question_id=34)
+</pre>
+ </div> 
+ <p>函数中的<code>question_id=’34’</code>参数，是由<code>&lt;int:question_id&gt;/</code>而来。使用尖括号“捕获”这部分 URL，且以关键字参数的形式发送给视图函数。上述字符串的<code>question_id</code>部分定义了将被用于区分匹配模式的变量名，而<code>int</code>则是一个转换器决定了应该以什么变量类型匹配这部分的 URL 路径。</p> 
+ <p>没必要书写一个如下的较为愚蠢的包含<code>.html</code>的模式，它显然是没必要，不够简练的：</p> 
+ <div class="codehilite">
+  <pre><span></span>path('polls/latest.html', views.index),
+</pre>
+ </div> 
+ <h2>三、编写能实际干点活的视图</h2> 
+ <p>每个视图至少做两件事之一：返回一个包含请求页面的HttpResponse对象或者弹出一个类似Http404的异常。其它的则随你便，你爱干嘛干嘛。</p> 
+ <p>下面是一个新的index()视图，用于替代先前无用的index，它会根据发布日期显示最近的5个投票问卷。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.http</span> <span class="kn">import</span> <span class="n">HttpResponse</span>
+
+<span class="kn">from</span> <span class="nn">.models</span> <span class="kn">import</span> <span class="n">Question</span>
+
+
+<span class="k">def</span> <span class="nf">index</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="n">latest_question_list</span> <span class="o">=</span> <span class="n">Question</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s1">'-pub_date'</span><span class="p">)[:</span><span class="mi">5</span><span class="p">]</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">q</span><span class="o">.</span><span class="n">question_text</span> <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="n">latest_question_list</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+
+<span class="c1"># Leave the rest of the views (detail, results, vote) unchanged</span>
+
+<span class="c1"># 省略了那些没改动过的视图(detail, results, vote)</span>
+</pre>
+ </div> 
+ <p><strong>这里有个非常重要的问题：在当前视图中的HTML页面是硬编码的。</strong>如果你想改变页面的显示内容，就必须修改这里的Python代码。为了解决这个问题，需要使用Django提供的模板系统，解耦视图和模板之间的硬连接。</p> 
+ <p>首先，在polls目录下创建一个新的<code>templates</code>目录，Django会在它里面查找模板文件。</p> 
+ <p>项目的&nbsp;<code>TEMPLATES</code>配置项描述了 Django 如何载入和渲染模板。默认的设置文件设置了&nbsp;<code>DjangoTemplates</code>&nbsp;后端，并将&nbsp;<code>APP_DIRS</code>设置成了 True。这一选项将会让&nbsp;<code>DjangoTemplates</code>&nbsp;在每个&nbsp;<code>INSTALLED_APPS</code>&nbsp;文件夹中寻找 "templates" 子目录。这就是为什么尽管我们没有像在第二部分中那样修改 DIRS 设置，Django 也能正确找到 polls 的模板位置的原因。</p> 
+ <p>在templates目录中，再创建一个新的子目录名叫<code>polls</code>，进入该子目录，创建一个新的html文件<code>index.html</code>。换句话说，你的模板文件应该是<code>polls/templates/polls/index.html</code>。因为 Django 会寻找到对应的<code>app_directories</code> ，所以你只需要使用<code>polls/index.html</code>就可以引用到这一模板了。</p> 
+ <p><strong>模板命名空间：</strong></p> 
+ <p>你也许会想，为什么不把模板文件直接放在polls/templates目录下，而是费劲的再建个子目录polls呢?设想这么个情况，有另外一个app，它也有一个名叫index.html的文件，当Django在搜索模板时，有可能就找到它，然后退出搜索，这就命中了错误的目标，不是我们想要的结果。解决这个问题的最好办法就是在templates目录下再建立一个与app同名的子目录，将自己所属的模板都放到里面，从而达到独立命名空间的作用，不会再出现引用错误。</p> 
+ <p>现在，将下列代码写入文件<code>polls/templates/polls/index.html</code>:</p> 
+ <div class="codehilite">
+  <pre><span></span>{% if latest_question_list %}
+    <span class="p">&lt;</span><span class="nt">ul</span><span class="p">&gt;</span>
+    {% for question in latest_question_list %}
+        <span class="p">&lt;</span><span class="nt">li</span><span class="p">&gt;&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">"/polls/{{ question.id }}/"</span><span class="p">&gt;</span>{{ question.question_text }}<span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+    {% endfor %}
+    <span class="p">&lt;/</span><span class="nt">ul</span><span class="p">&gt;</span>
+{% else %}
+    <span class="p">&lt;</span><span class="nt">p</span><span class="p">&gt;</span>No polls are available.<span class="p">&lt;/</span><span class="nt">p</span><span class="p">&gt;</span>
+{% endif %}
+</pre>
+ </div> 
+ <p>同时，修改视图文件<code>polls/views.py</code>，让新的<code>index.html</code>文件生效：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.http</span> <span class="kn">import</span> <span class="n">HttpResponse</span>
+<span class="kn">from</span> <span class="nn">django.template</span> <span class="kn">import</span> <span class="n">loader</span>
+
+<span class="kn">from</span> <span class="nn">.models</span> <span class="kn">import</span> <span class="n">Question</span>
+
+
+<span class="k">def</span> <span class="nf">index</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="n">latest_question_list</span> <span class="o">=</span> <span class="n">Question</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s1">'-pub_date'</span><span class="p">)[:</span><span class="mi">5</span><span class="p">]</span>
+    <span class="n">template</span> <span class="o">=</span> <span class="n">loader</span><span class="o">.</span><span class="n">get_template</span><span class="p">(</span><span class="s1">'polls/index.html'</span><span class="p">)</span>
+    <span class="n">context</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">'latest_question_list'</span><span class="p">:</span> <span class="n">latest_question_list</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="n">template</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">request</span><span class="p">))</span>
+</pre>
+ </div> 
+ <p>上面的代码会加载<code>polls/index.html</code>文件，并传递给它一个参数。这个参数是一个字典，包含了模板变量名和Python对象之间的映射关系。</p> 
+ <p>在浏览器中通过访问<code>/polls/</code>，你可以看到一个列表，包含<code>“What’s up”</code>的问卷，以及连接到其对应详细内容页面的链接点。</p> 
+ <p>注意：如果你显示的是<code>No polls are available.</code>说明你前面没有添加Questions对象。前面的大量手动API操作你没有做。没关系，我们在admin中追加对象就可以。</p> 
+ <p><strong>快捷方式：render()</strong></p> 
+ <p>在实际运用中，加载模板、传递参数，返回HttpResponse对象是一整套再常用不过的操作了，为了节省力气，Django提供了一个快捷方式：render函数，一步到位！</p> 
+ <p>修改成下面的代码：</p> 
+ <p>polls/views.py</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.shortcuts</span> <span class="kn">import</span> <span class="n">render</span>
+
+<span class="kn">from</span> <span class="nn">.models</span> <span class="kn">import</span> <span class="n">Question</span>
+
+
+<span class="k">def</span> <span class="nf">index</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="n">latest_question_list</span> <span class="o">=</span> <span class="n">Question</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s1">'-pub_date'</span><span class="p">)[:</span><span class="mi">5</span><span class="p">]</span>
+    <span class="n">context</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'latest_question_list'</span><span class="p">:</span> <span class="n">latest_question_list</span><span class="p">}</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'polls/index.html'</span><span class="p">,</span> <span class="n">context</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>注意，我们不再需要导入&nbsp;<code>loader</code>和&nbsp;<code>HttpResponse</code>，而是从<code>django.shortcuts</code>导入了render。</p> 
+ <p>render()函数的第一个位置参数是请求对象（就是view函数的第一个参数），第二个位置参数是模板。还可以有一个可选的第三参数，一个字典，包含需要传递给模板的数据。最后render函数返回一个经过字典数据渲染过的模板封装而成的HttpResponse对象。</p> 
+ <h2>四、返回404错误</h2> 
+ <p>现在让我们来编写返回具体问卷文本内容的视图：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="c1"># polls/views.py</span>
+
+<span class="kn">from</span> <span class="nn">django.http</span> <span class="kn">import</span> <span class="n">Http404</span>
+<span class="kn">from</span> <span class="nn">django.shortcuts</span> <span class="kn">import</span> <span class="n">render</span>
+
+<span class="kn">from</span> <span class="nn">.models</span> <span class="kn">import</span> <span class="n">Question</span>
+<span class="c1"># ...</span>
+<span class="k">def</span> <span class="nf">detail</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">question_id</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">question</span> <span class="o">=</span> <span class="n">Question</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="n">question_id</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">Question</span><span class="o">.</span><span class="n">DoesNotExist</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">Http404</span><span class="p">(</span><span class="s2">"Question does not exist"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'polls/detail.html'</span><span class="p">,</span> <span class="p">{</span><span class="s1">'question'</span><span class="p">:</span> <span class="n">question</span><span class="p">})</span>
+</pre>
+ </div> 
+ <p>这里有个新知识点，如果请求的问卷ID不存在，那么会弹出一个Http404错误。</p> 
+ <p>如果你想试试上面这段代码是否正常工作的话，你可以新建<code>polls/detail.html</code>文件，暂时写入下面的代码：</p> 
+ <div class="codehilite">
+  <pre><span></span>{{ question }}
+</pre>
+ </div> 
+ <p><strong>快捷方式：get_object_or_404()</strong></p> 
+ <p>就像render函数一样，Django同样为你提供了一个偷懒的方式，替代上面的多行代码，那就是<code>get_object_or_404()</code>方法，参考下面的代码：</p> 
+ <p>polls/views.py</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.shortcuts</span> <span class="kn">import</span> <span class="n">get_object_or_404</span><span class="p">,</span> <span class="n">render</span>
+
+<span class="kn">from</span> <span class="nn">.models</span> <span class="kn">import</span> <span class="n">Question</span>
+<span class="c1"># ...</span>
+<span class="k">def</span> <span class="nf">detail</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">question_id</span><span class="p">):</span>
+    <span class="n">question</span> <span class="o">=</span> <span class="n">get_object_or_404</span><span class="p">(</span><span class="n">Question</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">question_id</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'polls/detail.html'</span><span class="p">,</span> <span class="p">{</span><span class="s1">'question'</span><span class="p">:</span> <span class="n">question</span><span class="p">})</span>
+</pre>
+ </div> 
+ <p>别说我没提醒你，和render一样，也需要从Django内置的快捷方式模块中导出<code>get_object_or_404()</code>！</p> 
+ <p><code>get_object_or_404()</code>方法将一个Django模型作为第一个位置参数，后面可以跟上任意个数的关键字参数，如果对象不存在则弹出Http404错误。</p> 
+ <p>同样，还有一个<code>get_list_or_404()</code>方法，和上面的<code>get_object_or_404()</code>类似，只不过是用来替代<code>filter()</code>函数，当查询列表为空时弹出404错误。（filter是模型API中用来过滤查询结果的函数，它的结果是一个列表集。而get则是查询一个结果的方法，和filter是一个和多个的区别！）</p> 
+ <p>为什么我们使用辅助函数<code>get_object_or_404()</code>而不是自己捕获<code>ObjectDoesNotExist</code>异常呢？还有，为什么模型 API 不直接抛出<code>ObjectDoesNotExist</code>而是抛出 <code>Http404</code>呢？因为这样做会增加模型层和视图层的耦合性。指导 Django 设计的最重要的思想之一就是要保证松散耦合。一些受控的耦合将会被包含在 <code>django.shortcuts</code> 模块中。</p> 
+ <h2>五、 使用模板系统</h2> 
+ <p>回过头去看看我们的 detail() 视图。它向模板传递了上下文变量 question 。下面是 polls/detail.html 模板里正式的代码：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="p">&lt;</span><span class="nt">h1</span><span class="p">&gt;</span>{{ question.question_text }}<span class="p">&lt;/</span><span class="nt">h1</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">ul</span><span class="p">&gt;</span>
+{% for choice in question.choice_set.all %}
+    <span class="p">&lt;</span><span class="nt">li</span><span class="p">&gt;</span>{{ choice.choice_text }}<span class="p">&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+{% endfor %}
+<span class="p">&lt;/</span><span class="nt">ul</span><span class="p">&gt;</span>
+</pre>
+ </div> 
+ <p>在模板系统中圆点<code>.</code>是万能的魔法师，你可以用它访问对象的属性。在例子<code>{{ question.question_text }}</code>中，DJango首先会在question对象中尝试查找一个字典，如果失败，则尝试查找属性，如果再失败，则尝试作为列表的索引进行查询。</p> 
+ <p>在 <code>{% for %}</code>循环中的方法调用——<code>question.choice_set.all</code>其实就是Python的代码<code>question.choice_set.all()</code>,它将返回一组可迭代的<code>Choice</code>对象，并用在<code>{% for %}</code>标签中。</p> 
+ <p>这里我们对Django模板语言有个简单的印象就好，更深入的介绍放在后面。</p> 
+ <h2>六、删除模板中硬编码的URLs</h2> 
+ <p>在<code>polls/index.html</code>文件中，还有一部分硬编码存在，也就是href里的“/polls/”部分：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="nt">&lt;li&gt;&lt;a</span> <span class="na">href=</span><span class="s">"/polls/</span><span class="cp">{{</span> <span class="nv">question.id</span> <span class="cp">}}</span><span class="s">/"</span><span class="nt">&gt;</span><span class="cp">{{</span> <span class="nv">question.question_text</span> <span class="cp">}}</span><span class="nt">&lt;/a&gt;&lt;/li&gt;</span>
+</pre>
+ </div> 
+ <p>它对于代码修改非常不利。设想如果你在urls.py文件里修改了路由表达式，那么你所有的模板中对这个url的引用都需要修改，这是无法接受的！</p> 
+ <p>我们前面给urls定义了一个name别名，可以用它来解决这个问题。具体代码如下：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="nt">&lt;li&gt;&lt;a</span> <span class="na">href=</span><span class="s">"</span><span class="cp">{%</span> <span class="k">url</span> <span class="s1">'detail'</span> <span class="nv">question.id</span> <span class="cp">%}</span><span class="s">"</span><span class="nt">&gt;</span><span class="cp">{{</span> <span class="nv">question.question_text</span> <span class="cp">}}</span><span class="nt">&lt;/a&gt;&lt;/li&gt;</span>
+</pre>
+ </div> 
+ <p>Django会在<code>polls.urls</code>文件中查找<code>name='detail'</code>的url，具体的就是下面这行：</p> 
+ <div class="codehilite">
+  <pre><span></span>path('&lt;int:question_id&gt;/', views.detail, name='detail'),
+</pre>
+ </div> 
+ <p>举个栗子，如果你想将polls的detail视图的URL更换为<code>polls/specifics/12/</code>，那么你不需要在模板中重新修改url地址了，仅仅只需要在<code>polls/urls.py</code>文件中，将对应的正则表达式改成下面这样的就行了，所有模板中对它的引用都会自动修改成新的链接：</p> 
+ <div class="codehilite">
+  <pre><span></span># 添加新的单词'specifics'
+path('specifics/&lt;int:question_id&gt;/', views.detail, name='detail'),
+</pre>
+ </div> 
+ <h2>七、URL names的命名空间</h2> 
+ <p>本教程例子中，只有一个app也就是polls，但是在现实中很显然会有5个、10个、更多的app同时存在一个项目中。Django是如何区分这些app之间的URL name呢？</p> 
+ <p>答案是使用URLconf的命名空间。在polls/urls.py文件的开头部分，添加一个<code>app_name</code>的变量来指定该应用的命名空间：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">path</span>
+
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">views</span>
+
+<span class="n">app_name</span> <span class="o">=</span> <span class="s1">'polls'</span>
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">''</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">'index'</span><span class="p">),</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'&lt;int:question_id&gt;/'</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">detail</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">'detail'</span><span class="p">),</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'&lt;int:question_id&gt;/results/'</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">results</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">'results'</span><span class="p">),</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'&lt;int:question_id&gt;/vote/'</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">vote</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">'vote'</span><span class="p">),</span>
+<span class="p">]</span>
+</pre>
+ </div> 
+ <p>现在，让我们将代码修改得更严谨一点，将<code>polls/templates/polls/index.html</code>中的</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="nt">&lt;li&gt;&lt;a</span> <span class="na">href=</span><span class="s">"</span><span class="cp">{%</span> <span class="k">url</span> <span class="s1">'detail'</span> <span class="nv">question.id</span> <span class="cp">%}</span><span class="s">"</span><span class="nt">&gt;</span><span class="cp">{{</span> <span class="nv">question.question_text</span> <span class="cp">}}</span><span class="nt">&lt;/a&gt;&lt;/li&gt;</span>
+</pre>
+ </div> 
+ <p>修改为：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="nt">&lt;li&gt;&lt;a</span> <span class="na">href=</span><span class="s">"</span><span class="cp">{%</span> <span class="k">url</span> <span class="s1">'polls:detail'</span> <span class="nv">question.id</span> <span class="cp">%}</span><span class="s">"</span><span class="nt">&gt;</span><span class="cp">{{</span> <span class="nv">question.question_text</span> <span class="cp">}}</span><span class="nt">&lt;/a&gt;&lt;/li&gt;</span>
+</pre>
+ </div> 
+ <p><strong>注意引用方法是冒号，不是圆点也不是斜杠！</strong></p> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/88"> <i class="fa fa-arrow-left"></i>&nbsp;Part 2：模型与后台</a> 
+  <a class="float-right" href="/course/django/90"> Part 4：表单和类视图&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 76</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/89">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.0.0.996.996.50/006xIWURly8gehjmghiqfj30ro0roq53.jpg?KID=imgbed,tva&amp;Expires=1591289035&amp;ssig=NX%2BU5OBrH%2F" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>圆点和斜杠代表的是路径，app_name不是路径，所以用冒号。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 蔷薇-Nina </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年6月5日 22:07</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2098">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif?KID=imgbed,tva&amp;Expires=1588268933&amp;ssig=r7TYKAMB%2FX" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>老师，您好！按照您的讲解，我在做后端Admin界面时，在设置多列表时出现问题，我的admin界面里面分两组，一组是后台自带的user和Group,另一组（组名assets）是我自己创建的（包含操作记录、物资类型、用户、确认码），然后我现在的问题是在操作记录里面列表只有一列属性（比如操作人是哪位），但我想实现操作记录里面多列属性（包含操作人，操作时间，操作类型），尝试了很多次没成功，我自己创建的组中的操作记录选项打开时的网页链接为http://127.0.0.1:8000/admin/assets/matlog/， 我想请教您的问题是，如何修改我目前的代码，以下是我的代码（assets/admin.py为 from django.contrib import admin # Register your models here. from assets import models class AssetAdmin(admin.ModelAdmin): #list_display = ['asset_type', 'name', 'status', 'approved_by', 'c_time', "m_time"] list_display = ['asset_type', 'name', 'status', 'approved_by', 'c_time', "m_time"] admin.site.register(models.User)#后台用户信息 admin.site.register(models.Mat)#后台物资数据库信息 admin.site.register(models.MatLog)#后台操作记录信息 admin.site.register(models.ConfirmString)#确认码信息 # admin.site.register(models.IDC) # admin.site.register(models.Manufacturer) ////////////////////////////////////////////////////////////////////////////////////////////////////////////////隔开符 assets/models.py为 from django.db import models from django.contrib.auth.models import User #日志表 class MatLog(models.Model): """ 日志. 在关联对象被删除的时候，不能一并删除，需保留日志。 因此，on_delete=models.SET_NULL """ log_id = models.IntegerField(unique=True, verbose_name="编号") # 不可重复 log_type_choice = ( ('入库', '入库操作'), ('出库', '出库操作'), ('调库', '调库操作'), ('盘整','盘整操作'), ) mat = models.ForeignKey(Mat, blank=True, null=True,related_name='log_mat',on_delete=models.SET_NULL) user = models.ForeignKey(User, blank=True, null=True, verbose_name='事件执行人',related_name='log_user',on_delete=models.SET_NULL) # 执行人 event_type = models.CharField(verbose_name='事件类型',max_length=64, choices=log_type_choice, default='盘整') detail = models.TextField(verbose_name='事件详情') date = models.DateTimeField(verbose_name='事件时间', auto_now_add=True) memo1 = models.TextField(verbose_name='备注1', blank=True, null=True) memo2 = models.CharField(verbose_name='备注2', max_length=64,blank=True, null=True) memo3 = models.DateTimeField(verbose_name='备注3', blank=True, null=True) memo4 = models.IntegerField(verbose_name='备注4', max_length=64,blank=True, null=True) def __str__(self): return self.event_type class Meta: verbose_name = "事件类型" verbose_name_plural = "操作记录"） 期待老师您的回复，以解决我的困惑，谢谢！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户6194890949 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年4月30日 23:13</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2058">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva3.sinaimg.cn/crop.80.0.1280.1280.50/006qQNZyjw8f2o001srjbj31400zktee.jpg?KID=imgbed,tva&amp;Expires=1586950900&amp;ssig=iv81kYa2lh" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>这个是不是还需要什么别的基础，目前只有python基础</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; WonderfulFeel </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年4月17日 16:00</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2041">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1586851613&amp;ssig=EAgcKENHyi" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>还要一点前端和sql的基础。{{}}之类的是Django的模板系统的语法。HTML页面是我们自己写的，留下{{}}之类让Django去填空或者处理。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; WonderfulFeel </span> 
+      <em>2020年4月18日 08:42</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2043">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva3.sinaimg.cn/crop.80.0.1280.1280.50/006qQNZyjw8f2o001srjbj31400zktee.jpg?KID=imgbed,tva&amp;Expires=1586950900&amp;ssig=iv81kYa2lh" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>照葫芦画瓢画下来了，html和py直接的联系还是不太清晰</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; WonderfulFeel </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年4月17日 15:59</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2040">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva3.sinaimg.cn/crop.80.0.1280.1280.50/006qQNZyjw8f2o001srjbj31400zktee.jpg?KID=imgbed,tva&amp;Expires=1586950900&amp;ssig=iv81kYa2lh" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>各位大虾，在整个过程中我不太理解{% %} {{ }}这个和后台哪个链接在一起啊</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; WonderfulFeel </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年4月17日 15:58</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2039">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif?KID=imgbed,tva&amp;Expires=1585386199&amp;ssig=w38p9MBRxi" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>刘老师，我按照您的方法设置了polls/view.py和polls/urls.py但是访问不了polls/34/是为什么呀 from django.urls import path from . import views urlpatterns = [ # ex: /polls/ path('', views.index, name='index'), # ex: /polls/5/ path('&lt;int:question_id&gt;/', views.detail, name='detail'), # ex: /polls/5/results/ path('&lt;int:question_id&gt;/results/', views.results, name='results'), # ex: /polls/5/vote/ path('&lt;int:question_id&gt;/vote/', views.vote, name='vote'), ] from django.shortcuts import render from django.http import HttpResponse # Create your views here. def index(request): return HttpResponse("Hello, world. You're at the polls index.") def detail(request, question_id): return HttpResponse("You're looking at question %s." % question_id) def results(request, question_id): response = "You're looking at the results of question %s." return HttpResponse(response % question_id) def vote(request, question_id): return HttpResponse("You're voting on question %s." % question_id)</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; Love86571 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年3月28日 14:05</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1981">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1586851613&amp;ssig=EAgcKENHyi" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>光这么看，我也看不出问题所在....</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; Love86571 </span> 
+      <em>2020年4月14日 13:22</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2024">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva1.sinaimg.cn/crop.0.0.996.996.50/cdfeeb44jw8faxo700qjfj20ro0rpta7.jpg?KID=imgbed,tva&amp;Expires=1579252627&amp;ssig=IgpH0Mxzac" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>老师你好，我在views.py 里面 写成 latest_question_list = Question.objects.order_by('-pub_time')[:5] context = {'latest_question_list': latest_question_list} return render(request, 'test1App/index.html', context) 可以访问到Question内容，但是我将latest_question_list这个名称修改一下就不行，比如： late_question_list = Question.objects.order_by('-pub_time')[:5] context = {'late_question_list': late_question_list} return render(request, 'test1App/index.html', context) 我将Question返回的变量名修改了，然后在context里面也做出相应的修改，但是访问App的时候就返回No polls are available. 我确定我数据库里面也是有对应数据的。而且我直接从网站里复制的代码下来，然后做出修改也出现这个问题，请问这是什么原因呢？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 范先甡 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年1月17日 14:22</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1851">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva1.sinaimg.cn/crop.0.0.996.996.50/cdfeeb44jw8faxo700qjfj20ro0rpta7.jpg?KID=imgbed,tva&amp;Expires=1579252627&amp;ssig=IgpH0Mxzac" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>已解决，原来是因为在html文件中 for 循环 查找的 变量 是 latest_question_list!</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 范先甡 &nbsp;&nbsp;回复&nbsp;&nbsp; 范先甡 </span> 
+      <em>2020年1月17日 14:31</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1852">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.0.0.400.400.50/006QW0vNly8g2wj3b1qbcj30b40b4t8r.jpg?KID=imgbed,tva&amp;Expires=1578058431&amp;ssig=qdVpSEZGXP" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>老师您好，我模仿这个例程写了一个简单的小程序，这个教程的 二 中，/polls/urls.py 中调用例如view.detail()函数时并没有给相应的id，函数定义中需要这个question_id，为什么这里没有报错。我自己模仿这个写的一直在这里报错：detail() missing 1 required positional argument: 'appfaq_id'。劳烦您解惑，谢谢</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 风火流云2018 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年1月3日 18:39</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1827">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1577334347&amp;ssig=QyjwpbGyW9" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>url会向detail函数传递一个参数。如果你写的detail定义体没有参数，那就会报错。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 风火流云2018 </span> 
+      <em>2020年1月4日 08:51</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1828">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif?KID=imgbed,tva&amp;Expires=1577961853&amp;ssig=D2feN23D%2Bb" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>老师您好，我按照您的步骤，在登陆http://127.0.0.1:8000/admin/polls/34页面的时候出现如下提示，不能进入页面，目前采用python3.7+pycharm2,2的组合，看到你在评论区恢复道这个问题时说需要更换pycharm为1.17版本，更换后发现pycharm1.17+python3.7还是不兼容，安装后出现 django不能重启服务器，Page not found (404) Request Method: GET Request URL: http://127.0.0.1:8000/admin/polls/34 Using the URLconf defined in mysite.urls, Django tried these URL patterns, in this order: polls/ admin/ [name='index'] admin/ login/ [name='login'] admin/ logout/ [name='logout'] admin/ password_change/ [name='password_change'] admin/ password_change/done/ [name='password_change_done'] admin/ jsi18n/ [name='jsi18n'] admin/ r/&lt;int:content_type_id&gt;/&lt;path:object_id&gt;/ [name='view_on_site'] admin/ polls/question/ admin/ auth/group/ admin/ auth/user/ admin/ ^(?P&lt;app_label&gt;polls|auth)/$ [name='app_list'] The current path, admin/polls/34, didn't match any of these. You're seeing this error because you have DEBUG = True in your Django settings file. Change that to False, and Django will display a standard 404 page. 问一下你怎么解决呢？麻烦您了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户7951013165 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年1月2日 15:49</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1821">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1577334347&amp;ssig=QyjwpbGyW9" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>404错误是页面没找到,或者url有问题，和Python及Django版本无关。另外，pycharm1.17是什么鬼。。。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 用户7951013165 </span> 
+      <em>2020年1月2日 19:43</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1822">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif?KID=imgbed,tva&amp;Expires=1577987505&amp;ssig=nITgFIUIj%2B" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>不好意思，老师，我Django的版本是1.11.7，错写成pycharm版本号了。老师，麻烦你帮我看一下，我贴一下修改后的polls\urls.py代码及其他代码： （1） from django.urls import path from . import views urlpatterns = [ path('', views.index, name='index'), # ex: /polls/5/ path('&lt;int:question_id&gt;/', views.detail, name='detail'), # ex: /polls/5/results/ path('&lt;int:question_id&gt;/results/', views.results, name='results'), # ex: /polls/5/vote/ path('&lt;int:question_id&gt;/vote/', views.vote, name='vote'), ] （2）view.py中代码如下： from django.http import HttpResponse def index(request): return HttpResponse("Hello, world. You're at the polls index.") def detail(request, question_id): return HttpResponse("You're looking at question %s." % question_id) def results(request, question_id): response = "You're looking at the results of question %s." return HttpResponse(response % question_id) def vote(request, question_id): return HttpResponse("You're voting on question %s." % question_id) （3）setting中的INSTALLED_APPS代码： INSTALLED_APPS = [ 'polls.apps.PollsConfig', 'django.contrib.admin', 'django.contrib.auth', 'django.contrib.contenttypes', 'django.contrib.sessions', 'django.contrib.messages', 'django.contrib.staticfiles', ] （4）mysite/urls.py代码如下： from django.contrib import admin from django.urls import include, path urlpatterns = [ path('polls/', include('polls.urls')), path('admin/', admin.site.urls), ] 后端页面显示问题出在mysite/urls上面，可是找不到相关问题出在哪儿，麻烦您帮我看一下，老师</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 用户7951013165 &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2020年1月2日 23:14</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1825">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 12em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva3.sinaimg.cn/crop.0.0.960.960.50/80e5b0a7jw8f6ls8xktnoj20qo0qpwfh.jpg?KID=imgbed,tva&amp;Expires=1578051197&amp;ssig=hVfdQDtLi2" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>这个问题我也遇到过,你的path('&lt;int:question_id&gt;/', views.detail, name='detail')的question_id的后面有斜杠"/",那么访问网址里面就是要以斜杠"/"结束的,你用网址:http://127.0.0.1:8000/admin/polls/34/,试试吧</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 畏罪_h &nbsp;&nbsp;回复&nbsp;&nbsp; 用户7951013165 </span> 
+      <em>2020年1月3日 16:38</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1826">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif?KID=imgbed,tva&amp;Expires=1577271949&amp;ssig=6fKoH3WIPb" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>各位大神。。这些示例看不懂里面的意思，有影响吗？还是先看个过程。。。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户7261103841_53540 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年12月25日 16:07</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1784">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1577334347&amp;ssig=QyjwpbGyW9" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>这个入门实例建议还是多啃两遍。哪怕暂时不懂，也要把过程背下来。 因为这是后面的基础，如果这里都通不过，后面就更难理解了。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 用户7261103841_53540 </span> 
+      <em>2019年12月26日 09:31</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1788">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif?KID=imgbed,tva&amp;Expires=1577271949&amp;ssig=6fKoH3WIPb" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>谢谢老师。这几天多看了几遍终于读懂了。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 用户7261103841_53540 &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2019年12月27日 12:55</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1808">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax4.sinaimg.cn/crop.227.3.568.568.50/9f5aece8ly8fz51dsy5n9j20sg0g0dgy.jpg?KID=imgbed,tva&amp;Expires=1577236938&amp;ssig=t77NnFkjeb" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>爱了爱了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; ZL灬汕 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年12月25日 06:22</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1782">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva1.sinaimg.cn/crop.0.0.640.640.50/006ffszNjw8fbhehbbh6kj30hs0hsgm2.jpg?KID=imgbed,tva&amp;Expires=1569836870&amp;ssig=ipNioBE86d" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>二、编写视图里面polls下并没有urls.py，是要自己生成吗，但生成的无法识别啊，麻烦解答一下</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 移动废柴王小京 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年10月1日 22:37</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1647">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva1.sinaimg.cn/crop.0.0.640.640.50/006ffszNjw8fbhehbbh6kj30hs0hsgm2.jpg?KID=imgbed,tva&amp;Expires=1569836870&amp;ssig=ipNioBE86d" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>已解决</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 移动废柴王小京 &nbsp;&nbsp;回复&nbsp;&nbsp; 移动废柴王小京 </span> 
+      <em>2019年10月1日 22:56</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1648">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.0.0.996.996.50/005MUJH6ly8fp3hfgy46wj30ro0rodhd.jpg?KID=imgbed,tva&amp;Expires=1567171372&amp;ssig=t5n7j1Z2jN" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>在实际的web项目中碰到如下问题：通过127.0.0.18000可打开站点 ，但是polls下的urls.py和views.py这两个单独的文件分别运行时爆出一下错误：django.core.exceptions.AppRegistryNotReady: Apps aren't loaded yet. 搞不明白。请问是什么问题，刘江老师 python 3.7 django2.2.3</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 我是你们的李老板 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年8月30日 18:26</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1607">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1567237011&amp;ssig=JV0WnTg9nG" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>Django是一个框架，有专门的运行命令，需要载入配置信息，不能单独运行其中的某个py脚本文件。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 我是你们的李老板 </span> 
+      <em>2019年8月31日 12:38</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1608">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.0.0.512.512.50/005ugQy0ly8g4586xib3dj30e80e8mxf.jpg?Expires=1563166472&amp;ssig=65%2Bbg%2Bk%2BwO&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>{% if last_question_list %} In templatemymite/polls/templates/polls/index.html, error at line 1 Cannot resolve keyword 'pubdate' into field. Choices are: choice, id, pub_date, question_text 为什么index.html 第一行写成 last_question_list会报错？？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; waitingMissL </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年7月15日 11:56</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1455">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?Expires=1563275830&amp;ssig=bpp9YzPFp%2F&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>出错的原因是 'pubdate' 这个字符串少了个下划线</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; waitingMissL </span> 
+      <em>2019年7月16日 18:30</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1470">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.0.0.800.800.50/005PeaaHly8fnuvsb4pnej30m80m83zm.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>老师您好，我按照您的步骤，但是提示ImportError: cannot import name 'Question'，还麻烦指导一下</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 王鑫_n1ce </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年5月29日 10:06</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1361">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.0.0.800.800.50/005PeaaHly8fnuvsb4pnej30m80m83zm.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>已解决</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 王鑫_n1ce &nbsp;&nbsp;回复&nbsp;&nbsp; 王鑫_n1ce </span> 
+      <em>2019年5月31日 10:57</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1375">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>刘老师好！关于question.choice_set本来想咨询的，但baidu找到一些信息。分享给有疑问的同学： 知识点1：Question与Choice的对应关系为一个Question对应多个Choice，因此Choice中的field "question"为ForeignKey 知识点2：设置完对应关系后，Question中出现choice_set 通过Question.objects.get(id=1).choice_set.create(choice_text="I dont't know", votes=0)可以设置某个question的一个choice，通过Question.objects.get(id=1).choice_set.all()可以获得某个question对应的所有choice的集合 作者：elon 链接：https://www.jianshu.com/p/2b4140381709</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户8491438633 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年5月22日 10:22</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1348">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.0.0.996.996.50/005KbX7ely8fpuuaetiusj30ro0ro41w.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>感谢博主详细的讲解~真的是我这个菜鸟的福音，笔芯！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; yoyorachelw </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年4月18日 08:13</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1263">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.13.0.724.724.50/006aEWuely8fj58z4yin9j30ku0k4gm3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>很好的教程，希望博主能坚持下去！！ 最新的Django可以跑通博主的代码。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; NiceToMeetUhaha </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年1月3日 14:50</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1001">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva3.sinaimg.cn/crop.41.24.186.186.50/ee34327fjw8enwjlxadtoj207p09b3zc.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>在看这之前是看另外一个教程。那个教程呢，只能说一般，教会用而不知其意。 博主的这篇真的是讲到了初学者的痛点，讲理论，也实际操作，重要的是，把文件路径说明白，因为有些教程，特么滴往往就是不说这点， 让人好生烦恼。我之前的疑问都在这里得到解答。 博主真的很用心在写，感谢博主</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 陈镜子先生 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年12月5日 09:52</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/917">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>你说的是哪个教程？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 用户0173110620 &nbsp;&nbsp;回复&nbsp;&nbsp; 陈镜子先生 </span> 
+      <em>2019年6月5日 14:37</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1385">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva3.sinaimg.cn/crop.80.0.1280.1280.50/006qQNZyjw8f2o001srjbj31400zktee.jpg?KID=imgbed,tva&amp;Expires=1586950900&amp;ssig=iv81kYa2lh" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>python入门与实践呵呵呵</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> WonderfulFeel &nbsp;&nbsp;回复&nbsp;&nbsp; 用户0173110620 </span> 
+      <em>2020年4月17日 15:46</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2038">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.640.640.50/a1fb75c5ly8ff1dgpdx3tj20hs0hst9p.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>已走通 mark 20181107</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 深正能量 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年11月7日 17:30</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/834">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.996.996.50/005XwzwLjw8f7dcsz9681j30ro0rpgps.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>确实写得好，希望人气越来越旺，做的大好事啊。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 歘歘歘欻欻 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年10月10日 11:47</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/766">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.180.180.50/5c3ff86ajw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>刘老师，本章节第三小节的范例中，通过render（request, 'polls/index.html', context），context中对象实际上是一个QuerySet, 但是在html中，即使我的Question表中是有数据的，html中显示的永远是No polls are available. 我反复尝试，如果在view里for..in.. 传递是dict，html显示就没有问题。请问这是啥原因，研究两天了，我发现其他范例，传递的是对象，也是这种情况，请问是啥原因？ 我的django版本是2.0.5， 谢谢</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; nature_liqin </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年7月15日 22:15</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/586">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva4.sinaimg.cn/crop.4.5.228.228.50/c0f05f6cjw8enxaat5ro1j206y06zmx3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>context应该是一个dict才对吧{key,value},value为QuerySet</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 永不止步Study &nbsp;&nbsp;回复&nbsp;&nbsp; nature_liqin </span> 
+      <em>2018年7月18日 16:07</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/605">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>无论是1.11版本还是2.05，这里都没有问题。请检查自己的代码，继续学习下去。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; nature_liqin </span> 
+      <em>2018年7月18日 21:24</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/607">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>教程中 polls/templates/polls/detail.html 应该是 mysite/templates/polls/detail.html吧！ mysite 是项目， polls是app</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; D冬天的一把火H </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年7月12日 17:07</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/572">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>这是Django的设计原则之一</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; D冬天的一把火H </span> 
+      <em>2018年7月18日 21:15</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/606">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.40.40.50/0079hmfBly8frauomzui2j3014014dfl.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>urlpatterns = [ path('', views.index, name='index'), path('&lt;int:question_id&gt;/', views.detail, name='detail'), path('&lt;int:question_id&gt;/results/', views.results, name='result'), path('&lt;int:question_id&gt;/vote/', views.vote, name='vote'), ]</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 狼86712 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年5月31日 09:40</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/512">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva4.sinaimg.cn/crop.0.0.720.720.50/d75ca00djw8evqx12ik4hj20k00k0ab7.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>应该是urlpatterns = [ path('', views.index, name='index'), path('&lt;/int:question_id&gt;/', views.detail, name='detail'), path('&lt;/int:question_id&gt;/results/', views.results, name='result'), path('&lt;/int:question_id&gt;/vote/', views.vote, name='vote'), ]，这样可以用polls/1访问</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 校草的舍友 &nbsp;&nbsp;回复&nbsp;&nbsp; 狼86712 </span> 
+      <em>2018年8月31日 18:53</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/718">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva4.sinaimg.cn/crop.0.0.1002.1002.50/e87909bbjw8ezk9open3cj20ru0rv403.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>跟你一样的是错的的</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> King-VR &nbsp;&nbsp;回复&nbsp;&nbsp; 校草的舍友 </span> 
+      <em>2018年9月19日 11:39</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/738">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 12em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.0.0.664.664.50/006jd0K8ly8gefmxor0fnj30ig0igta0.jpg?KID=imgbed,tva&amp;Expires=1590472532&amp;ssig=r2QHORWz%2F9" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>最后怎么解决的呢</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 楼重兰 &nbsp;&nbsp;回复&nbsp;&nbsp; King-VR </span> 
+      <em>2020年5月26日 11:15</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2076">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 16em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.0.0.664.664.50/006jd0K8ly8gefmxor0fnj30ig0igta0.jpg?KID=imgbed,tva&amp;Expires=1590472532&amp;ssig=r2QHORWz%2F9" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>http://127.0.0.1:8000/polls/34/</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 楼重兰 &nbsp;&nbsp;回复&nbsp;&nbsp; 楼重兰 </span> 
+      <em>2020年5月26日 11:40</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2077">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/default/images/default_avatar_female_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>刘老师好，我照着你这篇博客写了一遍代码，前面都没问题，在最后“删除模板中硬编码的URLs”这一节的时候报错。 &lt;a href="/polls/{{ question.id }}/"&gt;{{ question.question_text }}&lt;/a&gt;这样写没问题。 改成 &lt;li&gt;&lt;a href="{% url 'detail' question.id %}"&gt;{{ question.question_text }}&lt;/a&gt;&lt;/li&gt; 或者 &lt;li&gt;&lt;a href="{% url 'polls:detail' question.id %}"&gt;{{ question.question_text }}&lt;/a&gt;&lt;/li&gt;就报错了。 错误信息：Reverse for 'detail' with arguments '('',)' and keyword arguments '{}' not found. 1 pattern(s) tried: ['polls/(?P&lt;question_id&gt;[0-9]+)/$'] 我的polls/urls.py配置也是跟你的博客里一样的： app_name = 'polls' urlpatterns = [ url(r'^$', views.index, name='index'), url(r'^(?P&lt;question_id&gt;[0-9]+)/$', views.detail, name='detail'), url(r'^(?P&lt;question_id&gt;[0-9]+)/result/$', views.results, name='results'), url(r'^(?P&lt;question_id&gt;[0-9]+)/vote/$', views.vote, name='vote'), ]</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; tonylaw114 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年5月17日 15:54</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/485">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/default/images/default_avatar_female_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>刚检查了一下，是我写错了参数了。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> tonylaw114 &nbsp;&nbsp;回复&nbsp;&nbsp; tonylaw114 </span> 
+      <em>2018年5月17日 17:15</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/486">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.15.640.640.50/006Enuzjjw8fb279lcvymj30hs0ingmu.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>刘老师您好，最近一直在看你的这个博客，在设置模板时报了如题的错，下面是我的配置： settings.py TEMPLATE_DIRS = [ { 'BACKEND': 'django.template.backends.django.DjangoTemplates', 'DIRS': [os.path.join(BASE_DIR, 'templates')], #'DIRS': ['polls/templates'], 'APP_DIRS': True, 'OPTIONS': { 'context_processors': [ 'django.template.context_processors.debug', 'django.template.context_processors.request', 'django.contrib.auth.context_processors.auth', 'django.contrib.messages.context_processors.messages', ], }, }, ] polls/views.py def index(request): latest_question_list= qs.objects.order_by('-pub_date')[:5] #template=loader.get_template('/polls/index.html') context={ "latest_question_list",latest_question_list, } #output=','.join([q.question_text for q in latest_question_list]) return render(request,'polls/index.html',context) index.html 所在目录为polls/templates/polls/index.html 另外 我是用pycharm 工具，在工程目录下也有个templates目录 D:\pythonworkspace\mysite\templates 报上面这个错，是setings 里配置错了吗</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 土豆哥0837 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年5月13日 15:50</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/477">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>设置里的配置项目的名字不是TEMPLATE_DIRS，而是TEMPLATES。我估计是这个原因。你是从老的Django版本里拷贝过来的配置吧？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 土豆哥0837 </span> 
+      <em>2018年5月13日 20:18</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/478">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.15.640.640.50/006Enuzjjw8fb279lcvymj30hs0ingmu.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>后来在网上看到说是要修改为TEMPLATES_DIRS 所以改成这个了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 土豆哥0837 &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2018年5月13日 20:56</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/479">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.15.640.640.50/006Enuzjjw8fb279lcvymj30hs0ingmu.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>非常感谢刘老师！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 土豆哥0837 &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2018年5月13日 20:56</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/480">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.15.640.640.50/006Enuzjjw8fb279lcvymj30hs0ingmu.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>Django version 1.11.12</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 土豆哥0837 &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2018年5月13日 20:59</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/481">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.180.180.50/67179639jw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>刘老师, 五、 使用模板系统的倒数第二句: poll.choice_set.all, 应为question.choice_set.all.</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 孤竹孙 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年5月4日 20:03</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/431">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>已修改</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 孤竹孙 </span> 
+      <em>2018年5月5日 09:28</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/434">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva3.sinaimg.cn/crop.0.0.180.180.50/90f05399jw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>上面原文这样说的： “模板命名空间： 你也许会想，为什么不把模板文件直接放在polls/templates目录下，而是费劲的再建个子目录polls呢?设想这么个情况，有另外一个app，它也有一个名叫index.html的文件，当Django在搜索模板时，有可能就找到它，然后退出搜索，这就命中了错误的目标，不是我们想要的结果。解决这个问题的最好办法就是在templates目录下再建立一个与app同名的子目录，将自己所属的模板都放到里面，从而达到独立命名空间的作用，不会再出现引用错误。” 我感觉这里有点不合理。 假如有两个 app 分别叫 app_a 和 app_b，为什么 Django 搜索 app_a 的模板文件时，会跑到 app_b 的模板目录里面搜索呢？ 另外，你上面又说解决这个问题的方法是在 polls 的 templates 再建立一个 polls 的子目录（为了区分其他 app），难道说其他 app 里面的模板文件也要放在 polls 的 templates 目录吗？ 希望老师能指点迷津，不胜感激！！！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 手动阀暗示法 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年3月30日 21:52</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/351">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>要这么理解： 1. 你可能有很多个app，其中甚至有不少app是别人写的，你拿来用而已 2. app的排序不一定是你希望的那个，Django只会按照既定的规则顺序查找每个app 3. Django查找模版的时候，会去每个app的templates目录下查找，这是核心机制！是每个！而不是只查找自己的html文件目录！ 4.如果有多个app同时有index.html模板，那么Django找到的第一个index会被调用，而这往往不是你想要的。比如app_a排在app_b前面，那么app_a没问题了，但app_b会使用app_a中的index.html文件。 5. 为了解决这个问题，在每个app的templates目录下再创建一级目录，就相当于增加了模版命名空间限制。 多看几遍吧，能理解最好，不行就先往后放放</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 手动阀暗示法 </span> 
+      <em>2018年3月31日 10:15</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/355">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva3.sinaimg.cn/crop.0.0.180.180.50/90f05399jw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>非常感谢老师的耐心教导！！！茅塞顿开！！！谢谢！！！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 手动阀暗示法 &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2018年3月31日 10:55</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/356">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva3.sinaimg.cn/crop.0.0.180.180.50/70574574jw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>已经按照教程检查了代码，没有错误。找了找网上的相关问答，似乎是二级路由没有生效？请问是什么原因呢？这里没办法贴图片，拜托老师解答下！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 湛蓝的微风 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年1月25日 18:22</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/158">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva3.sinaimg.cn/crop.0.0.180.180.50/70574574jw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我是在Windows7下，用的pycharm编译器，Django版本是2.0.1，Python版本是3.6.2。麻烦老师看一下是否是这个版本下内容有差异呢？谢谢</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 湛蓝的微风 &nbsp;&nbsp;回复&nbsp;&nbsp; 湛蓝的微风 </span> 
+      <em>2018年1月25日 19:27</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/159">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva3.sinaimg.cn/crop.0.0.180.180.50/70574574jw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>这是后台页面显示的报错内容，请老师过目： Page not found (404) Request Method: GET Request URL: http://127.0.0.1:8000/admin/polls/43/ Using the URLconf defined in perfectCRM.urls, Django tried these URL patterns, in this order: admin/ [name='index'] admin/ login/ [name='login'] admin/ logout/ [name='logout'] admin/ password_change/ [name='password_change'] admin/ password_change/done/ [name='password_change_done'] admin/ jsi18n/ [name='jsi18n'] admin/ r/&lt;int:content_type_id&gt;/&lt;path:object_id&gt;/ [name='view_on_site'] admin/ auth/group/ admin/ auth/user/ admin/ polls/question/ admin/ ^(?P&lt;app_label&gt;auth|polls)/$ [name='app_list'] ^polls/ The current path, admin/polls/43/, didn't match any of these. You're seeing this error because you have DEBUG = True in your Django settings file. Change that to False, and Django will display a standard 404 page. 在polls/后的正则都匹配不到，不知何故</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 湛蓝的微风 &nbsp;&nbsp;回复&nbsp;&nbsp; 湛蓝的微风 </span> 
+      <em>2018年1月25日 19:30</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/160">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 12em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>Django2.0在url的配置上和1.11差别较大。 建议你，pip uninstall django,然后pip install django==1.11.7</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 湛蓝的微风 </span> 
+      <em>2018年1月25日 21:30</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/161">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 16em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva3.sinaimg.cn/crop.0.0.180.180.50/70574574jw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>好的，谢谢！我去修改下</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 湛蓝的微风 &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2018年1月25日 21:31</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/162">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 16em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.480.480.50/d44de8e1jw8ege96enw2qj20dc0dcaac.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>一样的问题，一样的报错，并且我看您的建议，也改成了1.11.7版本的Django了，但还是不行</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 黎之殇矣 &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2018年2月12日 18:00</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/214">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 12em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.480.480.50/d44de8e1jw8ege96enw2qj20dc0dcaac.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我也是这个错误，但是我还没有搞定，想问问你怎么弄的？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 黎之殇矣 &nbsp;&nbsp;回复&nbsp;&nbsp; 湛蓝的微风 </span> 
+      <em>2018年2月13日 11:25</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/215">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 16em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>更换django 版本就好了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 打发的说法地方_492 &nbsp;&nbsp;回复&nbsp;&nbsp; 黎之殇矣 </span> 
+      <em>2019年3月26日 16:39</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1184">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.426.66.1066.1066.50/0066dngsjw8f3x7oviug2j31hc0xcnb9.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>是需要有什么特殊的设置吗，比如r'^(?P&lt;question_id&gt;[0-9]+)/$'前面加个polls</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 神本贪婪 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2017年12月28日 16:01</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/103">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>教程里分了二级路由，你需要分别编写根路由urls.py和polls应用中的urls.py。 从头开始，再检查一下代码吧。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 神本贪婪 </span> 
+      <em>2017年12月28日 19:12</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/104">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva4.sinaimg.cn/crop.15.0.271.271.50/005wDgoGtw1ee8p7h3yxgj30dw07n0tv.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>/polls/urls.py url(r'(?P&lt;question_id&gt;[0-9]+)/$', views.detail, name='detail'), 这个二级路由就不能以^开头了 ，因为全局的路由里面已经指定了'^polls',所以这里一加'^',就访问404了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> WrangLer丶 &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2018年10月22日 18:52</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/784">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.0.1002.1002.50/5d1982b8jw8fap92bs1dqj20ru0rutgd.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>适合已经对django有一定了解的用户当作补充教材，完全的新手看这个系列的教程会萌币</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 三杯茶XY </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2017年12月12日 14:42</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/84">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.0.0.1002.1002.50/9d4e7f8fly8fiicwy72t4j20ru0rvt9y.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>也不完全这样， 我就是完全的新手 第一个就是看这里的， 后来边写东西，边查看其它资料， 后来返回来看， 感觉又发现新大陆。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 取名字真心很烦 &nbsp;&nbsp;回复&nbsp;&nbsp; 三杯茶XY </span> 
+      <em>2018年11月28日 23:13</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/907">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.79.114.313.313.50/a33d1690jw8eqgfhcx55fj20c80fogmy.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>'polls' is not a registered namespace 改成最后的polls：detail后，进入网页提示这个</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 氷湗de心 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2017年11月22日 16:56</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/52">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>app_name = 'polls' # 关键是这行</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 氷湗de心 </span> 
+      <em>2017年11月23日 08:39</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/53">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax3.sinaimg.cn/crop.243.0.676.676.50/74dffc06ly8fdzzrhcs0gj20xc0is3zg.jpg?KID=imgbed,tva&amp;Expires=1580749838&amp;ssig=E4YxCLq5PS" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>还是不行啊</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 小白鸽abc &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2020年2月3日 22:10</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1864">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.0.0.888.888.50/007deJ4kly8ftigfqhvfej30oo0oo0t5.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>setting文件里INSTALL_APP里加上'polls'试试</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> cc反过来也是cc &nbsp;&nbsp;回复&nbsp;&nbsp; 氷湗de心 </span> 
+      <em>2018年12月31日 15:35</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/989">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva4.sinaimg.cn/crop.292.10.1290.1290.50/e01733f6tw1e85jacvntqj21kw11xe31.jpg?Expires=1565686521&amp;ssig=Ax6O69VFPL&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>老师的回复是说polls/urls.py这个文件里面需要加 app_name = 'polls'</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 天瑜_佳人 &nbsp;&nbsp;回复&nbsp;&nbsp; 氷湗de心 </span> 
+      <em>2019年8月13日 15:57</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1549">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

@@ -1,0 +1,414 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>2. 设计数据模型</h1> 
+ <small>阅读:&nbsp;65816&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：15 </small> 
+ <hr> 
+ <p>使用Django开发Web应用的过程中，很多人都是急急忙忙地写视图，写前端页面，把最根本的模型设计给忽略了。模型中定义了数据如何在数据库内保存，也就是数据表的定义方式。这部分工作体现在Django的代码中，其实就是model类的设计。</p> 
+ <h2>一、 数据库模型设计</h2> 
+ <p>作为一个用户登录和注册项目，需要保存的都是各种用户的相关信息。很显然，我们至少需要一张用户表User，在用户表里需要保存下面的信息：</p> 
+ <ul> 
+  <li>用户名</li> 
+  <li>密码</li> 
+  <li>邮箱地址</li> 
+  <li>性别</li> 
+  <li>创建时间</li> 
+ </ul> 
+ <p>我们现在就暂定保存这些信息吧，更多的内容，请大家在实际项目中自行添加。</p> 
+ <p>进入<code>login/models.py</code>文件，这里将是我们整个login应用中所有模型的存放地点，代码如下：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
+
+<span class="c1"># Create your models here.</span>
+
+
+<span class="k">class</span> <span class="nc">User</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+
+    <span class="n">gender</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="p">(</span><span class="s1">'male'</span><span class="p">,</span> <span class="s2">"男"</span><span class="p">),</span>
+        <span class="p">(</span><span class="s1">'female'</span><span class="p">,</span> <span class="s2">"女"</span><span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="n">name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span> <span class="n">unique</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">password</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">256</span><span class="p">)</span>
+    <span class="n">email</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">EmailField</span><span class="p">(</span><span class="n">unique</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">sex</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="n">gender</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">"男"</span><span class="p">)</span>
+    <span class="n">c_time</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateTimeField</span><span class="p">(</span><span class="n">auto_now_add</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
+
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">ordering</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"-c_time"</span><span class="p">]</span>
+        <span class="n">verbose_name</span> <span class="o">=</span> <span class="s2">"用户"</span>
+        <span class="n">verbose_name_plural</span> <span class="o">=</span> <span class="s2">"用户"</span>
+</pre>
+ </div> 
+ <p>各字段含义：</p> 
+ <ul> 
+  <li>name: 必填，最长不超过128个字符，并且唯一，也就是不能有相同姓名；</li> 
+  <li>password: 必填，最长不超过256个字符（实际可能不需要这么长）；</li> 
+  <li>email: 使用Django内置的邮箱类型，并且唯一；</li> 
+  <li>sex: 性别，使用了一个choice，只能选择男或者女，默认为男；</li> 
+  <li>使用<code>__str__</code>方法帮助人性化显示对象信息；</li> 
+  <li>元数据里定义用户按创建时间的反序排列，也就是最近的最先显示；</li> 
+ </ul> 
+ <p>注意：这里的用户名指的是网络上注册的用户名，不要等同于现实中的真实姓名，所以采用了唯一机制。如果是现实中的人名，那是可以重复的，肯定是不能设置unique的。另外关于密码，建议至少128位长度，原因后面解释。</p> 
+ <h2>二、 设置数据库后端</h2> 
+ <p>定义好了模型后，就必须选择我们用来保存数据的数据库系统。Django支持Mysql，SQLite，Oracle等等。</p> 
+ <p>Django中对数据库的设置在settings文件中，如下部分：</p> 
+ <div class="codehilite">
+  <pre><span></span># Database
+# https://docs.djangoproject.com/en/2.2/ref/settings/#databases
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+    }
+}
+</pre>
+ </div> 
+ <p>Django默认使用SQLite数据库，并内置SQLite数据库的访问API，也就是说和Python一样原生支持SQLite。本项目使用SQLite作为后端数据库，因此不需要修改settings中这部分内容。如果你想要使用别的数据库，请自行修改该部分设置。</p> 
+ <h2>三、注册app</h2> 
+ <p>每次创建了新的app后，都需要在全局settings中注册，这样Django才知道你有新的应用上线了。在settings的下面部分添加‘login’，建议在最后添加个逗号。</p> 
+ <div class="codehilite">
+  <pre><span></span># Application definition
+
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'login',
+]
+</pre>
+ </div> 
+ <h2>四、创建记录和数据表</h2> 
+ <p>app中的models建立好了后，并不会自动地在数据库中生成相应的数据表，需要你手动创建。</p> 
+ <p>进入Pycharm的terminal终端，执行下面的命令：</p> 
+ <div class="codehilite">
+  <pre><span></span>python manage.py makemigrations
+</pre>
+ </div> 
+ <p>返回结果：</p> 
+ <div class="codehilite">
+  <pre><span></span>(venv) D:\work\2019\for_test\mysite&gt;python manage.py makemigrations
+Migrations for 'login':
+  login\migrations\0001_initial.py
+    - Create model User
+</pre>
+ </div> 
+ <p>Django自动为我们创建了<code>login\migrations\0001_initial.py</code>文件，保存了我们的第一次数据迁移工作，也就是创建了User模型。</p> 
+ <p>接着执行下面的命令：</p> 
+ <div class="codehilite">
+  <pre><span></span>python manage.py migrate
+</pre>
+ </div> 
+ <p>Django将在数据库内创建真实的数据表。如果是第一次执行该命令，那么一些内置的框架，比如auth、session等的数据表也将被一同创建，如下所示：</p> 
+ <div class="codehilite">
+  <pre><span></span>(venv) D:\work\2019\for_test\mysite&gt;python manage.py migrate
+Operations to perform:
+  Apply all migrations: admin, auth, contenttypes, login, sessions
+Running migrations:
+  Applying contenttypes.0001_initial... OK
+  Applying auth.0001_initial... OK
+  Applying admin.0001_initial... OK
+  Applying admin.0002_logentry_remove_auto_add... OK
+  Applying admin.0003_logentry_add_action_flag_choices... OK
+  Applying contenttypes.0002_remove_content_type_name... OK
+  Applying auth.0002_alter_permission_name_max_length... OK
+  Applying auth.0003_alter_user_email_max_length... OK
+  Applying auth.0004_alter_user_username_opts... OK
+  Applying auth.0005_alter_user_last_login_null... OK
+  Applying auth.0006_require_contenttypes_0002... OK
+  Applying auth.0007_alter_validators_add_error_messages... OK
+  Applying auth.0008_alter_user_username_max_length... OK
+  Applying auth.0009_alter_user_last_name_max_length... OK
+  Applying auth.0010_alter_group_name_max_length... OK
+  Applying auth.0011_update_proxy_permissions... OK
+  Applying login.0001_initial... OK
+  Applying sessions.0001_initial... OK
+</pre>
+ </div> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/103"> <i class="fa fa-arrow-left"></i>&nbsp;1. 搭建项目环境</a> 
+  <a class="float-right" href="/course/django/105"> 3. admin后台&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 15</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/104">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif?KID=imgbed,tva&amp;Expires=1573464926&amp;ssig=Vga4%2BLW0JW" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>刘老师您好：模型设计，比如说要设置头像这些，是不是在这个模型上加字段呢</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户3453927965 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年11月11日 14:37</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1710">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1573045997&amp;ssig=x1BZU9hqr4" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>是的</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 用户3453927965 </span> 
+      <em>2019年11月11日 16:23</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1711">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva4.sinaimg.cn/crop.0.0.180.180.50/968b41bbjw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>这个创建的数据库表名会自动加上“assets_”，请问我如何修改这个规则？另外我如果使用已有的表，如何关联？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 汉中雪松 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年4月28日 09:48</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1296">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.996.996.50/006BUQTQly8fdt3ajs2qzj30ro0ro3z1.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>请问我在运行python manage.py makemigrations之后提醒django.core.exceptions.ImproperlyConfigured: Error loading MySQLdb module. Did you install mysqlclient? 应该怎么解决啊。修改ini文件提示没有pymysql这个model</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; Freedom月弦 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年3月31日 09:58</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1198">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>pip install pymysql http://www.liujiangblog.com/course/django/165</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; Freedom月弦 </span> 
+      <em>2019年4月1日 08:10</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1202">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva3.sinaimg.cn/crop.0.280.720.720.50/006gDDqPjw8exidxmdnn5j30k00zkq7e.jpg?KID=imgbed,tva&amp;Expires=1586171836&amp;ssig=uUyoZtS5BU" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>1. pip install mysqlclient 2. pip uninstall pymysql 3. 将__init__.py文件清空</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 范建平0107 &nbsp;&nbsp;回复&nbsp;&nbsp; Freedom月弦 </span> 
+      <em>2020年4月13日 10:50</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2016">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.996.996.50/005UbWMily8fpdttutaj8j30ro0rowg7.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>django.db.utils.ProgrammingError: (1064, "You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to us e near '; SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED' at line 1") 请问这个增么弄？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 指间沙-沙从指间走 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年5月16日 15:45</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/483">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.996.996.50/005UbWMily8fpdttutaj8j30ro0rowg7.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>是在使用虚拟环境的时候报的这个错误，当不使用虚拟环境的时候就能正常连接，</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 指间沙-沙从指间走 &nbsp;&nbsp;回复&nbsp;&nbsp; 指间沙-沙从指间走 </span> 
+      <em>2018年5月18日 10:36</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/488">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.1.101.584.584.50/a88eb2ccjw1e93so1h00uj20go0m8tbm.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我这里是Win10环境，mysql数据库，django2.0版本。没有使用虚拟环境运行但是还是出现这个报错，是怎么回事？ d:\django_restful2&gt;python manage.py makemigrations api Traceback (most recent call last): File "C:\Python35\lib\site-packages\django\db\backends\utils.py", line 83, in _execute return self.cursor.execute(sql) File "C:\Python35\lib\site-packages\django\db\backends\mysql\base.py", line 71, in execute return self.cursor.execute(query, args) File "C:\Python35\lib\site-packages\pymysql\cursors.py", line 170, in execute result = self._query(query) File "C:\Python35\lib\site-packages\pymysql\cursors.py", line 328, in _query conn.query(q) File "C:\Python35\lib\site-packages\pymysql\connections.py", line 516, in query self._affected_rows = self._read_query_result(unbuffered=unbuffered) File "C:\Python35\lib\site-packages\pymysql\connections.py", line 727, in _read_query_result result.read() File "C:\Python35\lib\site-packages\pymysql\connections.py", line 1066, in read first_packet = self.connection._read_packet() File "C:\Python35\lib\site-packages\pymysql\connections.py", line 683, in _read_packet packet.check_error() File "C:\Python35\lib\site-packages\pymysql\protocol.py", line 220, in check_error err.raise_mysql_exception(self._data) File "C:\Python35\lib\site-packages\pymysql\err.py", line 109, in raise_mysql_exception raise errorclass(errno, errval) pymysql.err.ProgrammingError: (1064, "You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '; SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED' at line 1")</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 清风穆云 &nbsp;&nbsp;回复&nbsp;&nbsp; 指间沙-沙从指间走 </span> 
+      <em>2018年8月3日 09:28</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/658">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.996.996.50/be5a6167jw8fafwfrxveyj20ro0rp76i.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>没看明白啥意思 第一个字段好像是排序 后面不知道了 求大神详解一下 我是小白</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 超子i </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年2月4日 12:10</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/187">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>参考这里http://www.liujiangblog.com/course/django/99</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 超子i </span> 
+      <em>2018年2月4日 15:13</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/188">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>博主，你好！ 每次创建好模型下边那个def__str__()函数，return self.字段名。请问这个字段名是怎么确定是哪个的？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 我在的城市没有昵 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2017年12月7日 15:13</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/74">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>模型中的任何字段都可以，但尽量选直观的，独一无二的，能区分他者的。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 我在的城市没有昵 </span> 
+      <em>2017年12月7日 19:08</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/76">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.0.180.180.50/70663a32jw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>def __str__(self): return self.name 这里用这个好吧？不然linux 下输入中文会报错 def __unicode__(self): return self.name</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; Minja_ </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2017年11月26日 00:00</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/64">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.240.53.597.597.50/9d6668d1ly8fecyq2h1yaj20qo0qo3zj.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>python2用的是 def __unicode__(self):，python3用的是 def __str__(self):，这个是根据你的python版本写的</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> HiramJoyce &nbsp;&nbsp;回复&nbsp;&nbsp; Minja_ </span> 
+      <em>2017年12月5日 19:28</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/69">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

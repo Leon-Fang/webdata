@@ -1,0 +1,607 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>Django环境安装</h1> 
+ <small>阅读:&nbsp;111611&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：22 </small> 
+ <hr> 
+ <p>Django是由Python编写的Web框架，依赖Python环境，所以需要提前安装好Python解释器。</p> 
+ <p>关于Python的安装，请参考站点中Python教程的相关部分，这里不再赘述。</p> 
+ <p>建议安装最新版本的Python3，因为从Django2.0开始不再支持Python2.7。Python安装完毕后，会自动安装pip工具包。</p> 
+ <p>进行Python + Django的Web开发，最佳IDE环境是Pycharm，请大家自行安装，建议使用2018以上的版本。</p> 
+ <p>Django对Python版本的依赖关系如下表所示：</p> 
+ <table> 
+  <thead> 
+   <tr> 
+    <th>Django 版本</th> 
+    <th>Python 版本</th> 
+   </tr> 
+  </thead> 
+  <tbody> 
+   <tr> 
+    <td>1.8</td> 
+    <td>2.7, 3.2 (until the end of 2016), 3.3, 3.4, 3.5</td> 
+   </tr> 
+   <tr> 
+    <td>1.9, 1.10</td> 
+    <td>2.7, 3.4, 3.5</td> 
+   </tr> 
+   <tr> 
+    <td>1.11</td> 
+    <td>2.7，3.4，3.5，3.6，3.7 (1.11.17添加)</td> 
+   </tr> 
+   <tr> 
+    <td>2.0</td> 
+    <td>3.4，3.5，3.6，3.7</td> 
+   </tr> 
+   <tr> 
+    <td>2.1，2.2</td> 
+    <td>3.5, 3.6, 3.7</td> 
+   </tr> 
+  </tbody> 
+ </table> 
+ <p>Django本身的版本支持路线图如下所示：</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/85-1.png"></p> 
+ <p>具体的时间如下图：</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/85-2.png"></p> 
+ <p>未来版本的计划节点：</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/85-3.png"></p> 
+ <p>可以看到，当前的2.2版是个LTS长期支持版本，官方维护到2022年，有三年时间，是一个不错的选择。而3.0版和3.1版都是过渡版本，直到2021年的3.2版才是个LTS版本。</p> 
+ <hr> 
+ <h2>一、安装Django</h2> 
+ <h3>1. 通过pip安装Django</h3> 
+ <p>如果你是通过升级的方式安装Django，那么你需要先卸载旧的版本。</p> 
+ <p>Django提供3种发行版本，推荐使用官方的稳定版本：</p> 
+ <ul> 
+  <li>你的操作系统提供的发行版本（Linux）</li> 
+  <li>官方稳定版本（推荐）</li> 
+  <li>开发测试版本</li> 
+ </ul> 
+ <p>Django本质上是Python语言的一个类库，因此可以通过pip工具安装。这也是最简便最好的安装方式。不建议通过下载安装包或者编译源码进行安装的方法，除非你的环境无法连接外部网络。</p> 
+ <p>这里介绍windows系统下pip命令安装方式。</p> 
+ <p>win+r，调出cmd，运行命令：<code>pip install django</code>，自动安装PyPi提供的最新版本。</p> 
+ <p>如果要指定版本，可使用<code>pip install django==2.2</code>这种形式。</p> 
+ <p>在Linux操作系统中，也是一样，使用pip工具包安装Django。</p> 
+ <h3>2. 验证安装</h3> 
+ <p>进入Python交互式环境（注意一定要进入刚才安装了Django的Python解释器），按下面所示查看安装版本：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span> <span class="nn">django</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="k">print</span><span class="p">(</span><span class="n">django</span><span class="o">.</span><span class="n">get_version</span><span class="p">())</span>
+<span class="mf">2.2</span>
+</pre>
+ </div> 
+ <p>或者使用<code>pip list</code>命令，查看是否存在Django模块。</p> 
+ <h3>3. 配置系统环境</h3> 
+ <p>成功安装Django后，以windows为例，在Python根目录下的Scripts目录中可找到一个<code>django-admin.exe</code>文件，这是Django的核心管理程序，最好将它加入操作系统的环境变量中，这样在以后的调用会比较方便。</p> 
+ <p>如何进入环境变量设置界面，参考Python教程中的相关部分。如下图所示，在Path变量中添加Scripts目录。</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/85-4.png"></p> 
+ <p>回到cmd界面，运行<code>django-admin help</code>，能看到下面的内容表示环境变量设置成功。</p> 
+ <div class="codehilite">
+  <pre><span></span>D:\test&gt;django-admin help
+
+Type 'django-admin help &lt;subcommand&gt;' for help on a specific subcommand.
+
+Available subcommands:
+
+[django]
+    check
+    compilemessages
+    createcachetable
+    dbshell
+    diffsettings
+    dumpdata
+    flush
+    inspectdb
+    loaddata
+    makemessages
+    makemigrations
+    migrate
+    runserver
+    sendtestemail
+    shell
+    showmigrations
+    sqlflush
+    sqlmigrate
+    sqlsequencereset
+    squashmigrations
+    startapp
+    startproject
+    test
+    testserver
+Note that only Django core commands are listed as settings are not properly configured (error: Requested setting INSTALLED_APPS, but settings are not configured. You must either define the environment variable DJANGO_SETTINGS_MODULE or call settings.configure() before accessing settings.).
+</pre>
+ </div> 
+ <h2>二、 测试Django</h2> 
+ <h3>1. 在cmd或Linux命令行环境下创建Django项目</h3> 
+ <p>在windows的cmd环境中(Linux中类同)，新建或者进入你想创建Django项目的目录，然后输入下面的命令：</p> 
+ <div class="codehilite">
+  <pre><span></span>django-admin startproject mysite
+</pre>
+ </div> 
+ <p>这样就会在当前目录下创建一个叫做mysite的Django项目。</p> 
+ <div class="codehilite">
+  <pre><span></span>D:\test&gt;django-admin startproject mysite
+D:\test&gt;dir
+
+ D:\test 的目录
+
+2019/4/20  11:19    &lt;DIR&gt;          .
+2019/4/20  11:19    &lt;DIR&gt;          ..
+2019/4/20  11:19    &lt;DIR&gt;          mysite
+               0 个文件              0 字节
+               3 个目录 102,160,605,184 可用字节
+</pre>
+ </div> 
+ <p>可以看到Django自动帮我们创建了一个mysite文件夹，这是项目的根目录。在mysite根目录中，又有一个mysite目录，这是整个项目的配置文件目录（一定不要和同名的根目录搞混淆了），还有一个manage.py文件，是整个项目的管理脚本。</p> 
+ <div class="codehilite">
+  <pre><span></span>D:\test&gt;cd mysite
+
+D:\test\mysite&gt;dir
+
+ D:\test\mysite 的目录
+
+2019/4/20  11:19    &lt;DIR&gt;          .
+2019/4/20  11:19    &lt;DIR&gt;          ..
+2019/4/20  11:19               826 manage.py
+2019/4/20  11:19    &lt;DIR&gt;          mysite
+               1 个文件            826 字节
+               3 个目录 102,160,605,184 可用字节
+D:\test\mysite&gt;cd mysite
+
+D:\test\mysite\mysite&gt;dir
+
+ D:\test\mysite\mysite 的目录
+
+2019/4/20  11:19    &lt;DIR&gt;          .
+2019/4/20  11:19    &lt;DIR&gt;          ..
+2019/4/20  11:19             3,216 settings.py
+2019/4/20  11:19               784 urls.py
+2019/4/20  11:19               406 wsgi.py
+2019/4/20  11:19                 0 __init__.py
+               4 个文件          4,406 字节
+               2 个目录 102,160,605,184 可用字节
+</pre>
+ </div> 
+ <p>在项目根目录下，运行<code>python manage.py runserver</code>，Django会以<code>127.0.0.1:8000</code>这个默认配置启动开发服务器。</p> 
+ <div class="codehilite">
+  <pre><span></span>D:\test\mysite&gt;python manage.py runserver
+Watching for file changes with StatReloader
+Performing system checks...
+
+System check identified no issues (0 silenced).
+
+You have 17 unapplied migration(s). Your project may not work properly until you apply the migrations for app(s): admin, auth, contenttypes, sessions.
+Run 'python manage.py migrate' to apply them.
+April 18, 2019 - 09:55:08
+Django version 2.2, using settings 'mysite.settings'
+Starting development server at http://127.0.0.1:8000/
+Quit the server with CTRL-BREAK.
+</pre>
+ </div> 
+ <p>打开你的浏览器，在地址栏输入<code>127.0.0.1:8000</code>，如果看到如下的界面，说明Django一切正常，你可以放心大胆的开始Django之旅了！</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/85-5.png"></p> 
+ <hr> 
+ <h3>2. 在windows下使用Pycharm创建Django工程</h3> 
+ <p>当前，2018以后的Pycharm版本都支持同时创建虚拟环境和Django工程。</p> 
+ <p>首先打开Pycharm，点击<code>file--&gt;new project</code>，出现下面的对话框，注意下面的红框提示：</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/85-6.png"></p> 
+ <ul> 
+  <li>在Location处选择工程目录</li> 
+  <li>在New environment using处选择Virtualenv（这可能需要你提前pip install virtualenv进行虚拟工具virtualenv的安装）。通常情况下，虚拟环境会以venv的名字，自动在工程目录下生成。</li> 
+  <li>在Base interpreter处，选择你要使用的Python解释器</li> 
+  <li>下面两个单选框，根据需要自行选择</li> 
+  <li>如果想使用现成的解释器或者虚拟环境，请选择Existing interpreter</li> 
+ </ul> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/85-7.png"></p> 
+ <p>再点开下方的More Settings：</p> 
+ <ul> 
+  <li>Template language:选择使用的模板语言，默认Django就行，可选Jinjia。</li> 
+  <li>Templates folder：Pycharm安利给我们的功能，额外创建一个工程级别的模板文件的保存目录，可以不设置，空着，这里使用默认设置吧。</li> 
+  <li>启用Admin，一般勾上。</li> 
+ </ul> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/85-8.png"></p> 
+ <p>没什么问题了，就点击Create吧。</p> 
+ <p>下面就是一段时间的等待，Pycharm会帮助我们自动创建虚拟环境，以及安装最新版本的Django。</p> 
+ <p>创建完成之后，进入Pycharm的设置菜单，可以看到当前Django版本是最新的2.2版本。如果你要指定过去的版本，比如2.1、1.11等，那就不能这么操作了，需要在命令行下自己创建虚拟环境并安装django。或者在这里先删除Django，再安装你想要的指定版本。</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/85-9.png"></p> 
+ <p>看下我们当前的状态，注意venv这个虚拟环境目录，以及我们额外创建的templats目录：</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/85-10.png"></p> 
+ <p>点击绿色的三角，启动默认的开发服务器，如果看到欢迎界面，说明一切OK!</p> 
+ <p><strong>如果没有特别说明，教程将采用在Pycharm中开发Django项目的方式。</strong></p> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/84"> <i class="fa fa-arrow-left"></i>&nbsp;Django简介</a> 
+  <a class="float-right" href="/course/django/86"> 第一个Django应用&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 22</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/85">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax4.sinaimg.cn/crop.24.0.1194.1194.50/006rlOOMly8feuqdztc70j30yi0x6tdd.jpg?KID=imgbed,tva&amp;Expires=1596189856&amp;ssig=O%2F%2FqELt5%2FQ" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>千万别去搞什么虚拟环境 浪费时间 出了问题</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 田向阳天雷渡劫 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年8月3日 20:14</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2165">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1595566769&amp;ssig=qVeSsp06gY" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>不要因噎废食哦</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 田向阳天雷渡劫 </span> 
+      <em>2020年8月4日 07:59</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2166">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax3.sinaimg.cn/crop.0.0.996.996.50/007S5PrZly8g4pailo49ej30ro0romzf.jpg?KID=imgbed,tva&amp;Expires=1594646379&amp;ssig=fKTlxWol2L" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>请问从命令行运行`python manage.py runserver`，确定是在根目录下，运行后没有反应，这是什么情况呢？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 虫儿飞ZZZZZC </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年7月13日 18:21</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2133">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1595566769&amp;ssig=qVeSsp06gY" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>信息太少，无法回答，sorry</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 虫儿飞ZZZZZC </span> 
+      <em>2020年7月24日 10:16</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2158">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva1.sinaimg.cn/crop.0.0.180.180.50/59bd64d7jw1e8qgp5bmzyj2050050aa8.jpg?KID=imgbed,tva&amp;Expires=1581628195&amp;ssig=Lc1zj21Os%2F" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>最后 点击create后一直卡在这样一个对话框这里：installing Django downloading https://files.pythonhosted.org/packages/</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 定期换名字啦啦 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年2月14日 02:11</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1892">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1580535067&amp;ssig=MT2I5MRwQN" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>检查内容填写和选择框。检查pycharm的设置。检查网络链接。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 定期换名字啦啦 </span> 
+      <em>2020年2月14日 10:26</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1893">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax4.sinaimg.cn/crop.0.0.533.533.50/006uS0Tgly8g8o28qjzp8j30et0etgmx.jpg?KID=imgbed,tva&amp;Expires=1582196815&amp;ssig=oy0Cw7yK63" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我的也这样，你最后咋解决的</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 枯木逢春你逢我 &nbsp;&nbsp;回复&nbsp;&nbsp; 定期换名字啦啦 </span> 
+      <em>2020年2月20日 16:07</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1919">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva4.sinaimg.cn/crop.0.0.1424.1424.50/006674kUjw8f7n8e9ltg8j313k13ktb1.jpg?KID=imgbed,tva&amp;Expires=1585221091&amp;ssig=Ov1VRNfLP2" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>你的可能是因为Python下载源的问题卡住，换成豆瓣的源应该就可以了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 妳笑我陪着妳笑 &nbsp;&nbsp;回复&nbsp;&nbsp; 枯木逢春你逢我 </span> 
+      <em>2020年3月26日 16:12</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1980">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.0.0.996.996.50/006p2ljily8ftc4bq6pqej30ro0rodhx.jpg?KID=imgbed,tva&amp;Expires=1581056905&amp;ssig=8xYnjfvneK" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>最好的django中文教程，寻找了很久</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 不要放蘑菇 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年2月7日 11:29</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1869">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.0.0.512.512.50/ae2ba8caly8g5x9erv98qj20e80e8glx.jpg?KID=imgbed,tva&amp;Expires=1576056494&amp;ssig=yHVuhwgxtn" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>创建虚拟环境并安装django的时候一直不成功，总是超时报错唉：pip._vendor.urllib3.exceptions.ReadTimeoutError: HTTPSConnectionPool(host='files.pythonhosted.org', port=443): Read timed out.</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 玉米汁放风筝 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年12月12日 21:43</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1760">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1577334347&amp;ssig=QyjwpbGyW9" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>检查网络。这个不是Django的锅。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 玉米汁放风筝 </span> 
+      <em>2019年12月26日 10:28</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1798">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.0.0.1006.1006.50/005CXP0Aly8fx3202o6h8j30ry0ryq58.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>真的太棒了，认真学习中</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 羿宪朋 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年12月23日 14:24</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/974">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.960.960.50/006xIWURly8fo9wxo24vzj30qo0qoaaz.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>参考：https://www.cnblogs.com/wcwnina/p/9136398.html</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 蔷薇-Nina </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年6月4日 23:36</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/517">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva3.sinaimg.cn/crop.0.3.506.506.50/8d626e10jw8f6gpi0e4b8j20e20e8dg1.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>写的很棒，正在努力学习中。要是侧边目录固定就好了，浏览起来会变得很方便。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 西域小狐 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年6月4日 20:54</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/516">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva3.sinaimg.cn/crop.56.0.244.244.50/6a4f4bb4jw8ex15v4pifsj20c807qgm9.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我的点击运行后报错的，有时候直接报python 已停止工作。我的urls.py和你的内容不知道一不一样，我的只有 """mysite URL Configuration The `urlpatterns` list routes URLs to views. For more information please see: https://docs.djangoproject.com/en/1.10/topics/http/urls/ Examples: Function views 1. Add an import: from my_app import views 2. Add a URL to urlpatterns: url(r'^$', views.home, name='home') Class-based views 1. Add an import: from other_app.views import Home 2. Add a URL to urlpatterns: url(r'^$', Home.as_view(), name='home') Including another URLconf 1. Import the include() function: from django.conf.urls import url, include 2. Add a URL to urlpatterns: url(r'^blog/', include('blog.urls')) """ from django.conf.urls import url from django.contrib import admin urlpatterns = [ url(r'^admin/', admin.site.urls), ]</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 英超利弗莫尔 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年5月24日 08:29</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/499">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.1080.1080.50/5ec2a85bjw8eh4ja956ryj20u00u0abc.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>不过我点击了mysite旁边的绿色箭头,可以直接启动服务器,也能成功好像.</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 秋秋秋秋方 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年2月25日 11:29</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/218">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.180.180.50/e8d04c5ejw8eam3050saqj2050050746.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我输入“pip install django-1.11.6”，好像不是“=”，我输入等于就不行。 错误位于第一大标题下的第1小标题。 新手，错了勿怪</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; Simoral </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2017年11月16日 20:42</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/38">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.180.180.50/e8d04c5ejw8eam3050saqj2050050746.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>不是‘-’</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> Simoral &nbsp;&nbsp;回复&nbsp;&nbsp; Simoral </span> 
+      <em>2017年11月16日 20:54</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/39">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>已经修改过来，谢谢指出！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; Simoral </span> 
+      <em>2017年11月17日 15:15</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/40">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 12em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.0.9.493.493.50/9f125c07ly8fm7wo8uibdj20dp0e8dh2.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>123</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 巴拉拉小魔仙啾啾 &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2019年4月16日 14:04</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1258">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva4.sinaimg.cn/crop.0.0.720.720.50/005GKXlRjw8ez5z8n2ks2j30k00k0my1.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>从入门到真正入门，谢谢刘哥</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; Chauncey_yan </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2017年11月10日 21:22</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/32">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>千万不要放弃！哈哈！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; Chauncey_yan </span> 
+      <em>2017年11月13日 11:21</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/35">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

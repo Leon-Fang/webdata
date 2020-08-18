@@ -1,0 +1,1177 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>4.收集Windows数据</h1> 
+ <small>阅读:&nbsp;29040&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：46 </small> 
+ <hr> 
+ <h2>一、windows中收集硬件信息</h2> 
+ <p>为了收集运行Windows操作系统的服务器的硬件信息，我们需要编写一个专门的脚本。</p> 
+ <p>在Pycharm的Client目录下的plugins包中，新建一个<code>collect_windows_info.py</code>文件，写入下面的代码：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># -*- coding:utf-8 -*-</span>
+
+<span class="kn">import</span> <span class="nn">platform</span>
+<span class="kn">import</span> <span class="nn">win32com</span>
+<span class="kn">import</span> <span class="nn">wmi</span>
+
+<span class="sd">"""</span>
+<span class="sd">本模块基于windows操作系统，依赖wmi和win32com库，需要提前使用pip进行安装，</span>
+<span class="sd">pip install wmi</span>
+<span class="sd">pip install pypiwin32</span>
+<span class="sd">或者下载安装包手动安装。</span>
+<span class="sd">"""</span>
+
+
+<span class="k">class</span> <span class="nc">Win32Info</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># 固定用法，更多内容请参考模块说明</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wmi_obj</span> <span class="o">=</span> <span class="n">wmi</span><span class="o">.</span><span class="n">WMI</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wmi_service_obj</span> <span class="o">=</span> <span class="n">win32com</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">Dispatch</span><span class="p">(</span><span class="s2">"WbemScripting.SWbemLocator"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wmi_service_connector</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wmi_service_obj</span><span class="o">.</span><span class="n">ConnectServer</span><span class="p">(</span><span class="s2">"."</span><span class="p">,</span> <span class="s2">"root\cimv2"</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">collect</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">'os_type'</span><span class="p">:</span> <span class="n">platform</span><span class="o">.</span><span class="n">system</span><span class="p">(),</span>
+            <span class="s1">'os_release'</span><span class="p">:</span> <span class="s2">"</span><span class="si">%s</span><span class="s2"> </span><span class="si">%s</span><span class="s2">  </span><span class="si">%s</span><span class="s2"> "</span> <span class="o">%</span> <span class="p">(</span><span class="n">platform</span><span class="o">.</span><span class="n">release</span><span class="p">(),</span> <span class="n">platform</span><span class="o">.</span><span class="n">architecture</span><span class="p">()[</span><span class="mi">0</span><span class="p">],</span> <span class="n">platform</span><span class="o">.</span><span class="n">version</span><span class="p">()),</span>
+            <span class="s1">'os_distribution'</span><span class="p">:</span> <span class="s1">'Microsoft'</span><span class="p">,</span>
+            <span class="s1">'asset_type'</span><span class="p">:</span> <span class="s1">'server'</span>
+        <span class="p">}</span>
+
+        <span class="c1"># 分别获取各种硬件信息</span>
+        <span class="n">data</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_cpu_info</span><span class="p">())</span>
+        <span class="n">data</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_ram_info</span><span class="p">())</span>
+        <span class="n">data</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_motherboard_info</span><span class="p">())</span>
+        <span class="n">data</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_disk_info</span><span class="p">())</span>
+        <span class="n">data</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_nic_info</span><span class="p">())</span>
+        <span class="c1"># 最后返回一个数据字典</span>
+        <span class="k">return</span> <span class="n">data</span>
+
+    <span class="k">def</span> <span class="nf">get_cpu_info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">"""</span>
+<span class="sd">        获取CPU的相关数据，这里只采集了三个数据，实际有更多，请自行选择需要的数据</span>
+<span class="sd">        :return:</span>
+<span class="sd">        """</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">cpu_lists</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wmi_obj</span><span class="o">.</span><span class="n">Win32_Processor</span><span class="p">()</span>
+        <span class="n">cpu_core_count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">cpu</span> <span class="ow">in</span> <span class="n">cpu_lists</span><span class="p">:</span>
+            <span class="n">cpu_core_count</span> <span class="o">+=</span> <span class="n">cpu</span><span class="o">.</span><span class="n">NumberOfCores</span>
+
+        <span class="n">cpu_model</span> <span class="o">=</span> <span class="n">cpu_lists</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">Name</span>   <span class="c1"># CPU型号（所有的CPU型号都是一样的）</span>
+        <span class="n">data</span><span class="p">[</span><span class="s2">"cpu_count"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">cpu_lists</span><span class="p">)</span>      <span class="c1"># CPU个数</span>
+        <span class="n">data</span><span class="p">[</span><span class="s2">"cpu_model"</span><span class="p">]</span> <span class="o">=</span> <span class="n">cpu_model</span>
+        <span class="n">data</span><span class="p">[</span><span class="s2">"cpu_core_count"</span><span class="p">]</span> <span class="o">=</span> <span class="n">cpu_core_count</span>  <span class="c1"># CPU总的核数</span>
+
+        <span class="k">return</span> <span class="n">data</span>
+
+    <span class="k">def</span> <span class="nf">get_ram_info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">"""</span>
+<span class="sd">        收集内存信息</span>
+<span class="sd">        :return:</span>
+<span class="sd">        """</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="c1"># 这个模块用SQL语言获取数据</span>
+        <span class="n">ram_collections</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wmi_service_connector</span><span class="o">.</span><span class="n">ExecQuery</span><span class="p">(</span><span class="s2">"Select * from Win32_PhysicalMemory"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">ram</span> <span class="ow">in</span> <span class="n">ram_collections</span><span class="p">:</span>    <span class="c1"># 主机中存在很多根内存，要循环所有的内存数据</span>
+            <span class="n">ram_size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">ram</span><span class="o">.</span><span class="n">Capacity</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1024</span><span class="o">**</span><span class="mi">3</span><span class="p">))</span>  <span class="c1"># 转换内存单位为GB</span>
+            <span class="n">item_data</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">"slot"</span><span class="p">:</span> <span class="n">ram</span><span class="o">.</span><span class="n">DeviceLocator</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span>
+                <span class="s2">"capacity"</span><span class="p">:</span> <span class="n">ram_size</span><span class="p">,</span>
+                <span class="s2">"model"</span><span class="p">:</span> <span class="n">ram</span><span class="o">.</span><span class="n">Caption</span><span class="p">,</span>
+                <span class="s2">"manufacturer"</span><span class="p">:</span> <span class="n">ram</span><span class="o">.</span><span class="n">Manufacturer</span><span class="p">,</span>
+                <span class="s2">"sn"</span><span class="p">:</span> <span class="n">ram</span><span class="o">.</span> <span class="n">SerialNumber</span><span class="p">,</span>
+            <span class="p">}</span>
+            <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item_data</span><span class="p">)</span>  <span class="c1"># 将每条内存的信息，添加到一个列表里</span>
+
+        <span class="k">return</span> <span class="p">{</span><span class="s2">"ram"</span><span class="p">:</span> <span class="n">data</span><span class="p">}</span>    <span class="c1"># 再对data列表封装一层，返回一个字典，方便上级方法的调用</span>
+
+    <span class="k">def</span> <span class="nf">get_motherboard_info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">"""</span>
+<span class="sd">        获取主板信息</span>
+<span class="sd">        :return:</span>
+<span class="sd">        """</span>
+        <span class="n">computer_info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wmi_obj</span><span class="o">.</span><span class="n">Win32_ComputerSystem</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">system_info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wmi_obj</span><span class="o">.</span><span class="n">Win32_OperatingSystem</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">data</span><span class="p">[</span><span class="s1">'manufacturer'</span><span class="p">]</span> <span class="o">=</span> <span class="n">computer_info</span><span class="o">.</span><span class="n">Manufacturer</span>
+        <span class="n">data</span><span class="p">[</span><span class="s1">'model'</span><span class="p">]</span> <span class="o">=</span> <span class="n">computer_info</span><span class="o">.</span><span class="n">Model</span>
+        <span class="n">data</span><span class="p">[</span><span class="s1">'wake_up_type'</span><span class="p">]</span> <span class="o">=</span> <span class="n">computer_info</span><span class="o">.</span><span class="n">WakeUpType</span>
+        <span class="n">data</span><span class="p">[</span><span class="s1">'sn'</span><span class="p">]</span> <span class="o">=</span> <span class="n">system_info</span><span class="o">.</span><span class="n">SerialNumber</span>
+        <span class="k">return</span> <span class="n">data</span>
+
+    <span class="k">def</span> <span class="nf">get_disk_info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">"""</span>
+<span class="sd">        硬盘信息</span>
+<span class="sd">        :return:</span>
+<span class="sd">        """</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">disk</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">wmi_obj</span><span class="o">.</span><span class="n">Win32_DiskDrive</span><span class="p">():</span>     <span class="c1"># 每块硬盘都要获取相应信息</span>
+            <span class="n">disk_data</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">interface_choices</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"SAS"</span><span class="p">,</span> <span class="s2">"SCSI"</span><span class="p">,</span> <span class="s2">"SATA"</span><span class="p">,</span> <span class="s2">"SSD"</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">interface</span> <span class="ow">in</span> <span class="n">interface_choices</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">interface</span> <span class="ow">in</span> <span class="n">disk</span><span class="o">.</span><span class="n">Model</span><span class="p">:</span>
+                    <span class="n">disk_data</span><span class="p">[</span><span class="s1">'interface_type'</span><span class="p">]</span> <span class="o">=</span> <span class="n">interface</span>
+                    <span class="k">break</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">disk_data</span><span class="p">[</span><span class="s1">'interface_type'</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'unknown'</span>
+
+            <span class="n">disk_data</span><span class="p">[</span><span class="s1">'slot'</span><span class="p">]</span> <span class="o">=</span> <span class="n">disk</span><span class="o">.</span><span class="n">Index</span>
+            <span class="n">disk_data</span><span class="p">[</span><span class="s1">'sn'</span><span class="p">]</span> <span class="o">=</span> <span class="n">disk</span><span class="o">.</span><span class="n">SerialNumber</span>
+            <span class="n">disk_data</span><span class="p">[</span><span class="s1">'model'</span><span class="p">]</span> <span class="o">=</span> <span class="n">disk</span><span class="o">.</span><span class="n">Model</span>
+            <span class="n">disk_data</span><span class="p">[</span><span class="s1">'manufacturer'</span><span class="p">]</span> <span class="o">=</span> <span class="n">disk</span><span class="o">.</span><span class="n">Manufacturer</span>
+            <span class="n">disk_data</span><span class="p">[</span><span class="s1">'capacity'</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">disk</span><span class="o">.</span><span class="n">Size</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1024</span><span class="o">**</span><span class="mi">3</span><span class="p">))</span>
+            <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">disk_data</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">{</span><span class="s1">'physical_disk_driver'</span><span class="p">:</span> <span class="n">data</span><span class="p">}</span>
+
+    <span class="k">def</span> <span class="nf">get_nic_info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">"""</span>
+<span class="sd">        网卡信息</span>
+<span class="sd">        :return:</span>
+<span class="sd">        """</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">nic</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">wmi_obj</span><span class="o">.</span><span class="n">Win32_NetworkAdapterConfiguration</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">nic</span><span class="o">.</span><span class="n">MACAddress</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">nic_data</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="n">nic_data</span><span class="p">[</span><span class="s1">'mac'</span><span class="p">]</span> <span class="o">=</span> <span class="n">nic</span><span class="o">.</span><span class="n">MACAddress</span>
+                <span class="n">nic_data</span><span class="p">[</span><span class="s1">'model'</span><span class="p">]</span> <span class="o">=</span> <span class="n">nic</span><span class="o">.</span><span class="n">Caption</span>
+                <span class="n">nic_data</span><span class="p">[</span><span class="s1">'name'</span><span class="p">]</span> <span class="o">=</span> <span class="n">nic</span><span class="o">.</span><span class="n">Index</span>
+                <span class="k">if</span> <span class="n">nic</span><span class="o">.</span><span class="n">IPAddress</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                    <span class="n">nic_data</span><span class="p">[</span><span class="s1">'ip_address'</span><span class="p">]</span> <span class="o">=</span> <span class="n">nic</span><span class="o">.</span><span class="n">IPAddress</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="n">nic_data</span><span class="p">[</span><span class="s1">'net_mask'</span><span class="p">]</span> <span class="o">=</span> <span class="n">nic</span><span class="o">.</span><span class="n">IPSubnet</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">nic_data</span><span class="p">[</span><span class="s1">'ip_address'</span><span class="p">]</span> <span class="o">=</span> <span class="s1">''</span>
+                    <span class="n">nic_data</span><span class="p">[</span><span class="s1">'net_mask'</span><span class="p">]</span> <span class="o">=</span> <span class="s1">''</span>
+                <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nic_data</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">{</span><span class="s1">'nic'</span><span class="p">:</span> <span class="n">data</span><span class="p">}</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+    <span class="c1"># 测试代码</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">Win32Info</span><span class="p">()</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+        <span class="k">print</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="s2">":"</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+</pre>
+ </div> 
+ <p>windows中没有方便的命令可以获取硬件信息，但是有额外的模块可以帮助我们实现目的，这个模块叫做wmi。可以使用<code>pip install wmi</code>的方式安装，当前版本是1.4.9。但是wmi安装后，<code>import wmi</code>依然会出错，因为它依赖一个叫做win32com的模块。</p> 
+ <p>我们依然可以通过<code>pip install pypiwin32</code>来安装win32com模块，但是不幸的是，据反映，有些机器无法通过pip成功安装。所以，这里我在github中提供了一个手动安装包<code>pywin32-220.win-amd64-py3.5(配合wmi模块，获取主机信息的模块).exe</code>，方便大家。(如果版本不兼容，也可以自行在网上搜索。)</p> 
+ <p>依赖包的问题解决后，我们来看一下<code>sys_info.py</code>脚本的代码。</p> 
+ <ul> 
+  <li>类Win32Info封装了具体数据收集逻辑</li> 
+  <li>其中对Win32模块的调用方式是固定的，有兴趣的可以自行学习这个模块的官方文档</li> 
+  <li>核心在于collect方法，它汇总了其它方法收集的信息！</li> 
+  <li>collect方法首先通过platform模块获取平台的信息，然后保存到一个data字典中。</li> 
+  <li>分别调用其它方法，获取CPU、RAM、主板、硬盘和网卡的信息。</li> 
+  <li>每一类数据收集完成后都会作为一个新的字典，update到开始的data字典中，最终形成完整的信息字典。</li> 
+  <li>最后在脚本末尾有一个测试入口。</li> 
+ </ul> 
+ <p>整个脚本的代码其实很简单，我们只要将Win32的方法调用当作透明的空气，剩下的不过就是将获得的数据，按照我们指定的格式打包成一个数据字典。</p> 
+ <h2>强调：数据字典的格式和键值是非常重要的，是预设的，不可以随意改变！</h2> 
+ <h2>二、信息收集测试</h2> 
+ <p>下面，单独运行一下该脚本（注意不是运行CMDB项目），查看一下生成的数据。为了显示更直观，可以通过在线json校验工具格式化一下。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="p">{</span>
+<span class="n">os_type</span><span class="s1">': '</span><span class="n">Windows</span><span class="s1">',</span>
+<span class="s1">'os_release'</span><span class="p">:</span> <span class="s1">'764bit6.1.7601'</span><span class="p">,</span>
+<span class="s1">'os_distribution'</span><span class="p">:</span> <span class="s1">'Microsoft'</span><span class="p">,</span>
+<span class="s1">'asset_type'</span><span class="p">:</span> <span class="s1">'server'</span><span class="p">,</span>
+<span class="s1">'cpu_count'</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+<span class="s1">'cpu_model'</span><span class="p">:</span> <span class="s1">'Intel(R)Core(TM)i5-2300CPU@2.80GHz'</span><span class="p">,</span>
+<span class="s1">'cpu_core_count'</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+<span class="s1">'ram'</span><span class="p">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+        <span class="s1">'slot'</span><span class="p">:</span> <span class="s1">'A0'</span><span class="p">,</span>
+        <span class="s1">'capacity'</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+        <span class="s1">'model'</span><span class="p">:</span> <span class="s1">'PhysicalMemory'</span><span class="p">,</span>
+        <span class="s1">'manufacturer'</span><span class="p">:</span> <span class="s1">''</span><span class="p">,</span>
+        <span class="s1">'sn'</span><span class="p">:</span> <span class="s1">''</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s1">'slot'</span><span class="p">:</span> <span class="s1">'A1'</span><span class="p">,</span>
+        <span class="s1">'capacity'</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+        <span class="s1">'model'</span><span class="p">:</span> <span class="s1">'PhysicalMemory'</span><span class="p">,</span>
+        <span class="s1">'manufacturer'</span><span class="p">:</span> <span class="s1">''</span><span class="p">,</span>
+        <span class="s1">'sn'</span><span class="p">:</span> <span class="s1">''</span>
+    <span class="p">}</span>
+<span class="p">],</span>
+<span class="s1">'manufacturer'</span><span class="p">:</span> <span class="s1">'GigabyteTechnologyCo.,</span>
+<span class="n">Ltd</span><span class="o">.</span><span class="s1">',</span>
+<span class="s1">'model'</span><span class="p">:</span> <span class="s1">'P67X-UD3R-B3'</span><span class="p">,</span>
+<span class="s1">'wake_up_type'</span><span class="p">:</span> <span class="mi">6</span><span class="p">,</span>
+<span class="s1">'sn'</span><span class="p">:</span> <span class="s1">'00426-OEM-8992662-12006'</span><span class="p">,</span>
+<span class="s1">'physical_disk_driver'</span><span class="p">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+        <span class="s1">'iface_type'</span><span class="p">:</span> <span class="s1">'unknown'</span><span class="p">,</span>
+        <span class="s1">'slot'</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s1">'sn'</span><span class="p">:</span> <span class="s1">'3830414130423230233235362020202020202020'</span><span class="p">,</span>
+        <span class="s1">'model'</span><span class="p">:</span> <span class="s1">'KINGSTONSV100S264GATADevice'</span><span class="p">,</span>
+        <span class="s1">'manufacturer'</span><span class="p">:</span> <span class="s1">'(标准磁盘驱动器)'</span><span class="p">,</span>
+        <span class="s1">'capacity'</span><span class="p">:</span> <span class="mi">59</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s1">'iface_type'</span><span class="p">:</span> <span class="s1">'unknown'</span><span class="p">,</span>
+        <span class="s1">'slot'</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="s1">'sn'</span><span class="p">:</span> <span class="s1">'2020202020202020201020205935334445414235'</span><span class="p">,</span>
+        <span class="s1">'model'</span><span class="p">:</span> <span class="s1">'ST2000DL003-9VT166ATADevice'</span><span class="p">,</span>
+        <span class="s1">'manufacturer'</span><span class="p">:</span> <span class="s1">'(标准磁盘驱动器)'</span><span class="p">,</span>
+        <span class="s1">'capacity'</span><span class="p">:</span> <span class="mi">1863</span>
+    <span class="p">}</span>
+<span class="p">],</span>
+<span class="s1">'nic'</span><span class="p">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+        <span class="s1">'mac'</span><span class="p">:</span> <span class="s1">'24: CF: 92: FF: 48: 34'</span><span class="p">,</span>
+        <span class="s1">'model'</span><span class="p">:</span> <span class="s1">'[</span>
+            <span class="mo">00000011</span>
+        <span class="p">]</span><span class="n">RealtekRTL8192CUWirelessLAN802</span><span class="o">.</span><span class="mi">11</span><span class="n">nUSB2</span><span class="o">.</span><span class="mi">0</span><span class="n">NetworkAdapter</span><span class="s1">',</span>
+        <span class="s1">'name'</span><span class="p">:</span> <span class="mi">11</span><span class="p">,</span>
+        <span class="s1">'ip_address'</span><span class="p">:</span> <span class="s1">'192.168.1.100'</span><span class="p">,</span>
+        <span class="s1">'net_mask'</span><span class="p">:</span> <span class="p">(</span><span class="s1">'255.255.255.0'</span><span class="p">,</span>
+        <span class="s1">'64'</span><span class="p">)</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s1">'mac'</span><span class="p">:</span> <span class="s1">'0A: 00: 27: 00: 00: 00'</span><span class="p">,</span>
+        <span class="s1">'model'</span><span class="p">:</span> <span class="s1">'[</span>
+            <span class="mo">00000013</span>
+        <span class="p">]</span><span class="n">VirtualBoxHost</span><span class="o">-</span><span class="n">OnlyEthernetAdapter</span><span class="s1">',</span>
+        <span class="s1">'name'</span><span class="p">:</span> <span class="mi">13</span><span class="p">,</span>
+        <span class="s1">'ip_address'</span><span class="p">:</span> <span class="s1">'192.168.56.1'</span><span class="p">,</span>
+        <span class="s1">'net_mask'</span><span class="p">:</span> <span class="p">(</span><span class="s1">'255.255.255.0'</span><span class="p">,</span>
+        <span class="s1">'64'</span><span class="p">)</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s1">'mac'</span><span class="p">:</span> <span class="s1">'24: CF: 92: FF: 48: 34'</span><span class="p">,</span>
+        <span class="s1">'model'</span><span class="p">:</span> <span class="s1">'[</span>
+            <span class="mo">00000017</span>
+        <span class="p">]</span><span class="n">MicrosoftVirtualWiFiMiniportAdapter</span><span class="s1">',</span>
+        <span class="s1">'name'</span><span class="p">:</span> <span class="mi">17</span><span class="p">,</span>
+        <span class="s1">'ip_address'</span><span class="p">:</span> <span class="s1">''</span><span class="p">,</span>
+        <span class="s1">'net_mask'</span><span class="p">:</span> <span class="s1">''</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s1">'mac'</span><span class="p">:</span> <span class="s1">'10: 19: 86: 00: 12: 98'</span><span class="p">,</span>
+        <span class="s1">'model'</span><span class="p">:</span> <span class="s1">'[</span>
+            <span class="mo">0000001</span><span class="mi">8</span>
+        <span class="p">]</span><span class="n">Bluetooth设备</span><span class="p">(</span><span class="err">个人区域网</span><span class="p">)</span><span class="s1">',</span>
+        <span class="s1">'name'</span><span class="p">:</span> <span class="mi">18</span><span class="p">,</span>
+        <span class="s1">'ip_address'</span><span class="p">:</span> <span class="s1">''</span><span class="p">,</span>
+        <span class="s1">'net_mask'</span><span class="p">:</span> <span class="s1">''</span>
+    <span class="p">}</span>
+<span class="p">]</span>
+<span class="p">}</span>
+</pre>
+ </div> 
+ <p>上面的信息包含操作系统、主板、CPU、内存、硬盘、网卡等各种信息。可以看到我有两条内存，两块硬盘，以及4块网卡。内存没有获取到sn，但slot是不一样的。硬盘有sn，但接口未知。四块网卡有出现mac地址相同的情况，因为那是虚拟机的。</p> 
+ <p>你的数据和我的肯定不一样，但是数据格式和键值必须一样，我们后面自动分析数据、填充数据，都依靠这个固定格式的数据字典。</p> 
+ <p>通过测试我们发现数据可以收集到了，那么再测试一下数据能否正常发送到服务器。</p> 
+ <h2>三、数据发送测试</h2> 
+ <p>由于后面我们还会采用Linux虚拟机作为测试用例，所以Django服务器就不能再运行在127.0.0.1:8000上面了。</p> 
+ <p>查看一下当前机器的IP，发现是192.168.0.100，修改项目的settings.py文件，将ALLOWED_HOSTS修改如下：</p> 
+ <div class="codehilite">
+  <pre><span></span>ALLOWED_HOSTS = ["*"]
+</pre>
+ </div> 
+ <p>这表示接收所有同一局域网内的网络访问。</p> 
+ <p>然后以0.0.0.0:8000的参数启动CMDB项目服务器，表示对局域网内所有ip开放服务。</p> 
+ <p>回到客户端，进入Client/bin目录，运行<code>python main.py report_data</code>，可以看到如下结果：</p> 
+ <div class="codehilite">
+  <pre><span></span>(venv) D:\work\2019\for_test\CMDB\Client\bin&gt;python main.py report_data
+正在将数据发送至： [http://192.168.0.100:8000/assets/report/]  ......
+?[31;1m发送失败，错误原因： HTTP Error 404: Not Found?[0m
+日志记录成功！
+</pre>
+ </div> 
+ <p>这是一个404错误，表示服务器地址没找到，这是因为我们还没有为Django编写接收数据的视图和路由。</p> 
+ <p>这时，打开log目录下的日志文件，内容如下：</p> 
+ <div class="codehilite">
+  <pre><span></span>发送时间：2019-04-12 10:13:52     服务器地址：http://192.168.0.100:8000/assets/report/      返回结果：发送失败   错误原因：  HTTP Error 404: Not Found 
+</pre>
+ </div> 
+ <h2>四、接收数据</h2> 
+ <p>进入<code>cmdb/urls.py</code>文件中，编写一个二级路由，将所有assets相关的数据都转发到<code>assets.urls</code>中，如下所示：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.contrib</span> <span class="kn">import</span> <span class="n">admin</span>
+<span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">path</span>
+<span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">include</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'admin/'</span><span class="p">,</span> <span class="n">admin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">urls</span><span class="p">),</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'assets/'</span><span class="p">,</span> <span class="n">include</span><span class="p">(</span><span class="s1">'assets.urls'</span><span class="p">)),</span>
+<span class="p">]</span>
+</pre>
+ </div> 
+ <p>然后，我们在assets中新建一个urls.py文件，写入下面的代码：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">path</span>
+<span class="kn">from</span> <span class="nn">assets</span> <span class="kn">import</span> <span class="n">views</span>
+
+<span class="n">app_name</span> <span class="o">=</span> <span class="s1">'assets'</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'report/'</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">report</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">'report'</span><span class="p">),</span>
+<span class="p">]</span>
+</pre>
+ </div> 
+ <p>这样，我们的路由就写好了。</p> 
+ <p>转过头，我们进入assets/views.py文件，写一个简单的视图。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.shortcuts</span> <span class="kn">import</span> <span class="n">render</span>
+<span class="kn">from</span> <span class="nn">django.shortcuts</span> <span class="kn">import</span> <span class="n">HttpResponse</span>
+
+<span class="c1"># Create your views here.</span>
+
+<span class="k">def</span> <span class="nf">report</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>    
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s2">"POST"</span><span class="p">:</span>
+        <span class="n">asset_data</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'asset_data'</span><span class="p">)</span>
+        <span class="k">print</span><span class="p">(</span><span class="n">asset_data</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="s2">"成功收到数据！"</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>代码很简单，接收POST过来的数据，打印出来，然后返回成功的消息。</p> 
+ <p>重新启动服务器，然后去Client客户端运行<code>python main.py report_data</code>，可以看到：</p> 
+ <div class="codehilite">
+  <pre><span></span>(venv) D:\work\2019\for_test\CMDB\Client\bin&gt;python main.py report_data
+正在将数据发送至： [http://192.168.0.100:8000/assets/report/]  ......
+?[31;1m发送失败，错误原因： HTTP Error 403: Forbidden?[0m
+日志记录成功！
+</pre>
+ </div> 
+ <p>403就是拒绝服务的错误了。</p> 
+ <p>原因在于我们模拟浏览器发送了一个POST请求给Django，但是请求中没有携带Django需要的csrf安全令牌，所以拒绝了请求。</p> 
+ <p>为了解决这个问题，我们需要在这个report视图上忽略csrf验证，可以通过Django的<code>@csrf_exempt</code>装饰器。修改代码如下：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.shortcuts</span> <span class="kn">import</span> <span class="n">render</span>
+<span class="kn">from</span> <span class="nn">django.shortcuts</span> <span class="kn">import</span> <span class="n">HttpResponse</span>
+<span class="kn">from</span> <span class="nn">django.views.decorators.csrf</span> <span class="kn">import</span> <span class="n">csrf_exempt</span>
+
+<span class="c1"># Create your views here.</span>
+
+<span class="nd">@csrf_exempt</span>
+<span class="k">def</span> <span class="nf">report</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s2">"POST"</span><span class="p">:</span>
+        <span class="n">asset_data</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'asset_data'</span><span class="p">)</span>
+        <span class="k">print</span><span class="p">(</span><span class="n">asset_data</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="s2">"成功收到数据！"</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>重启CMDB服务器，再次从客户端报告数据，可以看到返回结果如下：</p> 
+ <div class="codehilite">
+  <pre><span></span>(venv) D:\work\2019\for_test\CMDB\Client\bin&gt;python main.py report_data
+正在将数据发送至： [http://192.168.0.100:8000/assets/report/]  ......
+?[31;1m发送完毕！?[0m
+返回结果：成功收到数据！
+日志记录成功！
+</pre>
+ </div> 
+ <p>这表明数据发送成功了。</p> 
+ <p>再看Pycharm中，也打印出了接收到的数据，一切OK！</p> 
+ <p>CSRF验证的问题解决了，但是又带来新的安全问题。我们可以通过增加用户名、密码，或者md5验证或者自定义安全令牌的方式解决，这部分内容需要大家自己添加。</p> 
+ <p>Windows下的客户端已经验证完毕了，然后我们就可以通过各种方式让脚本定时运行、收集和报告数据，一切都自动化。</p> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/119"> <i class="fa fa-arrow-left"></i>&nbsp;3.数据收集客户端</a> 
+  <a class="float-right" href="/course/django/121"> 5.Linux下收集数据&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 46</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/120">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif?KID=imgbed,tva&amp;Expires=1576426743&amp;ssig=MzcdpTGSnx" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>Traceback (most recent call last): File "collect_windows_info.py", line 6, in &lt;module&gt; import wmi File "F:\learn_env_py3\lib\site-packages\wmi.py", line 157, in &lt;module&gt; obj = GetObject ("winmgmts:") File "F:\learn_env_py3\lib\site-packages\win32com\client\__init__.py", line 72, in GetObject return Moniker(Pathname, clsctx) File "F:\learn_env_py3\lib\site-packages\win32com\client\__init__.py", line 87, in Moniker moniker, i, bindCtx = pythoncom.MkParseDisplayName(Pathname) pywintypes.com_error: (-2147023821, '服务不存在，或已被标记为删除。', None, None) 我单独运行完采集数据脚本后保这个错误是什么意思？？？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; Zel1994 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年12月15日 21:20</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1764">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif?KID=imgbed,tva&amp;Expires=1567489076&amp;ssig=a42TcnmJ%2F2" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>AttributeError: 'Win32Info' object has no attribute 'wmi_obj'，哪位大神告诉我下，为什么提示没有属性'wmi_obj'， 我在 def __int__(self): # 固定用法，更多内容请参考模块说明 self.wmi_obj = wmi.WMI() 我在__init__中已经写了啊</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户6229983382 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年9月3日 10:40</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1611">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif?Expires=1564731259&amp;ssig=njO4VPTA8R&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>博主，mac下载不了pypi32win 有其他的可以代替它吗</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 墨村015 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年8月14日 22:04</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1555">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?Expires=1566005137&amp;ssig=WT35MhxJ6H&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>pypi32win是windows操作系统下使用的工具，所以本教程不支持管理mac主机。 如果你只是想在mac系统中下载这个文件本身，那么我的github中提供了这个工具原文件。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 墨村015 </span> 
+      <em>2019年8月17日 08:56</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1563">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.0.0.1006.1006.50/005Jndwoly8g3450n44xmj30ry0rygn4.jpg?Expires=1565752616&amp;ssig=LW8lXM7Trr&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我的报错正在讲数据发送至：[http://192.168.10.40:8000/assets/report/] ...... ?[31; 1m发送失败，错误原因：&lt;urlopen error [WinError 10061] 由于目标计算机积极拒绝，无法连接。&gt;?[0m 日志记录成功</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; clearlies </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年8月14日 12:05</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1553">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?Expires=1566005137&amp;ssig=WT35MhxJ6H&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>在开篇处，我就提示过，这个项目和你的本地环境关联很大，比如这种目标计算机拒绝的问题。出现这种情况，更多的是端口未开放、防火墙、网络链接设置等原因，和Django关系不大。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; clearlies </span> 
+      <em>2019年8月17日 08:54</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1562">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax3.sinaimg.cn/crop.0.0.1328.1328.50/7ca4f39aly8fiqky1ogagj210w10wjvz.jpg?KID=imgbed,tva&amp;Expires=1593585666&amp;ssig=UjTbnr%2Bq8r" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>你看下是不是， 由于你添加代码导致django 报错server停了。 我跟你一样的报错，重新起来了server就好了。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 点此死机 &nbsp;&nbsp;回复&nbsp;&nbsp; clearlies </span> 
+      <em>2020年7月1日 11:43</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2125">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif?Expires=1564731259&amp;ssig=njO4VPTA8R&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>mac下载win32总是不成功</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 墨村015 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年8月2日 14:35</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1533">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva4.sinaimg.cn/crop.0.0.180.180.50/892ac731jw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>此处获取设备SN号使用self.wmi_obj.Win32_BaseBoard()[0].SerialNumber.strip()更合理，获取到的SN才是主板上显示的正确SN。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; guai-蜀黍 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年5月9日 15:36</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1323">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.996.996.50/006lsZAIjw8f3bpsculx1j30ro0rpadf.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>python main.py report_data 正在将数据发送至： [http://127.0.0.1:8000/assets/report/] ...... ?[31;1m发送失败，错误原因： HTTP Error 500: Internal Server Error?[0m 日志记录成功！ 我的出现的是500，不知道那块出错了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 凯风寒泉zk </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年4月26日 17:10</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1292">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/default/images/default_avatar_male_50.gif?Expires=1564995416&amp;ssig=qODbZfryGb&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>你好，我也遇到这个问题，你怎么解决的呀</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> Noob5200 &nbsp;&nbsp;回复&nbsp;&nbsp; 凯风寒泉zk </span> 
+      <em>2019年8月5日 16:55</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1538">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva4.sinaimg.cn/crop.0.0.1342.1342.50/005NQBQ8jw8f5q3for1d6j311a11ak05.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>老师，我的电脑并没有装虚拟机，这个环节该如何测试，是要先去装一个虚拟机吗，还有我的django也是2.1.7版本的，前面的步骤没问题，都调好了，就是发送数据这一直是 10060类型错误</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; SEE__终极 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年4月3日 13:33</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1213">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva3.sinaimg.cn/crop.0.58.440.440.50/b8253f15jw8eayptqq27uj20c80fh755.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我用的是django2.1.3的，那个路由配的挺蒙蔽了，就是一直发送成功，接受失败。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 衰老的粽子 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年2月15日 15:57</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1069">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>CMDB系统是部署在A服务器上，那么客户端CLIENT是需要部署在B服务器上吗？那就意味着每台需要被采集数据的服务器都要安装PYTHON及所用到的包？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 我叫阿里纳斯 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年11月15日 11:44</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/863">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>你可能觉得这很麻烦，工作量太大。换个思维想，即使你不装Python，你也要装别的工具来采集和发送数据到CMDB，不然，数据从哪来？另外，对于运维人员，批量安装环境和软件是基本功，不是什么太难的问题。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 我叫阿里纳斯 </span> 
+      <em>2018年11月15日 19:09</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/866">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我现在CLIENT和CMDB是装在同一台机器上（windows），conf.settings的配置的server地址为本机IP地址，端口80也是打开的，但是在terminal执行python main.py report_data会返回 HTTP Error 401: Unauthorized ， terminal完整的返回是这个下面这段。本地机器是没有设置用户名密码的。 正在将数据发送至： [http://10.2.x.x:80/assets/report/] ...... ?[31;1m发送失败，HTTP Error 401: Unauthorized?[0m 日志记录成功！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 我叫阿里纳斯 &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2018年11月16日 10:06</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/871">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 12em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.100.100.50/006cSvaDjw8evg11w74t3j302s02sa9v.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>跟楼主一样的情况 F:\Program Files (x86)\cmdb\Client\bin&gt;python main.py report_data 正在将数据发送至： [http://192.168.1.100:8000/assets/report/] ...... ?[31;1m发送失败，&lt;urlopen error [WinError 10061] 由于目标计算机积极拒绝，无法连接。&gt;?[0m 日志记录成功！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 俺们全村都知道 &nbsp;&nbsp;回复&nbsp;&nbsp; 我叫阿里纳斯 </span> 
+      <em>2019年1月11日 14:10</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1013">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 16em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>你的这个问题好了吗？ 什么问题</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 用户6033813033 &nbsp;&nbsp;回复&nbsp;&nbsp; 俺们全村都知道 </span> 
+      <em>2019年4月14日 21:59</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1254">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 20em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>conf.settings.py文件内设置本机的IP~</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 小紫薯奶爸 &nbsp;&nbsp;回复&nbsp;&nbsp; 用户6033813033 </span> 
+      <em>2019年5月3日 15:56</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1307">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 24em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.0.0.1006.1006.50/005Jndwoly8g3450n44xmj30ry0rygn4.jpg?Expires=1565752616&amp;ssig=LW8lXM7Trr&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>设置了但还是拒绝</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> clearlies &nbsp;&nbsp;回复&nbsp;&nbsp; 小紫薯奶爸 </span> 
+      <em>2019年8月14日 11:29</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1551">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 16em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.0.0.1006.1006.50/005Jndwoly8g3450n44xmj30ry0rygn4.jpg?Expires=1565752616&amp;ssig=LW8lXM7Trr&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>你的问题解决了吗</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> clearlies &nbsp;&nbsp;回复&nbsp;&nbsp; 俺们全村都知道 </span> 
+      <em>2019年8月14日 12:04</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1552">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva4.sinaimg.cn/crop.0.0.1342.1342.50/005NQBQ8jw8f5q3for1d6j311a11ak05.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我想问下你的意思是我把这个windows下完全一样的代码项目从新部署在虚拟机上吗，然后再虚拟机上启动服务器0.0.0.0：8000，然后回到Windows系统去client/bin的目录下在虚拟环境中去执行python main.py report_data是这么个流程吗？ 我的报错信息是10060 由于连接方在一段时间后没有正确答复或连接的主机没有反应，连接尝试失败</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> SEE__终极 &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2019年4月11日 09:10</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1242">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.996.996.50/006rlcsvjw8fbcakrcf7ij30ro0rpn0k.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>可以把收集Windows信息的python脚本连同pywin32这些一起打包成exe可执行文件，就不用在每个机器上都装python了，昨天试了可以的。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> aifeiyu915 &nbsp;&nbsp;回复&nbsp;&nbsp; 我叫阿里纳斯 </span> 
+      <em>2019年6月6日 11:17</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1394">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva3.sinaimg.cn/crop.0.0.180.180.50/b868488fjw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>from win32com.client import Dispatch, constants 我安装win32com了，可是pycharm导入的时候，Dispatch还是显示没找到</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 阳明131415926 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年11月15日 09:56</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/862">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.180.180.50/88d81163jw8f3lpqro6w3j2050050wer.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我在安装了 pywin32-223.win-amd64-py3.7 ， 也 pip install pypiwin32 pip install wmi 了， 不知道为什么，import wmi 还是出错</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; DuoyiChen </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年9月25日 17:06</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/749">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.180.180.50/88d81163jw8f3lpqro6w3j2050050wer.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>原来是我的的 virtualenv 搞混了。env上没装。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> DuoyiChen &nbsp;&nbsp;回复&nbsp;&nbsp; DuoyiChen </span> 
+      <em>2018年9月25日 17:17</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/750">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.996.996.50/d17cf9a3jw8f2hc167wnaj20ro0rpjsw.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>博主，您好！当项目以其他IP运行后，发送post请求会提示目标拒绝，感觉应该是身份验证出现了问题，请问这块如何验证呢，另外能否讲一下post请求时，如何做csrf验证。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; July2124 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年8月10日 09:01</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/668">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>另外，基础的csrf知识请参考教程里相关章节</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; July2124 </span> 
+      <em>2018年8月10日 17:09</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/669">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.0.0.996.996.50/006ZCVHoly8fn8gjdy4z0j30ro0rowhb.jpg?KID=imgbed,tva&amp;Expires=1574757269&amp;ssig=e8C8tenQpv" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>目标积极拒绝是django服务器没开，就是runserver这步要先看。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 凌石石 &nbsp;&nbsp;回复&nbsp;&nbsp; July2124 </span> 
+      <em>2019年11月26日 13:35</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1728">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.104.45.384.384.50/948f4af0gw1egbeqmi59yj20hs0dcdi2.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我确认我已经安装了pywin32了。 并且在sys_info.py 文件中 import win32com 和import wmi 没有报错，什么原因呢？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 她她她--迷人 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年7月18日 12:29</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/601">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.104.45.384.384.50/948f4af0gw1egbeqmi59yj20hs0dcdi2.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>额，大意了，打错包名了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 她她她--迷人 &nbsp;&nbsp;回复&nbsp;&nbsp; 她她她--迷人 </span> 
+      <em>2018年7月18日 14:23</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/602">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.2.0.1237.1237.50/7074e05fly8fiwh6mvd7dj20yi0yd40r.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>执行python main.py collect_data只能获取到本地计算机的硬件信息，怎么才能获取到局域网所有服务器的硬件信息</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; parc_de </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年7月16日 14:35</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/588">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>每个主机放一个agent不就可以了嘛,当然也可以自已写一些协议去广播,但是需要原始系统有一定的支持</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 情调102 &nbsp;&nbsp;回复&nbsp;&nbsp; parc_de </span> 
+      <em>2018年12月7日 17:24</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/922">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.996.996.50/c3d26465ly8fqqbaxwz4vj20ro0rodib.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>正在将数据发送至：[http:// 10.200.11.199:8000/assets/report/] ...... ?[31;1m发送失败，&lt;urlopen error [Errno 11001] getaddrinfo failed&gt;?[0m 日志记录成功！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 海盗小船雷小瑶 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年5月6日 11:06</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/452">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva4.sinaimg.cn/crop.0.0.480.480.50/d126d996jw8eqpi1zl9qej20dc0dc74b.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>检查下handler.py的里面url = "http://%s:%s%s"这行</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 0提莫队长 &nbsp;&nbsp;回复&nbsp;&nbsp; 海盗小船雷小瑶 </span> 
+      <em>2018年9月29日 11:40</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/756">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.996.996.50/c3d26465ly8fqqbaxwz4vj20ro0rodib.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>怎么让core下边的红线消失啊，虽然可以运行，但是看着不舒服from core import handler</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 海盗小船雷小瑶 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年5月5日 19:24</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/444">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.1080.1080.50/5ec2a85bjw8eh4ja956ryj20u00u0abc.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我python3.6,django.1.11 首先CLINET包我放在CMDB包里引用不太正确,我就放桌面了.然后PIP下不了WMI,就去官网下了wmi,然后再用命令行python install setup装好总算成功了,获取了本地的电脑信息.然后再打开另外一个Pycharm打开了CMDB,用命令行启动0:0:0:0:8000服务器,再运行那个才CLIENT成功了- -</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 秋秋秋秋方 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年3月29日 15:37</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/345">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.960.960.50/006xIWURly8fo9wxo24vzj30qo0qoaaz.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>如果在同一主机上测试，则启动Django服务。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 蔷薇-Nina </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年3月27日 22:12</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/333">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva4.sinaimg.cn/crop.0.0.1342.1342.50/005NQBQ8jw8f5q3for1d6j311a11ak05.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>你怎么测试的，我的版本信息是python3.7.3 pypiwin32 223 wmi1.4.9 django2.1.7 然后按教程上的配置，我测试出来一直是 31;1m发送失败，&lt;urlopen error [WinError 10060] 由于连接方在一段时间后没有正确答复或连接的主机没有反应，连接尝试失败。&gt;?[0m</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> SEE__终极 &nbsp;&nbsp;回复&nbsp;&nbsp; 蔷薇-Nina </span> 
+      <em>2019年4月3日 14:17</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1214">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.640.640.50/615f9ce1jw8ev0z791vaoj20hs0hsq3m.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>发送失败，HTTP Error 500: Internal Server Error</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 冬天里的大白熊 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年3月23日 12:37</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/325">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.996.996.50/af3a5069ly8fjv3yl1bowj20ro0roq4r.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我也是500错误，没搞明白</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 深情默默爱格格 &nbsp;&nbsp;回复&nbsp;&nbsp; 冬天里的大白熊 </span> 
+      <em>2018年4月8日 15:28</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/362">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.330.0.758.758.50/6a52dc4ajw8eobeogo39bj211y0lc0ts.jpg?Expires=1563688657&amp;ssig=tZb4lJYxEE&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>后台还有一个进程在跑 杀掉 就可以了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 憨豆可乎 &nbsp;&nbsp;回复&nbsp;&nbsp; 深情默默爱格格 </span> 
+      <em>2019年7月21日 12:58</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1506">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva3.sinaimg.cn/crop.0.0.200.200.50/9a61bdf1jw8f34jytkna8j205k05kdfv.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>Python3.6 Django1.11.5 &gt;pip install win32com Collecting win32com Could not find a version that satisfies the requirement win32com (from versions: ) No matching distribution found for win32com</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; tomdong3721 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年2月5日 14:23</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/189">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我们依然可以通过pip install pypiwin32来安装win32com模块，但是不幸的是，据反映，有些机器无法通过pip成功安装。所以，这里我在github中提供了一个手动安装包pywin32-220.win-amd64-py3.5(配合wmi模块，获取主机信息的模块).exe，方便大家。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; tomdong3721 </span> 
+      <em>2018年2月5日 15:01</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/190">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.0.664.664.50/e8201e4cjw8f68s0l274sj20ig0iggme.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>数据发送部分,通过urllib发送不成功,提示404找不到路径,但是路径设置时正常的, 换成requests.post 提交就ok,又遇到这样的情况吗?</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 爱吃萝卜叶叶的毛毛虫 &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2019年4月19日 09:57</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1268">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva1.sinaimg.cn/crop.0.0.500.500.50/a5288890jw8ezom68pcmbj20dw0dw75i.jpg?KID=imgbed,tva&amp;Expires=1585309027&amp;ssig=4G%2FjTJjGYD" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>坑爹啊，pip install pywin32=223 版本的才可以</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> shfanzie &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2020年4月2日 17:30</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1998">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

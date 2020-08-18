@@ -1,0 +1,146 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>第二章：视图层</h1> 
+ <small>阅读:&nbsp;20164&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：6 </small> 
+ <hr> 
+ <p>视图层是Django处理请求的核心代码层，我们大多数Python代码都集中在这一层面。</p> 
+ <p>它对外接收用户请求，对内调度模型层和模版层，统合数据库和前端，最后根据业务逻辑，将处理好的数据，与前端结合，返回给用户。视图层是真正的后端，是Python工程师的‘主营业务’。</p> 
+ <p>Django的视图层包含下面一些主要内容：</p> 
+ <ul> 
+  <li>URL路由</li> 
+  <li>视图函数</li> 
+  <li>快捷方式</li> 
+  <li>装饰器</li> 
+  <li>请求与响应</li> 
+  <li>类视图</li> 
+  <li>文件上传</li> 
+  <li>CSV/PDF生成</li> 
+  <li>内置中间件</li> 
+ </ul> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/132"> <i class="fa fa-arrow-left"></i>&nbsp;查询参数及聚合函数</a> 
+  <a class="float-right" href="/course/django/134"> URL路由基础&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 6</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/133">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.0.180.180.50/59bd64d7jw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>模型的知识太多太繁杂了，没看太懂，留下了一个印象，继续往下看啦啦啦啦</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 定期换名字啦啦 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年3月21日 00:18</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1168">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva1.sinaimg.cn/crop.0.0.180.180.50/59bd64d7jw1e8qgp5bmzyj2050050aa8.jpg?KID=imgbed,tva&amp;Expires=1582805685&amp;ssig=raLhwkGACh" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>一年后又看了一遍模型层，现在觉得不是很难啊。逻辑清楚了就慢慢掌握了，原来模型层一点都不难，so easy!</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 定期换名字啦啦 &nbsp;&nbsp;回复&nbsp;&nbsp; 定期换名字啦啦 </span> 
+      <em>2020年2月27日 17:15</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1926">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva4.sinaimg.cn/crop.0.0.200.200.50/005AZoCtgw1f56mmb1475j305k05ka9v.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>看两编了，models还是没能全看懂，决定接着往下走</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 河南启芳电子科技有限公司 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年2月19日 17:23</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1070">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.0.996.996.50/684b4357jw8f6i1rp6013j20ro0romyl.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>先在自强学堂看了下基础的东西，扫扫盲，在看来博主博客，博主的博客写的内容还是蛮丰富的，必须动手实践才行，加油啦亲们</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 带着寂寞闯天涯 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年7月19日 20:47</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/620">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.960.960.50/006xIWURly8fo9wxo24vzj30qo0qoaaz.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>诚心建议刘博主在此章节增加关于Django通用类视图的内容。通用类视图很重要，不可忽略之！谢谢。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 蔷薇-Nina </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年6月11日 11:19</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/532">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.180.180.50/67179639jw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>学了一天,终于到了视图层的第二章了.~! 谢谢刘大大!</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 孤竹孙 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年5月5日 18:33</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/440">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

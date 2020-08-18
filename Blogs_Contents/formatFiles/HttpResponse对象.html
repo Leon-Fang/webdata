@@ -1,0 +1,206 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>HttpResponse对象</h1> 
+ <small>阅读:&nbsp;29970&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：2 </small> 
+ <hr> 
+ <p>类定义：class HttpResponse[source]</p> 
+ <p>HttpResponse类定义在django.http模块中。</p> 
+ <p>HttpRequest对象由Django自动创建，而HttpResponse对象则由程序员手动创建.</p> 
+ <p>我们编写的每个视图都要实例化、填充和返回一个HttpResponse对象。也就是函数的return值。</p> 
+ <h2>一、使用方法</h2> 
+ <h3>1. 传递一个字符串</h3> 
+ <p>最简单的方式是传递一个字符串作为页面的内容到HttpResponse构造函数，并返回给用户:</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">django.http</span> <span class="kn">import</span> <span class="n">HttpResponse</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">response</span> <span class="o">=</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="s2">"Here's the text of the Web page."</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">response</span> <span class="o">=</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="s2">"Text only, please."</span><span class="p">,</span> <span class="n">content_type</span><span class="o">=</span><span class="s2">"text/plain"</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>可以将response看做一个类文件对象，使用wirte()方法不断地往里面增加内容。</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; response = HttpResponse()
+&gt;&gt;&gt; response.write("<span class="nt">&lt;p&gt;</span>Here's the text of the Web page.<span class="nt">&lt;/p&gt;</span>")
+&gt;&gt;&gt; response.write("<span class="nt">&lt;p&gt;</span>Here's another paragraph.<span class="nt">&lt;/p&gt;</span>")
+</pre>
+ </div> 
+ <h3>2. 传递可迭代对象</h3> 
+ <p>HttpResponse会立即处理这个迭代器，并把它的内容存成字符串，最后废弃这个迭代器。比如文件在读取后，会立刻调用close()方法，关闭文件。</p> 
+ <h3>3. 设置头部字段</h3> 
+ <p>可以把HttpResponse对象当作一个字典一样，在其中增加和删除头部字段。</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; response = HttpResponse()
+&gt;&gt;&gt; response['Age'] = 120
+&gt;&gt;&gt; del response['Age']
+</pre>
+ </div> 
+ <p>注意！与字典不同的是，如果要删除的头部字段如果不存在，del不会抛出KeyError异常。</p> 
+ <p>HTTP的头部字段中不能包含换行。所以如果我们提供的头部字段值包含换行符（CR或者LF），将会抛出BadHeaderError异常。</p> 
+ <h3>4. 告诉浏览器将响应视为文件附件</h3> 
+ <p>让浏览器以文件附件的形式处理响应, 需要声明<code>content_type</code>类型和设置<code>Content-Disposition</code>头信息。 例如，给浏览器返回一个微软电子表格：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; response = HttpResponse(my_data, content_type='application/vnd.ms-excel')
+&gt;&gt;&gt; response['Content-Disposition'] = 'attachment; filename="foo.xls"'
+</pre>
+ </div> 
+ <h2>二、属性</h2> 
+ <h3>1. HttpResponse.content</h3> 
+ <p>响应的内容。bytes类型。</p> 
+ <h3>2. HttpResponse.charset</h3> 
+ <p>编码的字符集。 如果没指定，将会从<code>content_type</code>中解析出来。</p> 
+ <h3>3. HttpResponse.status_code</h3> 
+ <p>响应的状态码，比如200。</p> 
+ <h3>4. HttpResponse.reason_phrase</h3> 
+ <p>响应的HTTP原因短语。 使用标准原因短语。</p> 
+ <p>除非明确设置，否则<code>reason_phrase</code>由<code>status_code</code>的值决定。</p> 
+ <h3>5. HttpResponse.streaming</h3> 
+ <p>这个属性的值总是False。由于这个属性的存在，使得中间件能够区别对待流式响应和常规响应。</p> 
+ <h3>6. HttpResponse.closed</h3> 
+ <p>如果响应已关闭，那么这个属性的值为True。</p> 
+ <h2>三、 方法</h2> 
+ <h3>1. HttpResponse.<strong>init</strong>(content='', content_type=None, status=200, reason=None, charset=None)[source]</h3> 
+ <p>响应的实例化方法。使用content参数和<code>content-type</code>实例化一个HttpResponse对象。</p> 
+ <p>content应该是一个迭代器或者字符串。如果是迭代器，这个迭代期返回的应是一串字符串，并且这些字符串连接起来形成response的内容。 如果不是迭代器或者字符串，那么在其被接收的时候将转换成字符串。</p> 
+ <p><code>content_type</code>是可选地，用于填充HTTP的<code>Content-Type</code>头部。如果未指定，默认情况下由<code>DEFAULT_CONTENT_TYPE</code>和<code>DEFAULT_CHARSET</code>设置组成：<code>text/html; charset=utf-8</code>。</p> 
+ <p>status是响应的状态码。reason是HTTP响应短语。charset是编码方式。</p> 
+ <h3>2. HttpResponse.has_header(header)</h3> 
+ <p>检查头部中是否有给定的名称（不区分大小写），返回True或 False。</p> 
+ <h3>3. HttpResponse.setdefault(header, value)</h3> 
+ <p>设置一个头部，除非该头部已经设置过了。</p> 
+ <h3>4. HttpResponse.set_cookie(key, value='', max_age=None, expires=None, path='/', domain=None, secure=None, httponly=False)</h3> 
+ <p>设置一个Cookie。 参数与Python标准库中的Morsel.Cookie对象相同。</p> 
+ <p>max_age: 生存周期，以秒为单位。</p> 
+ <p>expires：到期时间。</p> 
+ <p>domain: 用于设置跨域的Cookie。例如<code>domain=".lawrence.com"</code>将设置一个<code>www.lawrence.com</code>、<code>blogs.lawrence.com</code>和<code>calendars.lawrence.com</code>都可读的Cookie。 否则，Cookie将只能被设置它的域读取。</p> 
+ <p>如果你想阻止客服端的JavaScript访问Cookie，可以设置httponly=True。</p> 
+ <h3>5. HttpResponse.set_signed_cookie(key, value, salt='', max_age=None, expires=None, path='/', domain=None, secure=None, httponly=True)</h3> 
+ <p>与<code>set_cookie()</code>类似，但是在设置之前将对cookie进行加密签名。通常与<code>HttpRequest.get_signed_cookie()</code>一起使用。 </p> 
+ <h3>6. HttpResponse.delete_cookie(key, path='/', domain=None)</h3> 
+ <p>删除Cookie中指定的key。 </p> 
+ <p>由于Cookie的工作方式，path和domain应该与<code>set_cookie()</code>中使用的值相同，否则Cookie不会删掉。</p> 
+ <h3>7. HttpResponse.write(content)[source]</h3> 
+ <p>将HttpResponse实例看作类似文件的对象，往里面添加内容。</p> 
+ <h3>8. HttpResponse.flush()</h3> 
+ <p>清空HttpResponse实例的内容。</p> 
+ <h3>9. HttpResponse.tell()[source]</h3> 
+ <p>将HttpResponse实例看作类似文件的对象，移动位置指针。</p> 
+ <h3>10. HttpResponse.getvalue()[source]</h3> 
+ <p>返回HttpResponse.content的值。 此方法将HttpResponse实例看作是一个类似流的对象。</p> 
+ <h3>11. HttpResponse.readable()</h3> 
+ <p>Django1.10中的新功能，值始终为False。</p> 
+ <h3>12. HttpResponse.seekable()</h3> 
+ <p>Django1.10中的新功能，值始终为False。</p> 
+ <h3>13. HttpResponse.writable()[source]</h3> 
+ <p>Django1.10中的新功能，值始终为True。</p> 
+ <h3>14. HttpResponse.writelines(lines)[source]</h3> 
+ <p>将一个包含行的列表写入响应对象中。 不添加分行符。</p> 
+ <h2>四、HttpResponse的子类</h2> 
+ <p>Django包含了一系列的HttpResponse衍生类（子类），用来处理不同类型的HTTP响应。与HttpResponse相同, 这些衍生类存在于django.http之中。</p> 
+ <ul> 
+  <li>class HttpResponseRedirect[source]：重定向，返回302状态码。已经被redirect()替代。</li> 
+  <li>class HttpResponsePermanentRedirect[source]:永久重定向，返回301状态码。</li> 
+  <li>class HttpResponseNotModified[source]：未修改页面，返回304状态码。</li> 
+  <li>class HttpResponseBadRequest[source]：错误的请求，返回400状态码。</li> 
+  <li>class HttpResponseNotFound[source]：页面不存在，返回404状态码。</li> 
+  <li>class HttpResponseForbidden[source]：禁止访问，返回403状态码。</li> 
+  <li>class HttpResponseNotAllowed[source]：禁止访问，返回405状态码。</li> 
+  <li>class HttpResponseGone[source]：过期，返回405状态码。</li> 
+  <li>class HttpResponseServerError[source]：服务器错误，返回500状态码。</li> 
+ </ul> 
+ <h2>五、JsonResponse类</h2> 
+ <p>class JsonResponse（data，encoder = DjangoJSONEncoder，safe = True，json_dumps_params = None ，** kwargs）[source] </p> 
+ <p>JsonResponse是HttpResponse的一个子类，是Django提供的用于创建JSON编码类型响应的快捷类。 </p> 
+ <p>它从父类继承大部分行为，并具有以下不同点：</p> 
+ <p>它的默认Content-Type头部设置为application/json。</p> 
+ <p>它的第一个参数data，通常应该为一个字典数据类型。 如果safe参数设置为False，则可以是任何可JSON 序列化的对象。</p> 
+ <p>encoder默认为<code>django.core.serializers.json.DjangoJSONEncoder</code>，用于序列化数据。 </p> 
+ <p>布尔类型参数safe默认为True。 如果设置为False，可以传递任何对象进行序列化（否则，只允许dict 实例）。</p> 
+ <p>典型的用法如下：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">django.http</span> <span class="kn">import</span> <span class="n">JsonResponse</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">response</span> <span class="o">=</span> <span class="n">JsonResponse</span><span class="p">({</span><span class="s1">'foo'</span><span class="p">:</span> <span class="s1">'bar'</span><span class="p">})</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">response</span><span class="o">.</span><span class="n">content</span>
+<span class="sa">b</span><span class="s1">'{"foo": "bar"}'</span>
+</pre>
+ </div> 
+ <p>若要序列化非dict对象，必须设置safe参数为False：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; response = JsonResponse([1, 2, 3], safe=False)
+</pre>
+ </div> 
+ <p>如果不传递safe=False，将抛出一个TypeError。</p> 
+ <p>如果你需要使用不同的JSON 编码器类，可以传递encoder参数给构造函数：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; response = JsonResponse(data, encoder=MyJSONEncoder)
+</pre>
+ </div> 
+ <h2>六、StreamingHttpResponse类</h2> 
+ <p>StreamingHttpResponse类被用来从Django响应一个流式对象到浏览器。如果生成的响应太长或者是占用的内存较大，这么做可能更有效率。 例如，它对于生成大型的CSV文件非常有用。</p> 
+ <p>StreamingHttpResponse不是HttpResponse的衍生类（子类），因为它实现了完全不同的应用程序接口。但是，除了几个明显不同的地方，两者几乎完全相同。</p> 
+ <h2>七、FileResponse</h2> 
+ <p>文件类型响应。通常用于给浏览器返回一个文件附件。</p> 
+ <p>FileResponse是StreamingHttpResponse的衍生类，为二进制文件专门做了优化。</p> 
+ <p>FileResponse需要通过二进制模式打开文件，如下:</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">django.http</span> <span class="kn">import</span> <span class="n">FileResponse</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">response</span> <span class="o">=</span> <span class="n">FileResponse</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="s1">'myfile.png'</span><span class="p">,</span> <span class="s1">'rb'</span><span class="p">))</span>
+</pre>
+ </div> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/139"> <i class="fa fa-arrow-left"></i>&nbsp;QueryDict对象</a> 
+  <a class="float-right" href="/course/django/141"> 文件上传&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 2</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/140">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.1080.1080.50/006xIWURly8g3w3jk5kmcj30u00u03zs.jpg?Expires=1562507709&amp;ssig=ZhQEgD7Ax2&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>HttpResponse≈文件对象+字典对象</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 蔷薇-Nina </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年7月9日 21:48</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1441">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.225.123.220.220.50/d7e850caly8fnbq64kyl5j20im0cggmo.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>每天学习一点点</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 王希知 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年3月14日 21:01</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1151">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

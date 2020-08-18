@@ -1,0 +1,105 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>Admin文档生成器</h1> 
+ <small>阅读:&nbsp;15549&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：0 </small> 
+ <hr> 
+ <p>Django的admindocs应用可以从模型、视图、模板标签等地方获得文档内容。</p> 
+ <h2>一、概览</h2> 
+ <p>要激活admindocs，请按下面的步骤操作：</p> 
+ <ul> 
+  <li>在<code>INSTALLED_APPS</code>内添加<code>django.contrib.admindocs</code></li> 
+  <li>在<code>urlpatterns</code>内添加<code>url(r'^admin/doc/',include('django.contrib.admindocs.urls'))</code>。确保它处于<code>r'^admin/'</code>条目之前，原因你懂的。</li> 
+  <li>安装Python的docutils模块(http://docutils.sf.net/)(pip3 install docutils)</li> 
+  <li>可选：想使用admindocs的书签小工具，需要安装django.contrib.admindocs.middleware.XViewMiddleware。</li> 
+ </ul> 
+ <p>如果上述步骤顺利完成，那么你可以从admin界面访问doc界面，也可以直接访问<code>/admin/doc</code>，如下图：</p> 
+ <p><img alt="22.png-12.2kB" src="http://static.zybuluo.com/feixuelove1009/vczgdhubo4rqbh5wndc85kw2/22.png"></p> 
+ <p>它看起来是下面的样子：</p> 
+ <p><img alt="23.png-109.9kB" src="http://static.zybuluo.com/feixuelove1009/5elmdqpzsajnu9lklcg2sdck/23.png"></p> 
+ <p>下面的这些特殊标记，可帮助你在文档字符串中，快速创建指向其它组件的链接：</p> 
+ <p><img alt="2.jpg-27.2kB" src="http://static.zybuluo.com/feixuelove1009/95gi5xwftlmomj6yziu2lv6r/2.jpg"></p> 
+ <h2>二、模型</h2> 
+ <p>在doc页面的模型部分，列出了所有的模型，点击可以查看具体的字段等细节信息。信息主要来自字段的<code>help_txt</code>部分和模型方法的<code>docstring</code>部分。如下面图中展示：</p> 
+ <p>有用的帮助信息看起来是这个样子的：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="k">class</span> <span class="nc">BlogEntry</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    Stores a single blog entry, related to :model:`blog.Blog` and</span>
+<span class="sd">    :model:`auth.User`.</span>
+<span class="sd">    """</span>
+    <span class="n">slug</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">SlugField</span><span class="p">(</span><span class="n">help_text</span><span class="o">=</span><span class="s2">"A short label, generally used in URLs."</span><span class="p">)</span>
+    <span class="n">author</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="n">User</span><span class="p">,</span>
+        <span class="n">models</span><span class="o">.</span><span class="n">SET_NULL</span><span class="p">,</span>
+        <span class="n">blank</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">blog</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Blog</span><span class="p">,</span> <span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
+    <span class="o">...</span>
+
+    <span class="k">def</span> <span class="nf">publish</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">"""Makes the blog entry live on the site."""</span>
+        <span class="o">...</span>
+</pre>
+ </div> 
+ <p><img alt="24.png-104.9kB" src="http://static.zybuluo.com/feixuelove1009/ajygzgpvd8ytwtp4wz2vlsqa/24.png"></p> 
+ <p><img alt="25.png-117.8kB" src="http://static.zybuluo.com/feixuelove1009/lf8m9raw5hmunkh9akf2qldc/25.png"></p> 
+ <h2>三、视图</h2> 
+ <p>站点内的每个URL都会在doc内享有一个页面，点击某个URL将会展示对应的视图信息。主要包括下面这些信息，请尽量丰富它们：</p> 
+ <ul> 
+  <li>视图功能的简单描述</li> 
+  <li>上下文环境，或者视图模块里的变量列表</li> 
+  <li>视图内使用的模板</li> 
+ </ul> 
+ <p>例如：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.shortcuts</span> <span class="kn">import</span> <span class="n">render</span>
+
+<span class="kn">from</span> <span class="nn">myapp.models</span> <span class="kn">import</span> <span class="n">MyModel</span>
+
+<span class="k">def</span> <span class="nf">my_view</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">slug</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    Display an individual :model:`myapp.MyModel`.</span>
+
+<span class="sd">    **Context**</span>
+
+<span class="sd">    ``mymodel``</span>
+<span class="sd">        An instance of :model:`myapp.MyModel`.</span>
+
+<span class="sd">    **Template:**</span>
+
+<span class="sd">    :template:`myapp/my_template.html`</span>
+<span class="sd">    """</span>
+    <span class="n">context</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'mymodel'</span><span class="p">:</span> <span class="n">MyModel</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">slug</span><span class="o">=</span><span class="n">slug</span><span class="p">)}</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'myapp/my_template.html'</span><span class="p">,</span> <span class="n">context</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p><img alt="26.png-132.3kB" src="http://static.zybuluo.com/feixuelove1009/hecy9ddfg73lkrty76sjp93g/26.png"></p> 
+ <h2>四、模板标签和过滤器</h2> 
+ <p>所有Django内置的或者你自定义的或者第三方app提供的标签和过滤器都将在页面内展示：</p> 
+ <p><img alt="27.png-133.1kB" src="http://static.zybuluo.com/feixuelove1009/4s0gcqgkm5lq3xa8ce00u4fm/27.png"></p> 
+ <p><img alt="28.png-140.4kB" src="http://static.zybuluo.com/feixuelove1009/yblibbj3wrxekjumd7sbd2lq/28.png"></p> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/159"> <i class="fa fa-arrow-left"></i>&nbsp;自定义Admin actions</a> 
+  <a class="float-right" href="/course/django/162"> 第六章：Django 综合篇&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 0</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/160">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

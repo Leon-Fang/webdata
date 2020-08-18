@@ -1,0 +1,45 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>第五章：Admin管理后台</h1> 
+ <small>阅读:&nbsp;17993&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：0 </small> 
+ <hr> 
+ <p>Django奉行Python的内置电池哲学。它自带了一系列在Web开发中用于解决常见问题或需求的额外的、可选工具。这些工具和插件，例如<code>django.contrib.redirects</code>都必须在settings中的<code>INSTALLED_APPS</code>处进行注册，有的还需要执行manage.py migrate命令，在数据库中创建一些数据表。</p> 
+ <p>Admin站点是Django有别于其它Web框架最重要的一点，并且非常受欢迎，简直是出门旅游xxxx的必备。不管你是写个小demo还是做个大项目都用得上。admin（下文中将Admin管理后台简称为admin）通过读取你的模型数据，快速构造出一个可以对实际数据进行管理的Web站点，常用于开发测试，简单管理等场合，适用于部门内部为工作方便的场合，但不建议在生产环境中使用。</p> 
+ <p>默认情况下，使用startproject的时候，admin就被激活了。</p> 
+ <p>在使用admin时请注意下面的需求和要点：</p> 
+ <ol> 
+  <li>将<code>django.contrib.admin</code>加入<code>INSTALLED_APPS</code>。</li> 
+  <li>admin依赖四个模块，请确保它们存在于<code>INSTALLED_APPS</code>，他们是django.contrib.auth、django.contrib.contenttypes、django.contrib.messages和django.contrib.sessions。</li> 
+  <li>在你的settings文件中的TEMPLATES中的<code>context_processors</code>选项内添加<code>django.contrib.auth.context_processors.auth</code>和<code>django.contrib.messages.context_processors.messages</code>这两条。同样，将<code>django.contrib.auth.middleware.AuthenticationMiddleware</code>和<code>django.contrib.messages.middleware.MessageMiddleware</code>添加到settings的<code>MIDDLEWARE</code>内。默认情况下，这些都是配置好的。</li> 
+  <li>决定哪些模型需要在admin内进行管理，在<code>admin.py</code>文件中注册它们。</li> 
+  <li>对于每个模型，可以创建一个对应的<code>ModelAdmin</code>类，这个类将封装对模型的所有自定义设置。</li> 
+  <li>实例化一个AdminSite，将模型、模型对应的ModelAdmin类传给它。</li> 
+  <li>链接AdminSite和你的URLconf。这一步通常默认已经完成。</li> 
+ </ol> 
+ <p>做完上面的步骤，你就可以在浏览器中访问admin站点了，默认地址是<code>/admin/</code>。但是，想要登录进去，你首先必须使用<code>python manage.py createsuperuser</code>命令创建管理员账户。</p> 
+ <p>创建管理员账户的过程中，注意密码强度，不能太简单。</p> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/156"> <i class="fa fa-arrow-left"></i>&nbsp;模型表单ModelForm</a> 
+  <a class="float-right" href="/course/django/158"> 自定制Admin&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 0</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/157">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

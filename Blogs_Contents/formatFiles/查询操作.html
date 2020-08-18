@@ -1,0 +1,1016 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>查询操作</h1> 
+ <small>阅读:&nbsp;68239&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：16 </small> 
+ <hr> 
+ <p>查询操作是Django的ORM框架中最重要的内容之一。我们建立模型、保存数据为的就是在需要的时候可以查询得到数据。Django自动为所有的模型提供了一套完善、方便、高效的API，一些重要的，我们要背下来，一些不常用的，要有印象，使用的时候可以快速查找参考手册。</p> 
+ <hr> 
+ <p>本节的内容基于如下的一个博客应用模型：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
+
+<span class="k">class</span> <span class="nc">Blog</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+    <span class="n">tagline</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">TextField</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>              <span class="c1"># __unicode__ on Python 2</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
+
+<span class="k">class</span> <span class="nc">Author</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">200</span><span class="p">)</span>
+    <span class="n">email</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">EmailField</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>              <span class="c1"># __unicode__ on Python 2</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
+
+<span class="k">class</span> <span class="nc">Entry</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">blog</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Blog</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
+    <span class="n">headline</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">255</span><span class="p">)</span>
+    <span class="n">body_text</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">TextField</span><span class="p">()</span>
+    <span class="n">pub_date</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateField</span><span class="p">()</span>
+    <span class="n">mod_date</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateField</span><span class="p">()</span>
+    <span class="n">authors</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span><span class="n">Author</span><span class="p">)</span>
+    <span class="n">n_comments</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">IntegerField</span><span class="p">()</span>
+    <span class="n">n_pingbacks</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">IntegerField</span><span class="p">()</span>
+    <span class="n">rating</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">IntegerField</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>              <span class="c1"># __unicode__ on Python 2</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">headline</span>
+</pre>
+ </div> 
+ <h1>一、创建对象</h1> 
+ <p>假设模型位于<code>mysite/blog/models.py</code>文件中，那么创建对象的方式如下：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">blog.models</span> <span class="kn">import</span> <span class="n">Blog</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">b</span> <span class="o">=</span> <span class="n">Blog</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">'Beatles Blog'</span><span class="p">,</span> <span class="n">tagline</span><span class="o">=</span><span class="s1">'All the latest Beatles news.'</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">b</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+</pre>
+ </div> 
+ <p>在后台，这会运行一条SQL的INSERT语句。如果你不显式地调用save()方法，Django不会立刻将该操作反映到数据库中。save()方法没有返回值，它可以接受一些额外的参数。</p> 
+ <p>如果想要一行代码完成上面的操作，请使用<code>creat()</code>方法，它可以省略save的步骤：</p> 
+ <div class="codehilite">
+  <pre><span></span>b = Blog.objects.create(name='Beatles Blog', tagline='All the latest Beatles news.')
+</pre>
+ </div> 
+ <h1>二、保存对象</h1> 
+ <p>使用save()方法，保存对数据库内已有对象的修改。例如如果已经存在b5对象在数据库内：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; b5.name = 'New name'
+&gt;&gt;&gt; b5.save()
+</pre>
+ </div> 
+ <p>在后台，这会运行一条SQL的UPDATE语句。如果你不显式地调用save()方法，Django不会立刻将该操作反映到数据库中。</p> 
+ <h2>1. 保存外键和多对多字段</h2> 
+ <p>保存一个外键字段和保存普通字段没什么区别，只是要注意值的类型要正确。下面的例子，有一个Entry的实例entry和一个Blog的实例<code>cheese_blog</code>，然后把<code>cheese_blog</code>作为值赋给了entry的blog属性，最后调用save方法进行保存。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">blog.models</span> <span class="kn">import</span> <span class="n">Entry</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">entry</span> <span class="o">=</span> <span class="n">Entry</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">cheese_blog</span> <span class="o">=</span> <span class="n">Blog</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"Cheddar Talk"</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">entry</span><span class="o">.</span><span class="n">blog</span> <span class="o">=</span> <span class="n">cheese_blog</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">entry</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+</pre>
+ </div> 
+ <p>多对多字段的保存稍微有点区别，需要调用一个<code>add()</code>方法，而不是直接给属性赋值，但它不需要调用save方法。如下例所示：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">blog.models</span> <span class="kn">import</span> <span class="n">Author</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">joe</span> <span class="o">=</span> <span class="n">Author</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"Joe"</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">entry</span><span class="o">.</span><span class="n">authors</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">joe</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>在一行语句内，可以同时添加多个对象到多对多的字段，如下所示：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; john = Author.objects.create(name="John")
+&gt;&gt;&gt; paul = Author.objects.create(name="Paul")
+&gt;&gt;&gt; george = Author.objects.create(name="George")
+&gt;&gt;&gt; ringo = Author.objects.create(name="Ringo")
+&gt;&gt;&gt; entry.authors.add(john, paul, george, ringo)
+</pre>
+ </div> 
+ <p>如果你指定或添加了错误类型的对象，Django会抛出异常。</p> 
+ <h1>三、检索对象</h1> 
+ <p>想要从数据库内检索对象，你需要基于模型类，通过管理器（Manager）构造一个查询结果集（QuerySet）。</p> 
+ <p>每个QuerySet代表一些数据库对象的集合。它可以包含零个、一个或多个过滤器（filters）。Filters缩小查询结果的范围。在SQL语法中，一个QuerySet相当于一个SELECT语句，而filter则相当于WHERE或者LIMIT一类的子句。</p> 
+ <p>通过模型的Manager获得QuerySet，每个模型至少具有一个Manager，默认情况下，它被称作<code>objects</code>，可以通过模型类直接调用它，但不能通过模型类的实例调用它，以此实现“表级别”操作和“记录级别”操作的强制分离。如下所示：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; Blog.objects
+&lt;django.db.models.manager.Manager object at ...&gt;
+&gt;&gt;&gt; b = Blog(name='Foo', tagline='Bar')
+&gt;&gt;&gt; b.objects
+Traceback:
+...
+AttributeError: "Manager isn't accessible via Blog instances."
+</pre>
+ </div> 
+ <h2>1. 检索所有对象</h2> 
+ <p>使用<code>all()</code>方法，可以获取某张表的所有记录。</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; all_entries = Entry.objects.all()
+</pre>
+ </div> 
+ <h2>2. 过滤对象</h2> 
+ <p>有两个方法可以用来过滤QuerySet的结果，分别是：</p> 
+ <ul> 
+  <li><code>filter(**kwargs)</code>：返回一个根据指定参数查询出来的QuerySet</li> 
+  <li><code>exclude(**kwargs)</code>：返回除了根据指定参数查询出来结果的QuerySet</li> 
+ </ul> 
+ <p>其中，<code>**kwargs</code>参数的格式必须是Django设置的一些字段格式。</p> 
+ <p>例如：</p> 
+ <div class="codehilite">
+  <pre><span></span>Entry.objects.filter(pub_date__year=2006)
+</pre>
+ </div> 
+ <p>它等同于：</p> 
+ <div class="codehilite">
+  <pre><span></span>Entry.objects.all().filter(pub_date__year=2006)
+</pre>
+ </div> 
+ <p><strong>链式过滤</strong></p> 
+ <p>filter和exclude的结果依然是个QuerySet，因此它可以继续被filter和exclude，这就形成了链式过滤： </p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; Entry.objects.filter(
+...     headline__startswith='What'
+... ).exclude(
+...     pub_date__gte=datetime.date.today()
+... ).filter(
+...     pub_date__gte=datetime(2005, 1, 30)
+... )
+</pre>
+ </div> 
+ <p>（这里需要注意的是，当在进行跨关系的链式过滤时，结果可能和你想象的不一样，参考下面的跨多值关系查询）</p> 
+ <p><strong>被过滤的QuerySets都是唯一的</strong></p> 
+ <p>每一次过滤，你都会获得一个全新的QuerySet，它和之前的QuerySet没有任何关系，可以完全独立的被保存，使用和重用。例如：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; q1 = Entry.objects.filter(headline__startswith="What")
+&gt;&gt;&gt; q2 = q1.exclude(pub_date__gte=datetime.date.today())
+&gt;&gt;&gt; q3 = q1.filter(pub_date__gte=datetime.date.today())
+</pre>
+ </div> 
+ <p>例子中的q2和q3虽然由q1得来，是q1的子集，但是都是独立自主存在的。同样q1也不会受到q2和q3的影响。</p> 
+ <p><strong>QuerySets都是懒惰的</strong></p> 
+ <p>一个创建QuerySets的动作不会立刻导致任何的数据库行为。你可以不断地进行filter动作一整天，Django不会运行任何实际的数据库查询动作，直到QuerySets被提交(evaluated)。</p> 
+ <p>简而言之就是，只有碰到某些特定的操作，Django才会将所有的操作体现到数据库内，否则它们只是保存在内存和Django的层面中。这是一种提高数据库查询效率，减少操作次数的优化设计。看下面的例子：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; q = Entry.objects.filter(headline__startswith="What")
+&gt;&gt;&gt; q = q.filter(pub_date__lte=datetime.date.today())
+&gt;&gt;&gt; q = q.exclude(body_text__icontains="food")
+&gt;&gt;&gt; print(q)
+</pre>
+ </div> 
+ <p>上面的例子，看起来执行了3次数据库访问，实际上只是在print语句时才执行1次访问。通常情况，QuerySets的检索不会立刻执行实际的数据库查询操作，直到出现类似print的请求，也就是所谓的evaluated。</p> 
+ <h2>3. 检索单一对象</h2> 
+ <p>filter方法始终返回的是QuerySets，那怕只有一个对象符合过滤条件，返回的也是包含一个对象的QuerySets，这是一个集合类型对象，你可以简单的理解为Python列表，可迭代可循环可索引。</p> 
+ <p>如果你确定你的检索只会获得一个对象，那么你可以使用Manager的get()方法来直接返回这个对象。</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; one_entry = Entry.objects.get(pk=1)
+</pre>
+ </div> 
+ <p>在get方法中你可以使用任何filter方法中的查询参数，用法也是一模一样。</p> 
+ <p><strong>注意</strong>：使用get()方法和使用filter()方法然后通过[0]的方式分片，有着不同的地方。看似两者都是获取单一对象。但是，<strong>如果在查询时没有匹配到对象，那么get()方法将抛出DoesNotExist异常</strong>。这个异常是模型类的一个属性，在上面的例子中，如果不存在主键为1的Entry对象，那么Django将抛出<code>Entry.DoesNotExist</code>异常。</p> 
+ <p>类似地，<strong>在使用get()方法查询时，如果结果超过1个，则会抛出MultipleObjectsReturned异常</strong>，这个异常也是模型类的一个属性。</p> 
+ <p><strong>所以：get()方法要慎用！</strong></p> 
+ <h2>4. 其它QuerySet方法</h2> 
+ <p>大多数情况下，需要从数据库中查找对象时，使用all()、 get()、filter() 和exclude()就行。针对QuerySet的方法还有很多，都是一些相对高级的用法。</p> 
+ <h2>5. QuerySet使用限制</h2> 
+ <p>使用类似Python对列表进行切片的方法可以对QuerySet进行范围取值。它相当于SQL语句中的LIMIT和OFFSET子句。参考下面的例子：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; Entry.objects.all()[:5]      # 返回前5个对象
+&gt;&gt;&gt; Entry.objects.all()[5:10]    # 返回第6个到第10个对象
+</pre>
+ </div> 
+ <p><strong>注意：不支持负索引！例如 Entry.objects.all()[-1]是不允许的</strong></p> 
+ <p>通常情况，切片操作会返回一个新的QuerySet，并且不会被立刻执行。但是有一个例外，那就是指定步长的时候，查询操作会立刻在数据库内执行，如下：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; Entry.objects.all()[:10:2]
+</pre>
+ </div> 
+ <p>若要获取单一的对象而不是一个列表（例如，SELECT foo FROM bar LIMIT 1），可以简单地使用索引而不是切片。例如，下面的语句返回数据库中根据标题排序后的第一条Entry：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; Entry.objects.order_by('headline')[0]
+</pre>
+ </div> 
+ <p>它相当于：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; Entry.objects.order_by('headline')[0:1].get()
+</pre>
+ </div> 
+ <p>注意：如果没有匹配到对象，那么第一种方法会抛出IndexError异常，而第二种方式会抛出DoesNotExist异常。</p> 
+ <p>也就是说在使用get和切片的时候，要注意查询结果的元素个数。</p> 
+ <h2>6. 字段查询</h2> 
+ <p>字段查询其实就是filter()、exclude()和get()等方法的关键字参数。 其基本格式是：<code>field__lookuptype=value</code>，<strong>注意其中是双下划线</strong>。 例如：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; Entry.objects.filter(pub_date__lte='2006-01-01')
+#　相当于：
+SELECT * FROM blog_entry WHERE pub_date &lt;= '2006-01-01';
+</pre>
+ </div> 
+ <p>其中的字段必须是模型中定义的字段之一。但是有一个例外，那就是ForeignKey字段，你可以为其添加一个“_id”后缀（单下划线）。这种情况下键值是外键模型的主键原生值。例如：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; Entry.objects.filter(blog_id=4)
+</pre>
+ </div> 
+ <p>如果你传递了一个非法的键值，查询函数会抛出TypeError异常。</p> 
+ <p>Django的数据库API支持20多种查询类型，下面介绍一些常用的：</p> 
+ <p><strong>exact：</strong></p> 
+ <p>默认类型。如果你不提供查询类型，或者关键字参数不包含一个双下划线，那么查询类型就是这个默认的exact。</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; Entry.objects.get(headline__exact="Cat bites dog")
+# 相当于
+# SELECT ... WHERE headline = 'Cat bites dog';
+# 下面两个相当
+&gt;&gt;&gt; Blog.objects.get(id__exact=14)  # Explicit form
+&gt;&gt;&gt; Blog.objects.get(id=14)         # __exact is implied
+</pre>
+ </div> 
+ <p><strong>iexact：</strong></p> 
+ <p>不区分大小写。</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; Blog.objects.get(name__iexact="beatles blog")
+# 匹配"Beatles Blog", "beatles blog",甚至"BeAtlES blOG".
+</pre>
+ </div> 
+ <p><strong>contains：</strong></p> 
+ <p>表示包含的意思！大小写敏感！</p> 
+ <div class="codehilite">
+  <pre><span></span>Entry.objects.get(headline__contains='Lennon')
+# 相当于
+# SELECT ... WHERE headline LIKE '%Lennon%';
+# 匹配'Today Lennon honored'，但不匹配'today lennon honored'
+</pre>
+ </div> 
+ <p><strong>icontains：</strong></p> 
+ <p>contains的大小写不敏感模式。</p> 
+ <p><strong>startswith和endswith</strong></p> 
+ <p>以什么开头和以什么结尾。大小写敏感！</p> 
+ <p><strong>istartswith和iendswith</strong></p> 
+ <p>是不区分大小写的模式。</p> 
+ <h2>7. 跨越关系查询</h2> 
+ <p>Django提供了强大并且直观的方式解决跨越关联的查询，它在后台自动执行包含JOIN的SQL语句。要跨越某个关联，只需使用关联的模型字段名称，并使用双下划线分隔，直至你想要的字段（可以链式跨越，无限跨度）。例如：</p> 
+ <div class="codehilite">
+  <pre><span></span># 返回所有Blog的name为'Beatles Blog'的Entry对象
+# 一定要注意，返回的是Entry对象，而不是Blog对象。
+# objects前面用的是哪个class，返回的就是哪个class的对象。
+&gt;&gt;&gt; Entry.objects.filter(blog__name='Beatles Blog')
+</pre>
+ </div> 
+ <p>反之亦然，如果要引用一个反向关联，只需要使用模型的小写名!</p> 
+ <div class="codehilite">
+  <pre><span></span># 获取所有的Blog对象，前提是它所关联的Entry的headline包含'Lennon'
+&gt;&gt;&gt; Blog.objects.filter(entry__headline__contains='Lennon')
+</pre>
+ </div> 
+ <p>如果你在多级关联中进行过滤而且其中某个中间模型没有满足过滤条件的值，Django将把它当做一个空的（所有的值都为NULL）但是合法的对象，不会抛出任何异常或错误。例如，在下面的过滤器中：</p> 
+ <div class="codehilite">
+  <pre><span></span>Blog.objects.filter(entry__authors__name='Lennon')
+</pre>
+ </div> 
+ <p>如果Entry中没有关联任何的author，那么它将当作其没有name，而不会因为没有author 引发一个错误。通常，这是比较符合逻辑的处理方式。唯一可能让你困惑的是当你使用<code>isnull</code>的时候：</p> 
+ <div class="codehilite">
+  <pre><span></span>Blog.objects.filter(entry__authors__name__isnull=True)
+</pre>
+ </div> 
+ <p>这将返回Blog对象，它关联的entry对象的author字段的name字段为空，以及Entry对象的author字段为空。如果你不需要后者，你可以这样写：</p> 
+ <div class="codehilite">
+  <pre><span></span>Blog.objects.filter(entry__authors__isnull=False,entry__authors__name__isnull=True)
+</pre>
+ </div> 
+ <p><strong>跨越多值的关系查询</strong> </p> 
+ <p>最基本的filter和exclude的关键字参数只有一个，这种情况很好理解。但是当关键字参数有多个，且是跨越外键或者多对多的情况下，那么就比较复杂，让人迷惑了。我们看下面的例子：</p> 
+ <div class="codehilite">
+  <pre><span></span>Blog.objects.filter(entry__headline__contains='Lennon', entry__pub_date__year=2008)
+</pre>
+ </div> 
+ <p>这是一个跨外键、两个过滤参数的查询。此时我们理解两个参数之间属于-与“and”的关系，也就是说，过滤出来的BLog对象对应的entry对象必须同时满足上面两个条件。这点很好理解。也就是说<strong>上面要求至少有一个entry同时满足两个条件</strong>。</p> 
+ <p>但是，看下面的用法：</p> 
+ <div class="codehilite">
+  <pre><span></span>Blog.objects.filter(entry__headline__contains='Lennon').filter(entry__pub_date__year=2008)
+</pre>
+ </div> 
+ <p>把两个参数拆开，放在两个filter调用里面，按照我们前面说过的链式过滤，这个结果应该和上面的例子一样。可实际上，它不一样，Django在这种情况下，将两个filter之间的关系设计为-或“or”，这真是让人头疼。</p> 
+ <p>多对多关系下的多值查询和外键foreignkey的情况一样。</p> 
+ <p>但是，更头疼的来了，exclude的策略设计的又和filter不一样！</p> 
+ <div class="codehilite">
+  <pre><span></span>Blog.objects.exclude(entry__headline__contains='Lennon',entry__pub_date__year=2008,)
+</pre>
+ </div> 
+ <p>这会排除headline中包含“Lennon”的Entry和在2008年发布的Entry，中间是一个-和“or”的关系！</p> 
+ <p>那么要排除同时满足上面两个条件的对象，该怎么办呢？看下面：</p> 
+ <div class="codehilite">
+  <pre><span></span>Blog.objects.exclude(
+entry=Entry.objects.filter(
+    headline__contains='Lennon',
+    pub_date__year=2008,
+),
+)
+</pre>
+ </div> 
+ <p>（有没有很坑爹的感觉？所以，建议在碰到跨关系的多值查询时，尽量使用Q查询）</p> 
+ <h2>8. 使用F表达式引用模型的字段</h2> 
+ <p>到目前为止的例子中，我们都是将模型字段与常量进行比较。但是，如果你想将模型的一个字段与同一个模型的另外一个字段进行比较该怎么办？</p> 
+ <p>使用Django提供的F表达式！</p> 
+ <p>例如，为了查找comments数目多于pingbacks数目的Entry，可以构造一个<code>F()</code>对象来引用pingback数目，并在查询中使用该F()对象：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">F</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Entry</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">n_comments__gt</span><span class="o">=</span><span class="n">F</span><span class="p">(</span><span class="s1">'n_pingbacks'</span><span class="p">))</span>
+</pre>
+ </div> 
+ <p>Django支持对F()对象进行加、减、乘、除、取模以及幂运算等算术操作。两个操作数可以是常数和其它F()对象。例如查找comments数目比pingbacks两倍还要多的Entry，我们可以这么写：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; Entry.objects.filter(n_comments__gt=F('n_pingbacks') * 2)
+</pre>
+ </div> 
+ <p>为了查询rating比pingback和comment数目总和要小的Entry，我们可以这么写：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; Entry.objects.filter(rating__lt=F('n_comments') + F('n_pingbacks'))
+</pre>
+ </div> 
+ <p>你还可以在F()中使用双下划线来进行跨表查询。例如，查询author的名字与blog名字相同的Entry：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; Entry.objects.filter(authors__name=F('blog__name'))
+</pre>
+ </div> 
+ <p>对于date和date/time字段，还可以加或减去一个timedelta对象。下面的例子将返回发布时间超过3天后被修改的所有Entry：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">timedelta</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Entry</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">mod_date__gt</span><span class="o">=</span><span class="n">F</span><span class="p">(</span><span class="s1">'pub_date'</span><span class="p">)</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">3</span><span class="p">))</span>
+</pre>
+ </div> 
+ <p>F()对象还支持<code>.bitand()</code>、<code>.bitor()</code>、<code>.bitrightshift()</code>和<code>.bitleftshift()</code>4种位操作，例如：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; F('somefield').bitand(16)
+</pre>
+ </div> 
+ <h2>9. 主键的快捷查询方式：pk</h2> 
+ <p>pk就是<code>primary key</code>的缩写。通常情况下，一个模型的主键为“id”，所以下面三个语句的效果一样：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; Blog.objects.get(id__exact=14) # Explicit form
+&gt;&gt;&gt; Blog.objects.get(id=14) # __exact is implied
+&gt;&gt;&gt; Blog.objects.get(pk=14) # pk implies id__exact
+</pre>
+ </div> 
+ <p>可以联合其他类型的参数：</p> 
+ <div class="codehilite">
+  <pre><span></span># Get blogs entries with id 1, 4 and 7
+&gt;&gt;&gt; Blog.objects.filter(pk__in=[1,4,7])
+# Get all blog entries with id &gt; 14
+&gt;&gt;&gt; Blog.objects.filter(pk__gt=14)
+</pre>
+ </div> 
+ <p>可以跨表操作：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; Entry.objects.filter(blog__id__exact=3) 
+&gt;&gt;&gt; Entry.objects.filter(blog__id=3) 
+&gt;&gt;&gt; Entry.objects.filter(blog__pk=3)
+</pre>
+ </div> 
+ <p>（<strong>当主键不是id的时候，请注意了！</strong>）</p> 
+ <h2>10. 在LIKE语句中转义百分符号和下划线</h2> 
+ <p>在原生SQL语句中<code>%</code>符号有特殊的作用。Django帮你自动转义了百分符号和下划线，你可以和普通字符一样使用它们，如下所示：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; Entry.objects.filter(headline__contains='%')
+# 它和下面的一样
+# SELECT ... WHERE headline LIKE '%\%%';
+</pre>
+ </div> 
+ <h2>11. 缓存与查询集</h2> 
+ <p>每个QuerySet都包含一个缓存，用于减少对数据库的实际操作。理解这个概念，有助于你提高查询效率。</p> 
+ <p>对于新创建的QuerySet，它的缓存是空的。当QuerySet第一次被提交后，数据库执行实际的查询操作，Django会把查询的结果保存在QuerySet的缓存内，随后的对于该QuerySet的提交将重用这个缓存的数据。</p> 
+ <p>要想高效的利用查询结果，降低数据库负载，你必须善于利用缓存。看下面的例子，这会造成2次实际的数据库操作，加倍数据库的负载，同时由于时间差的问题，可能在两次操作之间数据被删除或修改或添加，导致脏数据的问题：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; print([e.headline for e in Entry.objects.all()])
+&gt;&gt;&gt; print([e.pub_date for e in Entry.objects.all()])
+</pre>
+ </div> 
+ <p>为了避免上面的问题，好的使用方式如下，这只产生一次实际的查询操作，并且保持了数据的一致性：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; queryset = Entry.objects.all()
+&gt;&gt;&gt; print([p.headline for p in queryset]) # 提交查询
+&gt;&gt;&gt; print([p.pub_date for p in queryset]) # 重用查询缓存
+</pre>
+ </div> 
+ <p><strong>何时不会被缓存</strong></p> 
+ <p>有一些操作不会缓存QuerySet，例如切片和索引。这就导致这些操作没有缓存可用，每次都会执行实际的数据库查询操作。例如：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; queryset = Entry.objects.all()
+&gt;&gt;&gt; print(queryset[5]) # 查询数据库
+&gt;&gt;&gt; print(queryset[5]) # 再次查询数据库
+</pre>
+ </div> 
+ <p>但是，如果已经遍历过整个QuerySet，那么就相当于缓存过，后续的操作则会使用缓存，例如：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; queryset = Entry.objects.all()
+&gt;&gt;&gt; [entry for entry in queryset] # 查询数据库
+&gt;&gt;&gt; print(queryset[5]) # 使用缓存
+&gt;&gt;&gt; print(queryset[5]) # 使用缓存
+</pre>
+ </div> 
+ <p>下面的这些操作都将遍历QuerySet并建立缓存：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; [entry for entry in queryset]
+&gt;&gt;&gt; bool(queryset)
+&gt;&gt;&gt; entry in queryset
+&gt;&gt;&gt; list(queryset)
+</pre>
+ </div> 
+ <p>注意：简单的打印QuerySet并不会建立缓存，因为<code>__repr__()</code>调用只返回全部查询集的一个切片。</p> 
+ <h1>四、使用Q对象进行复杂查询</h1> 
+ <p>普通filter函数里的条件都是“and”逻辑，如果你想实现“or”逻辑怎么办？用Q查询！</p> 
+ <p>Q来自<code>django.db.models.Q</code>，用于封装关键字参数的集合，可以作为关键字参数用于filter、exclude和get等函数。 例如：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">Q</span>
+<span class="n">Q</span><span class="p">(</span><span class="n">question__startswith</span><span class="o">=</span><span class="s1">'What'</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>可以使用“&amp;”或者“|”或“~”来组合Q对象，分别表示与或非逻辑。它将返回一个新的Q对象。</p> 
+ <div class="codehilite">
+  <pre><span></span>Q(question__startswith='Who')|Q(question__startswith='What')
+# 这相当于：
+WHERE question LIKE 'Who%' OR question LIKE 'What%'
+</pre>
+ </div> 
+ <p>更多的例子：</p> 
+ <div class="codehilite">
+  <pre><span></span>Q(question__startswith='Who') | ~Q(pub_date__year=2005)
+</pre>
+ </div> 
+ <p>你也可以这么使用，默认情况下，以逗号分隔的都表示AND关系：</p> 
+ <div class="codehilite">
+  <pre><span></span>Poll.objects.get(
+Q(question__startswith='Who'),
+Q(pub_date=date(2005, 5, 2)) | Q(pub_date=date(2005, 5, 6))
+)
+# 它相当于
+# SELECT * from polls WHERE question LIKE 'Who%'
+AND (pub_date = '2005-05-02' OR pub_date = '2005-05-06')
+</pre>
+ </div> 
+ <p>当关键字参数和Q对象组合使用时，Q对象必须放在前面，如下例子：</p> 
+ <div class="codehilite">
+  <pre><span></span>Poll.objects.get(
+Q(pub_date=date(2005, 5, 2)) | Q(pub_date=date(2005, 5, 6)),question__startswith='Who',)
+</pre>
+ </div> 
+ <p>如果关键字参数放在Q对象的前面，则会报错。</p> 
+ <h1>五、比较对象</h1> 
+ <p>要比较两个模型实例，只需要使用python提供的双等号比较符就可以了。在后台，其实比较的是两个实例的主键的值。下面两种方法是等同的：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; some_entry == other_entry
+&gt;&gt;&gt; some_entry.id == other_entry.id
+</pre>
+ </div> 
+ <p>如果模型的主键不叫做“id”也没关系，后台总是会使用正确的主键名字进行比较，例如，如果一个模型的主键的名字是“name”，那么下面是相等的：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; some_obj == other_obj
+&gt;&gt;&gt; some_obj.name == other_obj.name
+</pre>
+ </div> 
+ <h1>六、删除对象</h1> 
+ <p>删除对象使用的是对象的<code>delete()</code>方法。该方法将返回被删除对象的总数量和一个字典，字典包含了每种被删除对象的类型和该类型的数量。如下所示：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; e.delete()
+(1, {'weblog.Entry': 1})
+</pre>
+ </div> 
+ <p>也可以批量删除。每个QuerySet都有一个delete()方法，它能删除该QuerySet的所有成员。例如：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; Entry.objects.filter(pub_date__year=2005).delete()
+(5, {'webapp.Entry': 5})
+</pre>
+ </div> 
+ <p>需要注意的是，有可能不是每一个对象的delete方法都被执行。如果你改写了delete方法，为了确保对象被删除，你必须手动迭代QuerySet进行逐一删除操作。</p> 
+ <p>当Django删除一个对象时，它默认使用SQL的ON DELETE CASCADE约束，也就是说，任何有外键指向要删除对象的对象将一起被删除。例如：</p> 
+ <div class="codehilite">
+  <pre><span></span>b = Blog.objects.get(pk=1)
+# 下面的动作将删除该条Blog和所有的它关联的Entry对象
+b.delete()
+</pre>
+ </div> 
+ <p>这种级联的行为可以通过的ForeignKey的<code>on_delete</code>参数自定义。</p> 
+ <p>注意，<code>delete()</code>是唯一没有在管理器上暴露出来的方法。这是刻意设计的一个安全机制，用来防止你意外地请求类似<code>Entry.objects.delete()</code>的动作，而不慎删除了所有的条目。如果你确实想删除所有的对象，你必须明确地请求一个完全的查询集，像下面这样：</p> 
+ <div class="codehilite">
+  <pre><span></span>Entry.objects.all().delete()
+</pre>
+ </div> 
+ <h1>七、复制模型实例</h1> 
+ <p>虽然没有内置的方法用于复制模型的实例，但还是很容易创建一个新的实例并将原实例的所有字段都拷贝过来。最简单的方法是将原实例的pk设置为None，这会创建一个新的实例copy。示例如下：</p> 
+ <div class="codehilite">
+  <pre><span></span>blog = Blog(name='My blog', tagline='Blogging is easy')
+blog.save() # blog.pk == 1
+#
+blog.pk = None
+blog.save() # blog.pk == 2
+</pre>
+ </div> 
+ <p>但是在使用继承的时候，情况会变得复杂，如果有下面一个Blog的子类：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="k">class</span> <span class="nc">ThemeBlog</span><span class="p">(</span><span class="n">Blog</span><span class="p">):</span>
+    <span class="n">theme</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">200</span><span class="p">)</span>
+
+<span class="n">django_blog</span> <span class="o">=</span> <span class="n">ThemeBlog</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">'Django'</span><span class="p">,</span> <span class="n">tagline</span><span class="o">=</span><span class="s1">'Django is easy'</span><span class="p">,</span> <span class="n">theme</span><span class="o">=</span><span class="s1">'python'</span><span class="p">)</span>
+<span class="n">django_blog</span><span class="o">.</span><span class="n">save</span><span class="p">()</span> <span class="c1"># django_blog.pk == 3</span>
+</pre>
+ </div> 
+ <p>基于继承的工作机制，你必须同时将pk和id设为None：</p> 
+ <div class="codehilite">
+  <pre><span></span>django_blog.pk = None
+django_blog.id = None
+django_blog.save() # django_blog.pk == 4
+</pre>
+ </div> 
+ <p>对于外键和多对多关系，更需要进一步处理。例如，Entry有一个ManyToManyField到Author。 复制条目后，您必须为新条目设置多对多关系，像下面这样：</p> 
+ <div class="codehilite">
+  <pre><span></span>entry = Entry.objects.all()[0] # some previous entry
+old_authors = entry.authors.all()
+entry.pk = None
+entry.save()
+entry.authors.set(old_authors)
+</pre>
+ </div> 
+ <p>对于OneToOneField，还要复制相关对象并将其分配给新对象的字段，以避免违反一对一唯一约束。 例如，假设entry已经如上所述重复：</p> 
+ <div class="codehilite">
+  <pre><span></span>detail = EntryDetail.objects.all()[0]
+detail.pk = None
+detail.entry = entry
+detail.save()
+</pre>
+ </div> 
+ <h1>八、批量更新对象</h1> 
+ <p>使用<code>update()</code>方法可以批量为QuerySet中所有的对象进行更新操作。</p> 
+ <div class="codehilite">
+  <pre><span></span># 更新所有2007年发布的entry的headline
+Entry.objects.filter(pub_date__year=2007).update(headline='Everything is the same')
+</pre>
+ </div> 
+ <p>只可以对普通字段和ForeignKey字段使用这个方法。若要更新一个普通字段，只需提供一个新的常数值。若要更新ForeignKey字段，需设置新值为你想指向的新模型实例。例如：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; b = Blog.objects.get(pk=1)
+# 修改所有的Entry，让他们都属于b
+&gt;&gt;&gt; Entry.objects.all().update(blog=b)
+</pre>
+ </div> 
+ <p>update方法会被立刻执行，并返回操作匹配到的行的数目（有可能不等于要更新的行的数量，因为有些行可能已经有这个新值了）。唯一的约束是：只能访问一张数据库表。你可以根据关系字段进行过滤，但你只能更新模型主表的字段。例如：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; b = Blog.objects.get(pk=1)
+# Update all the headlines belonging to this Blog.
+&gt;&gt;&gt; Entry.objects.select_related().filter(blog=b).update(headline='Everything is the same')
+</pre>
+ </div> 
+ <p>要注意的是update()方法会直接转换成一个SQL语句，并立刻批量执行。它不会运行模型的save()方法，或者产生<code>pre_save</code>或<code>post_save</code>信号（调用<code>save()</code>方法产生）或者服从<code>auto_now</code>字段选项。如果你想保存QuerySet中的每个条目并确保每个实例的save()方法都被调用，你不需要使用任何特殊的函数来处理。只需要迭代它们并调用save()方法：</p> 
+ <div class="codehilite">
+  <pre><span></span>for item in my_queryset:
+    item.save()
+</pre>
+ </div> 
+ <p>update方法可以配合F表达式。这对于批量更新同一模型中某个字段特别有用。例如增加Blog中每个Entry的pingback个数：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; Entry.objects.all().update(n_pingbacks=F('n_pingbacks') + 1)
+</pre>
+ </div> 
+ <p>然而，与filter和exclude子句中的F()对象不同，在update中你不可以使用F()对象进行跨表操作，你只可以引用正在更新的模型的字段。如果你尝试使用F()对象引入另外一张表的字段，将抛出FieldError异常：</p> 
+ <div class="codehilite">
+  <pre><span></span># THIS WILL RAISE A FieldError
+&gt;&gt;&gt; Entry.objects.update(headline=F('blog__name'))
+</pre>
+ </div> 
+ <h1>九、关系的对象</h1> 
+ <p>利用本节一开始的模型，一个Entry对象e可以通过blog属性<code>e.blog</code>获取关联的Blog对象。反过来，Blog对象b可以通过<code>entry_set</code>属性<code>b.entry_set.all()</code>访问与它关联的所有Entry对象。</p> 
+ <h2>1. 一对多（外键）</h2> 
+ <p><strong>正向查询:</strong></p> 
+ <p>直接通过圆点加属性，访问外键对象：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; e = Entry.objects.get(id=2)
+&gt;&gt;&gt; e.blog # 返回关联的Blog对象
+</pre>
+ </div> 
+ <p>要注意的是，对外键的修改，必须调用save方法进行保存，例如：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; e = Entry.objects.get(id=2)
+&gt;&gt;&gt; e.blog = some_blog
+&gt;&gt;&gt; e.save()
+</pre>
+ </div> 
+ <p>如果一个外键字段设置有<code>null=True</code>属性，那么可以通过给该字段赋值为None的方法移除外键值：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; e = Entry.objects.get(id=2)
+&gt;&gt;&gt; e.blog = None
+&gt;&gt;&gt; e.save() # "UPDATE blog_entry SET blog_id = NULL ...;"
+</pre>
+ </div> 
+ <p>在第一次对一个外键关系进行正向访问的时候，关系对象会被缓存。随后对同样外键关系对象的访问会使用这个缓存，例如：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; e = Entry.objects.get(id=2)
+&gt;&gt;&gt; print(e.blog)  # 访问数据库，获取实际数据
+&gt;&gt;&gt; print(e.blog)  # 不会访问数据库，直接使用缓存的版本
+</pre>
+ </div> 
+ <p>请注意QuerySet的<code>select_related()</code>方法会递归地预填充所有的一对多关系到缓存中。例如：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; e = Entry.objects.select_related().get(id=2)
+&gt;&gt;&gt; print(e.blog)  # 不会访问数据库，直接使用缓存
+&gt;&gt;&gt; print(e.blog)  # 不会访问数据库，直接使用缓存
+</pre>
+ </div> 
+ <p><strong>反向查询:</strong></p> 
+ <p>如果一个模型有ForeignKey，那么该ForeignKey所指向的外键模型的实例可以通过一个管理器进行反向查询，返回源模型的所有实例。默认情况下，这个管理器的名字为<code>FOO_set</code>，其中FOO是源模型的小写名称。该管理器返回的查询集可以用前面提到的方式进行过滤和操作。</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; b = Blog.objects.get(id=1)
+&gt;&gt;&gt; b.entry_set.all() # Returns all Entry objects related to Blog.
+# b.entry_set is a Manager that returns QuerySets.
+&gt;&gt;&gt; b.entry_set.filter(headline__contains='Lennon')
+&gt;&gt;&gt; b.entry_set.count()
+</pre>
+ </div> 
+ <p>你可以在ForeignKey字段的定义中，通过设置<code>related_name</code>来重写<code>FOO_set</code>的名字。举例说明，如果你修改Entry模型<code>blog = ForeignKey(Blog, on_delete=models.CASCADE, related_name=’entries’)</code>，那么上面的例子会变成下面的样子：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; b = Blog.objects.get(id=1)
+&gt;&gt;&gt; b.entries.all() # Returns all Entry objects related to Blog.
+# b.entries is a Manager that returns QuerySets.
+&gt;&gt;&gt; b.entries.filter(headline__contains='Lennon')
+&gt;&gt;&gt; b.entries.count()
+</pre>
+ </div> 
+ <p><strong>使用自定义的反向管理器:</strong></p> 
+ <p>默认情况下，用于反向关联的RelatedManager是该模型默认管理器的子类。如果你想为一个查询指定一个不同的管理器，你可以使用下面的语法：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
+
+<span class="k">class</span> <span class="nc">Entry</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="c1">#...</span>
+    <span class="n">objects</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">Manager</span><span class="p">()</span>  <span class="c1"># 默认管理器</span>
+    <span class="n">entries</span> <span class="o">=</span> <span class="n">EntryManager</span><span class="p">()</span>    <span class="c1"># 自定义管理器</span>
+
+<span class="n">b</span> <span class="o">=</span> <span class="n">Blog</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">b</span><span class="o">.</span><span class="n">entry_set</span><span class="p">(</span><span class="n">manager</span><span class="o">=</span><span class="s1">'entries'</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+</pre>
+ </div> 
+ <p>当然，指定的自定义反向管理器也可以调用它的自定义方法：</p> 
+ <div class="codehilite">
+  <pre><span></span>b.entry_set(manager='entries').is_published()
+</pre>
+ </div> 
+ <p><strong>处理关联对象的其它方法:</strong></p> 
+ <p>除了在前面定义的QuerySet方法之外，ForeignKey管理器还有其它方法用于处理关联的对象集合。下面是每个方法的概括。</p> 
+ <p>add(obj1, obj2, ...)：添加指定的模型对象到关联的对象集中。</p> 
+ <p>create(**kwargs)：创建一个新的对象，将它保存并放在关联的对象集中。返回新创建的对象。</p> 
+ <p>remove(obj1, obj2, ...)：从关联的对象集中删除指定的模型对象。</p> 
+ <p>clear()：清空关联的对象集。</p> 
+ <p>set(objs)：重置关联的对象集。</p> 
+ <p>若要一次性给关联的对象集赋值，使用set()方法，并给它赋值一个可迭代的对象集合或者一个主键值的列表。例如：</p> 
+ <div class="codehilite">
+  <pre><span></span>b = Blog.objects.get(id=1)
+b.entry_set.set([e1, e2])
+</pre>
+ </div> 
+ <p>在这个例子中，e1和e2可以是完整的Entry实例，也可以是整数的主键值。</p> 
+ <p>如果clear()方法可用，那么在将可迭代对象中的成员添加到集合中之前，将从<code>entry_set</code>中删除所有已经存在的对象。如果clear()方法不可用，那么将直接添加可迭代对象中的成员而不会删除所有已存在的对象。</p> 
+ <p>这节中的每个反向操作都将立即在数据库内执行。所有的增加、创建和删除操作也将立刻自动地保存到数据库内。</p> 
+ <h2>2. 多对多</h2> 
+ <p>多对多关系的两端都会自动获得访问另一端的API。这些API的工作方式与前面提到的“反向”一对多关系的用法一样。</p> 
+ <p>唯一的区别在于属性的名称：定义ManyToManyField的模型使用该字段的属性名称，而“反向”模型使用源模型的小写名称加上'_set' （和一对多关系一样）。</p> 
+ <div class="codehilite">
+  <pre><span></span>e = Entry.objects.get(id=3)
+e.authors.all() # Returns all Author objects for this Entry.
+e.authors.count()
+e.authors.filter(name__contains='John')
+#
+a = Author.objects.get(id=5)
+a.entry_set.all() # Returns all Entry objects for this Author.
+</pre>
+ </div> 
+ <p>与外键字段中一样，在多对多的字段中也可以指定<code>related_name</code>名。</p> 
+ <p>（注：在一个模型中，如果存在多个外键或多对多的关系指向同一个外部模型，必须给他们分别加上不同的<code>related_name</code>，用于反向查询）</p> 
+ <h2>3. 一对一</h2> 
+ <p>一对一非常类似多对一关系，可以简单的通过模型的属性访问关联的模型。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="k">class</span> <span class="nc">EntryDetail</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">entry</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">OneToOneField</span><span class="p">(</span><span class="n">Entry</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
+    <span class="n">details</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">TextField</span><span class="p">()</span>
+
+<span class="n">ed</span> <span class="o">=</span> <span class="n">EntryDetail</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">ed</span><span class="o">.</span><span class="n">entry</span> <span class="c1"># Returns the related Entry object.</span>
+</pre>
+ </div> 
+ <p>不同之处在于反向查询的时候。一对一关系中的关联模型同样具有一个管理器对象，但是该管理器表示一个单一的对象而不是对象的集合：</p> 
+ <div class="codehilite">
+  <pre><span></span>e = Entry.objects.get(id=2)
+e.entrydetail # 返回关联的EntryDetail对象
+</pre>
+ </div> 
+ <p>如果没有对象赋值给这个关系，Django将抛出一个DoesNotExist异常。 可以给反向关联进行赋值，方法和正向的关联一样： </p> 
+ <div class="codehilite">
+  <pre><span></span>e.entrydetail = ed
+</pre>
+ </div> 
+ <h2>4. 反向关联是如何实现的？</h2> 
+ <p>一些ORM框架需要你在关系的两端都进行定义。Django的开发者认为这违反了DRY (Don’t Repeat Yourself)原则，所以在Django中你只需要在一端进行定义。</p> 
+ <p>那么这是怎么实现的呢？因为在关联的模型类没有被加载之前，一个模型类根本不知道有哪些类和它关联。</p> 
+ <p>答案在<code>app registry</code>！在Django启动的时候，它会导入所有<code>INSTALLED_APPS</code>中的应用和每个应用中的模型模块。每创建一个新的模型时，Django会自动添加反向的关系到所有关联的模型。如果关联的模型还没有导入，Django将保存关联的记录并在关联的模型导入时添加这些关系。</p> 
+ <p>由于这个原因，将模型所在的应用都定义在<code>INSTALLED_APPS</code>的应用列表中就显得特别重要。否则，反向关联将不能正确工作。</p> 
+ <h2>5. 通过关联对象进行查询</h2> 
+ <p>涉及关联对象的查询与正常值的字段查询遵循同样的规则。当你指定查询需要匹配的值时，你可以使用一个对象实例或者对象的主键值。</p> 
+ <p>例如，如果你有一个id=5的Blog对象b，下面的三个查询将是完全一样的：</p> 
+ <div class="codehilite">
+  <pre><span></span>Entry.objects.filter(blog=b) # 使用对象实例
+Entry.objects.filter(blog=b.id) # 使用实例的id
+Entry.objects.filter(blog=5) # 直接使用id
+</pre>
+ </div> 
+ <h1>十、使用原生SQL语句</h1> 
+ <p>如果你发现需要编写的Django查询语句太复杂，你可以回归到手工编写SQL语句。Django对于编写原生的SQL查询有许多选项。</p> 
+ <p>最后，需要注意的是Django的数据库层只是一个数据库接口。你可以利用其它的工具、编程语言或数据库框架来访问数据库，Django没有强制指定你非要使用它的某个功能或模块。</p> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/101"> <i class="fa fa-arrow-left"></i>&nbsp;用包来组织模型</a> 
+  <a class="float-right" href="/course/django/130"> 查询集API&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 16</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/129">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_female_50.gif?KID=imgbed,tva&amp;Expires=1577776176&amp;ssig=JDb%2FnbVV8y" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>刘老师： 请教你一个问题！我现在公司用的是Oracle ERP，里面的表几乎都没有主键，我又不能给这些原生的表加主键，有什么办法可以使用model操作这些表吗？如果使用原生SQL，那model的特性就利用不上了。用不上model，那使用django是不是就没有啥意义了，有没有什么好的办法呢？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户6866094843 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年12月31日 12:14</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1817">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1577334347&amp;ssig=QyjwpbGyW9" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>对于公司已有的数据库，而且还是Oracel这种，我建议不要强行上Django，因为这搞不好会带来数据风险。 一般来说，Django项目开发之初，就应该设计好模型，选择合适的数据库，并后期良好维护。 不过就你目前的情况，从已有Oracel数据库，也是可以反推出模型结构的，使用的命令是python manage.py inspectdb，你可以深入研究一下。但是最好的做法还是与领导、DBA共同讨论方案，确保安全可靠。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 用户6866094843 </span> 
+      <em>2019年12月31日 17:05</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1818">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_female_50.gif?KID=imgbed,tva&amp;Expires=1577809662&amp;ssig=7XPwraDiqJ" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>inspectdb也用了，多数情况都是取不回model的，即使取回来了，也不能对表进行操作，原因是表里面没有主键。ERP里的表没有一个是通过主键和外键定义约束的，而django没有主键又操作不了表，看来是没解了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 用户6866094843 &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2019年12月31日 21:31</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1819">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 12em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1577334347&amp;ssig=QyjwpbGyW9" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>咱们这样其实是强Django所难，人本来不是专门搞这个的。 你的需求更多的是DBA考虑和解决的问题，而不是Web框架的任务。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 用户6866094843 </span> 
+      <em>2020年1月1日 08:40</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1820">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax3.sinaimg.cn/crop.0.0.996.996.50/76d56bbdly8g3z9zbrcv5j20ro0roq3z.jpg?KID=imgbed,tva&amp;Expires=1570787076&amp;ssig=GXkj9%2FFgY9" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>请问对于一对多多的Entry如何初始化一条数据呢。e1=Entry.objects.get(id=1)报错：blog.models.Entry.DoesNotExist: Entry matching query does not exist.</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 楼梯恐惧 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年10月11日 14:46</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1651">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.180.180.50/627b32e1jw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>执行保存后数据库会自己增加一条心的记录是咋回事呢？ ``` python @login_required def con_save(request): con = Contract.objects.get(pk=request.POST['conid']) con.orderno = request.POST['orderno'] con.contractno = request.POST['contractno'] con.factory = request.POST['factory'] con.factory_addr = request.POST['factory_addr'] con.factory_attn = request.POST['factory_attn'] con.goodsname = request.POST['goodsname'] con.qty = request.POST['qty'] con.pol = request.POST['pol'] con.pod = request.POST['pod'] con.op = request.POST['op'] con.pkg = request.POST['pkg'] con.cntr_type = request.POST['cntr_type'] con.save(update_fields=['orderno']) return HttpResponseRedirect(reverse('jask:con_detail', args=(con.id,))) ```</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 炎安- </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年4月28日 17:18</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1301">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.180.180.50/627b32e1jw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>查出原因来了，是其他地方的代码有问题 :(</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 炎安- &nbsp;&nbsp;回复&nbsp;&nbsp; 炎安- </span> 
+      <em>2019年4月29日 10:11</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1302">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva3.sinaimg.cn/crop.0.0.996.996.50/006ecA4Njw8eypb07b04tj30ro0rpq8x.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>这个百分号真的有用么。 &gt;&gt;&gt; Entry.objects.filter(headline__contains='baidu') &lt;QuerySet [&lt;Entry: baidu&gt;]&gt; &gt;&gt;&gt; Entry.objects.filter(headline__contains='%') &lt;QuerySet []&gt; &gt;&gt;&gt;</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 夜色涪江house </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年3月3日 15:38</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1096">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.720.720.50/c1b446bbjw8eh3ipz350ej20k00k0acc.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>需要先执行下列命令 import os os.environ['DJANGO_SETTINGS_MODULE']= 'mysite.settings' import django django.setup()</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; who抢了我的昵称 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年11月20日 16:15</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/880">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.720.720.50/c1b446bbjw8eh3ipz350ej20k00k0acc.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>不是在python命令行下，而是在python manage.py shell命令行下</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> who抢了我的昵称 &nbsp;&nbsp;回复&nbsp;&nbsp; who抢了我的昵称 </span> 
+      <em>2019年5月5日 14:21</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1311">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>实际运用中感觉遇到复杂查询还是回归原生sql了，快捷。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; Acerjin1897 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年8月1日 10:11</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/650">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.180.180.50/67179639jw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>这个章节,刷新很多认知啊~要反复阅读理解呢. 谢谢刘大大</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 孤竹孙 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年5月5日 17:38</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/439">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>博主您好： 我看了这章“查询操作”-&gt;"三、检索对象"-&gt;"7. 跨越关系查询"的exclude阐述 和下一章“查询集API”-&gt;“三、返回新QuerySets的API”-&gt;2. exclude() 的阐述后发现，这两章对exclude的阐述有矛盾。 这一章中： ①Blog.objects.exclude(entry__headline__contains='Lennon',entry__pub_date__year=2008,) 此段exclude阐述为 or 关系。 而下一章中 ②Entry.objects.exclude(pub_date__gt=datetime.date(2005, 1, 3), headline='Hello') 对exclude的阐述却为 and 关系。 这里语句样式是完全一样的均为 class.objects.exclude(item1=equation1,item2=equation2) 仅一点不同，即①为“跨越多值的关系查询” 难道对于多值的跨越和不跨越造成了exclude功能的不同？ 望博主解惑，谢谢</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户5952078759 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2017年12月24日 23:32</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/98">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>这里比较难以理解。所以尽量不要使用多个过滤条件的exclude，而是用Q表达式。 PS：官方文档的解释 For example, the following query would exclude blogs that contain both entries with “Lennon” in the headline and entries published in 2008: https://docs.djangoproject.com/en/1.11/topics/db/queries/#lookups-that-span-relationships</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 用户5952078759 </span> 
+      <em>2017年12月25日 09:20</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/99">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>感谢博主的答复，使用Q表达式确实更加容易理解一些。 我今天用一组数据测试了下，两条语句都应为 and 关系。 也就是：①select * from class where not (item1=equation1 and item2=equation2); ②select * from class1 as a,class2 as b where a.id = b.pid and not (b.item1=equation1 and b.item2=equation2) 测试语句模型： Blog.objects.exclude(entry__pub_date__gt=datetime.date(2005,1,3), entry__headline='headtest').values(); Entry.objects.exclude(pub_date__gt=datetime.date(2005,1,3), headline='headtest').values(); 测试数据概况： Blog中两条数据 Entry中一条外键关联Blog_id=1的数据</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 用户5952078759 &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2017年12月25日 13:09</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/100">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 12em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>应该是OR，你再测测</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 用户5995128989 &nbsp;&nbsp;回复&nbsp;&nbsp; 用户5952078759 </span> 
+      <em>2018年1月27日 22:40</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/165">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

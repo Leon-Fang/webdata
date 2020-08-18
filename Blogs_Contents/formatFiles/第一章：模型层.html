@@ -1,0 +1,211 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>第一章：模型层</h1> 
+ <small>阅读:&nbsp;39413&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：8 </small> 
+ <hr> 
+ <p><strong>题外话：</strong></p> 
+ <p>Django的教程写到这里，就进入了整体的第二部分，也是最关键的部分。此时有一个问题必须想清楚，那就是，以项目带动内容还是以参考书目的方式展开？为此，我考虑了很久。</p> 
+ <p>我在开始学习Django的时候，也看过许多教程和博客，有的专述某个细节，虽然比较深入，但不够全面；有的比较泛泛但不够深入。有的以项目带动，简单易懂，可以跟着一步步做，但做完了，只学到作者的几个小技巧，对Django仍然是一知半解。都知道用Django的ORM可以方便的操作数据库，但你知道Django有几种数据库API么？都知道模板过滤器很有帮助，但你都用过么，是不是只会大小写转换？</p> 
+ <p>项目实战当然重要，但是全面完善的内容介绍能给你更多的帮助。参考书式的讲解，可能比较晦涩，但绝对是你入门之后，最好的帮手，我们可以时不时，在需要的情况下，回头再翻翻，然后恍然大悟，原来Django本身就有这个功能，根本不需要自己实现。毕竟我们学习Django不是学习如何开发Web框架，而是学习Web框架本身提供给你的功能，如果连Django提供的现成功能都不能够了解齐全，还谈什么二次开发？</p> 
+ <p>当然，项目实战也必须有，但这就是教程的第三部分内容了。</p> 
+ <p>基调已定，那么为了保证内容的全面、准确和权威性，本部分内容以Django官方文档为依据，加以适当调整和修饰。</p> 
+ <p>以上！！</p> 
+ <hr> 
+ <p>回到我们的主题--模型层。</p> 
+ <p>在MVC或者说MTV设计模式中，模型（M）代表对数据库的操作。那么如何操作数据库呢？</p> 
+ <p>手动切换到数据库环境，然后敲入SQL语句？你知道这是个笑话！</p> 
+ <p>我们是程序员，讲的是自动化，实现的是Python环境下的操作，所以我们必然是通过写Python代码的方式。可是....Python和数据库语言SQL是两码事啊，它根本操作不了数据库！没关系，我们可以在Python代码中嵌入SQL语句，比如下面的方式：</p> 
+ <div class="codehilite">
+  <pre><span></span># 创建连接,这里先忽略创建方法
+conn = ......
+# 创建游标
+cursor = conn.cursor()
+
+# 执行SQL，并返回收影响行数
+effect_row = cursor.execute("insert into host (hostname,port,ip) values('ubuntu','22','10.0.0.2');")
+
+# 提交，不然无法保存新建或者修改的数据
+conn.commit()
+
+# 关闭游标
+cursor.close()
+# 关闭连接
+conn.close()
+</pre>
+ </div> 
+ <p>但是问题又来了，Python怎么创建和数据库的连接呢？或者更直白的说Python怎么连接数据库呢？可以使用类似pymysql这一类的第三方模块（针对不同的数据库，有不同的模块）。于是我们可以进行如下的连接：</p> 
+ <div class="codehilite">
+  <pre><span></span>conn = pymysql.connect(host='137.78.5.130', port=3306, user='root', passwd='123456', db='test')
+</pre>
+ </div> 
+ <p>好了，这样似乎就Ok了。但是，如果你有很多的数据库操作，并且你的Python程序员不是专业的DBA，写的SQL语句很烂，甚至经常写错，怎么办？</p> 
+ <p>聪明的人想出了一个办法：用Python语法来写，然后使用一个中间工具将Python代码翻译成原生的SQL语句，这样你总不会写错了吧？这个中间工具就是所谓的ORM（对象关系映射）！</p> 
+ <p>ORM将一个Python的对象映射为数据库中的一张关系表。它将SQL封装起来，程序员不再需要关心数据库的具体操作，只需要专注于自己本身代码和业务逻辑的实现。</p> 
+ <p>于是，整体的实现过程就是：Python代码，通过ORM转换成SQL语句，再通过pymysql去实际操作数据库。</p> 
+ <p><img alt="image.png-18.7kB" src="http://static.zybuluo.com/feixuelove1009/k1s4q20bnmdy1pbn0lxie992/image.png"></p> 
+ <p>最典型的ORM就是<a href="http://www.sqlalchemy.org/">SQLAlchemy</a>了，如果你的Web框架自身不带ORM系统，那么你可以安装使用它，SQLAlchemy使用者还是比较多的，本身功能也比较强大，大家可以自行学习。</p> 
+ <p><img alt="image.png-245kB" src="http://static.zybuluo.com/feixuelove1009/steh4we1lg801u7k4qoet7ci/image.png"></p> 
+ <hr> 
+ <p><strong>Django自带ORM系统，不需要额外安装别的ORM。</strong>当然，也可以安装并使用其它的ORM，比如SQLAlchemy，但是不建议这么做，因为Django系统庞大，集成完善，模型层与视图层、模板层结合得比较紧密，使用自带的ORM更方便更可靠，并且Django自带的ORM功能也非常强大，也不难学。</p> 
+ <p><strong>Django的ORM系统体现在框架内就是模型层。想要理解模型层的概念，关键在于理解用Python代码的方式来定义数据库表的做法！一个Python的类，就是一个模型，代表数据库中的一张数据表！Django奉行Python优先的原则，一切基于Python代码的交流，完全封装SQL内部细节。</strong></p> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/93"> <i class="fa fa-arrow-left"></i>&nbsp;Part 7：自定义admin</a> 
+  <a class="float-right" href="/course/django/95"> 模型和字段&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 8</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/94">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.93.25.502.502.50/007oFbNkly8fwbn6x17zfj30hs0p5h4r.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>赞美博主</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 红尘紫陌白 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年5月26日 22:46</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1355">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.0.0.996.996.50/005KbX7ely8fpuuaetiusj30ro0ro41w.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>博主的教材简直是我这种菜鸟的福音，建议出书！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; yoyorachelw </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年4月18日 10:50</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1264">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.225.123.220.220.50/d7e850caly8fnbq64kyl5j20im0cggmo.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>现在才找到这么好的django教程，应该还能重新弥补以前的漏洞</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 王希知 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年3月9日 16:05</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1126">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>强烈建议出书！ 我第一个买</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 想个名字真难111 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年2月9日 19:08</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1059">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva3.sinaimg.cn/crop.0.0.180.180.50/53095227jw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>这么好的教材，应该出书的。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 凡人颂 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年1月30日 23:12</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1053">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.720.720.50/c1b446bbjw8eh3ipz350ej20k00k0acc.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>总是忘，这次学深点。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; who抢了我的昵称 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年11月19日 21:12</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/877">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.29.72.151.151.50/c345a2c6jw1egex1o75ogj205c071mx9.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>1-16，开始第二章</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 世外就是TaoYuan </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年1月16日 11:04</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/128">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.0.0.996.996.50/005K3i3dly8ffoe5k938ej30ro0ro770.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>这是第一章 兄嘚</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> skymarch &nbsp;&nbsp;回复&nbsp;&nbsp; 世外就是TaoYuan </span> 
+      <em>2018年10月17日 13:35</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/777">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

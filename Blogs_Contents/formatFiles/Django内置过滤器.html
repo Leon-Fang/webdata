@@ -1,0 +1,1072 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>Django内置过滤器</h1> 
+ <small>阅读:&nbsp;26047&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：3 </small> 
+ <hr> 
+ <h2>Django内置过滤器总览</h2> 
+ <p>可以查询下表来总览Django的内置过滤器：</p> 
+ <table> 
+  <thead> 
+   <tr> 
+    <th>过滤器</th> 
+    <th>说明</th> 
+   </tr> 
+  </thead> 
+  <tbody> 
+   <tr> 
+    <td>add</td> 
+    <td>加法</td> 
+   </tr> 
+   <tr> 
+    <td>addslashes</td> 
+    <td>添加斜杠</td> 
+   </tr> 
+   <tr> 
+    <td>capfirst</td> 
+    <td>首字母大写</td> 
+   </tr> 
+   <tr> 
+    <td>center</td> 
+    <td>文本居中</td> 
+   </tr> 
+   <tr> 
+    <td>cut</td> 
+    <td>切除字符</td> 
+   </tr> 
+   <tr> 
+    <td>date</td> 
+    <td>日期格式化</td> 
+   </tr> 
+   <tr> 
+    <td>default</td> 
+    <td>设置默认值</td> 
+   </tr> 
+   <tr> 
+    <td>default_if_none</td> 
+    <td>为None设置默认值</td> 
+   </tr> 
+   <tr> 
+    <td>dictsort</td> 
+    <td>字典排序</td> 
+   </tr> 
+   <tr> 
+    <td>dictsortreversed</td> 
+    <td>字典反向排序</td> 
+   </tr> 
+   <tr> 
+    <td>divisibleby</td> 
+    <td>整除判断</td> 
+   </tr> 
+   <tr> 
+    <td>escape</td> 
+    <td>转义</td> 
+   </tr> 
+   <tr> 
+    <td>escapejs</td> 
+    <td>转义js代码</td> 
+   </tr> 
+   <tr> 
+    <td>filesizeformat</td> 
+    <td>文件尺寸人性化显示</td> 
+   </tr> 
+   <tr> 
+    <td>first</td> 
+    <td>第一个元素</td> 
+   </tr> 
+   <tr> 
+    <td>floatformat</td> 
+    <td>浮点数格式化</td> 
+   </tr> 
+   <tr> 
+    <td>force_escape</td> 
+    <td>强制立刻转义</td> 
+   </tr> 
+   <tr> 
+    <td>get_digit</td> 
+    <td>获取数字</td> 
+   </tr> 
+   <tr> 
+    <td>iriencode</td> 
+    <td>转换IRI</td> 
+   </tr> 
+   <tr> 
+    <td>join</td> 
+    <td>字符列表链接</td> 
+   </tr> 
+   <tr> 
+    <td>last</td> 
+    <td>最后一个</td> 
+   </tr> 
+   <tr> 
+    <td>length</td> 
+    <td>长度</td> 
+   </tr> 
+   <tr> 
+    <td>length_is</td> 
+    <td>长度等于</td> 
+   </tr> 
+   <tr> 
+    <td>linebreaks</td> 
+    <td>行转换</td> 
+   </tr> 
+   <tr> 
+    <td>linebreaksbr</td> 
+    <td>行转换</td> 
+   </tr> 
+   <tr> 
+    <td>linenumbers</td> 
+    <td>行号</td> 
+   </tr> 
+   <tr> 
+    <td>ljust</td> 
+    <td>左对齐</td> 
+   </tr> 
+   <tr> 
+    <td>lower</td> 
+    <td>小写</td> 
+   </tr> 
+   <tr> 
+    <td>make_list</td> 
+    <td>分割成字符列表</td> 
+   </tr> 
+   <tr> 
+    <td>phone2numeric</td> 
+    <td>电话号码</td> 
+   </tr> 
+   <tr> 
+    <td>pluralize</td> 
+    <td>复数形式</td> 
+   </tr> 
+   <tr> 
+    <td>pprint</td> 
+    <td>调试</td> 
+   </tr> 
+   <tr> 
+    <td>random</td> 
+    <td>随机获取</td> 
+   </tr> 
+   <tr> 
+    <td>rjust</td> 
+    <td>右对齐</td> 
+   </tr> 
+   <tr> 
+    <td>safe</td> 
+    <td>安全确认</td> 
+   </tr> 
+   <tr> 
+    <td>safeseq</td> 
+    <td>列表安全确认</td> 
+   </tr> 
+   <tr> 
+    <td>slice</td> 
+    <td>切片</td> 
+   </tr> 
+   <tr> 
+    <td>slugify</td> 
+    <td>转换成ASCII</td> 
+   </tr> 
+   <tr> 
+    <td>stringformat</td> 
+    <td>字符串格式化</td> 
+   </tr> 
+   <tr> 
+    <td>striptags</td> 
+    <td>去除HTML中的标签</td> 
+   </tr> 
+   <tr> 
+    <td>time</td> 
+    <td>时间格式化</td> 
+   </tr> 
+   <tr> 
+    <td>timesince</td> 
+    <td>从何时开始</td> 
+   </tr> 
+   <tr> 
+    <td>timeuntil</td> 
+    <td>到何时多久</td> 
+   </tr> 
+   <tr> 
+    <td>title</td> 
+    <td>所有单词首字母大写</td> 
+   </tr> 
+   <tr> 
+    <td>truncatechars</td> 
+    <td>截断字符</td> 
+   </tr> 
+   <tr> 
+    <td>truncatechars_html</td> 
+    <td>截断字符</td> 
+   </tr> 
+   <tr> 
+    <td>truncatewords</td> 
+    <td>截断单词</td> 
+   </tr> 
+   <tr> 
+    <td>truncatewords_html</td> 
+    <td>截断单词</td> 
+   </tr> 
+   <tr> 
+    <td>unordered_list</td> 
+    <td>无序列表</td> 
+   </tr> 
+   <tr> 
+    <td>upper</td> 
+    <td>大写</td> 
+   </tr> 
+   <tr> 
+    <td>urlencode</td> 
+    <td>转义url</td> 
+   </tr> 
+   <tr> 
+    <td>urlize</td> 
+    <td>url转成可点击的链接</td> 
+   </tr> 
+   <tr> 
+    <td>urlizetrunc</td> 
+    <td>urlize的截断方式</td> 
+   </tr> 
+   <tr> 
+    <td>wordcount</td> 
+    <td>单词计数</td> 
+   </tr> 
+   <tr> 
+    <td>wordwrap</td> 
+    <td>单词包裹</td> 
+   </tr> 
+   <tr> 
+    <td>yesno</td> 
+    <td>将True，False和None，映射成字符串‘yes’，‘no’，‘maybe’</td> 
+   </tr> 
+  </tbody> 
+ </table> 
+ <p><strong>为模版过滤器提供参数的方式是：过滤器后加个冒号，再紧跟参数，中间不能有空格！</strong></p> 
+ <p><strong>目前只能为过滤器最多提供一个参数！</strong></p> 
+ <h3>1. add</h3> 
+ <p>把add后的参数加给value。像这样：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{{</span> <span class="nv">value</span><span class="o">|</span><span class="nf">add</span><span class="s2">:"2"</span> <span class="cp">}}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>如果value为 4,则会输出6.</p> 
+ <p>过滤器首先会强制把两个值转换成Int类型。 如果强制转换失败, 它会试图使用各种方式把两个值相加。 </p> 
+ <p>对于下面的例子：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{{</span> <span class="nv">first</span><span class="o">|</span><span class="nf">add</span><span class="o">:</span><span class="nv">second</span> <span class="cp">}}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>如果first是[1, 2, 3]，second是[4, 5, 6], 将会输出[1, 2, 3, 4, 5, 6].</p> 
+ <h3>2. addslashes</h3> 
+ <p>在引号前面加上斜杆。常用于在CSV中转义字符串。像这样：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{{</span> <span class="nv">value</span><span class="o">|</span><span class="nf">addslashes</span> <span class="cp">}}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>如果value是"I'm using Django", 输出将变成 "I\'m using Django".</p> 
+ <h3>3. capfirst</h3> 
+ <p>大写变量的第一个字母。 如果第一个字符不是字母，该过滤器将不会生效。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{{</span> <span class="nv">value</span><span class="o">|</span><span class="nf">capfirst</span> <span class="cp">}}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>如果value是"django", 输出将变成"Django"。</p> 
+ <h3>4. center</h3> 
+ <p>在给定的宽度范围内居中.</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="x">"</span><span class="cp">{{</span> <span class="nv">value</span><span class="o">|</span><span class="nf">center</span><span class="s2">:"15"</span> <span class="cp">}}</span><span class="x">"</span>
+</pre>
+ </div> 
+ <p>如果value是"Django"，输出将是<code>Django</code>。</p> 
+ <h3>5. cut</h3> 
+ <p>移除value中所有的与给定参数相同的字符串。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{{</span> <span class="nv">value</span><span class="o">|</span><span class="nf">cut</span><span class="s2">:" "</span> <span class="cp">}}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>如果value为“String with spaces”，输出将为"Stringwithspaces"。</p> 
+ <h3>6. date</h3> 
+ <p>根据给定格式对一个日期变量进行格式化。</p> 
+ <p>可用的格式字符串：</p> 
+ <table> 
+  <thead> 
+   <tr> 
+    <th>格式化字符</th> 
+    <th>描述</th> 
+    <th>示例输出</th> 
+   </tr> 
+  </thead> 
+  <tbody> 
+   <tr> 
+    <td>a</td> 
+    <td>'a.m.'或'p.m.'</td> 
+    <td>'a.m.'</td> 
+   </tr> 
+   <tr> 
+    <td>A</td> 
+    <td>'AM'或'PM'</td> 
+    <td>'AM'</td> 
+   </tr> 
+   <tr> 
+    <td>b</td> 
+    <td>月份，文字形式，3个字母，小写。</td> 
+    <td>“jan”</td> 
+   </tr> 
+   <tr> 
+    <td>B</td> 
+    <td>未实现。</td> 
+    <td></td> 
+   </tr> 
+   <tr> 
+    <td>c</td> 
+    <td>ISO 8601格式</td> 
+    <td>2008-01-02T10:30:00.000123+02:00</td> 
+   </tr> 
+   <tr> 
+    <td>d</td> 
+    <td>月的日子，带前导零的2位数字。</td> 
+    <td>'01'到'31'</td> 
+   </tr> 
+   <tr> 
+    <td>D</td> 
+    <td>周几的文字表述形式，3个字母。</td> 
+    <td>'Fri'</td> 
+   </tr> 
+   <tr> 
+    <td>e</td> 
+    <td>时区名称</td> 
+    <td>''，'GMT'，'-500'，'US/Eastern'等</td> 
+   </tr> 
+   <tr> 
+    <td>E</td> 
+    <td>月份，分地区。</td> 
+    <td></td> 
+   </tr> 
+   <tr> 
+    <td>f</td> 
+    <td>时间</td> 
+    <td>'1'，'1:30'</td> 
+   </tr> 
+   <tr> 
+    <td>F</td> 
+    <td>月，文字形式。</td> 
+    <td>'January'</td> 
+   </tr> 
+   <tr> 
+    <td>g</td> 
+    <td>12小时格式，无前导零。</td> 
+    <td>'1'到'12'</td> 
+   </tr> 
+   <tr> 
+    <td>G</td> 
+    <td>24小时格式，无前导零。</td> 
+    <td>'0'到'23'</td> 
+   </tr> 
+   <tr> 
+    <td>h</td> 
+    <td>12小时格式。</td> 
+    <td>'01'到'12'</td> 
+   </tr> 
+   <tr> 
+    <td>H</td> 
+    <td>24小时格式。</td> 
+    <td>'00'到'23'</td> 
+   </tr> 
+   <tr> 
+    <td>i</td> 
+    <td>分钟</td> 
+    <td>'00'到'59'</td> 
+   </tr> 
+   <tr> 
+    <td>I</td> 
+    <td>夏令时间，无论是否生效。</td> 
+    <td>'1'或'0'</td> 
+   </tr> 
+   <tr> 
+    <td>j</td> 
+    <td>没有前导零的月份的日子。</td> 
+    <td>'1'到'31'</td> 
+   </tr> 
+   <tr> 
+    <td>l</td> 
+    <td>星期几，完整英文名</td> 
+    <td>'Friday'</td> 
+   </tr> 
+   <tr> 
+    <td>L</td> 
+    <td>布尔值是否是一个闰年。</td> 
+    <td>True或False</td> 
+   </tr> 
+   <tr> 
+    <td>m</td> 
+    <td>月，2位数字带前导零。</td> 
+    <td>'01'到'12'</td> 
+   </tr> 
+   <tr> 
+    <td>M</td> 
+    <td>月，文字，3个字母。</td> 
+    <td>“Jan”</td> 
+   </tr> 
+   <tr> 
+    <td>n</td> 
+    <td>月无前导零。</td> 
+    <td>'1'到'12'</td> 
+   </tr> 
+   <tr> 
+    <td>N</td> 
+    <td>美联社风格的月份缩写。</td> 
+    <td>'Jan.'，'Feb.'，'March'，'May'</td> 
+   </tr> 
+   <tr> 
+    <td>o</td> 
+    <td>ISO-8601周编号</td> 
+    <td>'1999'</td> 
+   </tr> 
+   <tr> 
+    <td>O</td> 
+    <td>与格林威治时间的差，单位小时。</td> 
+    <td>'+0200'</td> 
+   </tr> 
+   <tr> 
+    <td>P</td> 
+    <td>时间为12小时</td> 
+    <td>'1 am'，'1:30 pm'，'midnight'，'noon'，'12：30 pm'&gt;</td> 
+   </tr> 
+   <tr> 
+    <td>r</td> 
+    <td>RFC 5322格式化日期。</td> 
+    <td>'Thu， 21 Dec 2000 16:01:07 +0200'</td> 
+   </tr> 
+   <tr> 
+    <td>s</td> 
+    <td>秒，带前导零的2位数字。</td> 
+    <td>'00'到'59'</td> 
+   </tr> 
+   <tr> 
+    <td>S</td> 
+    <td>一个月的英文序数后缀，2个字符。</td> 
+    <td>'st'，'nd'，'rd'或'th'</td> 
+   </tr> 
+   <tr> 
+    <td>t</td> 
+    <td>给定月份的天数。</td> 
+    <td>28 to 31</td> 
+   </tr> 
+   <tr> 
+    <td>T</td> 
+    <td>本机的时区。</td> 
+    <td>'EST'，'MDT'</td> 
+   </tr> 
+   <tr> 
+    <td>u</td> 
+    <td>微秒。</td> 
+    <td>000000 to 999999</td> 
+   </tr> 
+   <tr> 
+    <td>U</td> 
+    <td>自Unix Epoch以来的秒数（1970年1月1日00:00:00 UTC）。</td> 
+    <td></td> 
+   </tr> 
+   <tr> 
+    <td>w</td> 
+    <td>星期几，数字无前导零。</td> 
+    <td>'0'（星期日）至'6'（星期六）</td> 
+   </tr> 
+   <tr> 
+    <td>W</td> 
+    <td>ISO-8601周数，周数从星期一开始。</td> 
+    <td>1，53</td> 
+   </tr> 
+   <tr> 
+    <td>y</td> 
+    <td>年份，2位数字。</td> 
+    <td>'99'</td> 
+   </tr> 
+   <tr> 
+    <td>Y</td> 
+    <td>年，4位数。</td> 
+    <td>'1999'</td> 
+   </tr> 
+   <tr> 
+    <td>z</td> 
+    <td>一年中的日子</td> 
+    <td>0到365</td> 
+   </tr> 
+   <tr> 
+    <td>Z</td> 
+    <td>时区偏移量，单位为秒。</td> 
+    <td>-43200到43200</td> 
+   </tr> 
+  </tbody> 
+ </table> 
+ <p>范例：</p> 
+ <p>{{ value|date:"D d M Y" }}</p> 
+ <p>如果value是一个datetime对象，比如datetime.datetime.now()，输出将是字符串'Wed 09 Jan 2008'。</p> 
+ <p>可以将date与time过滤器结合使用，以呈现datetime值的完整表示形式。 例如。：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{{</span> <span class="nv">value</span><span class="o">|</span><span class="nf">date</span><span class="s2">:"D d M Y"</span> <span class="cp">}}</span><span class="x"> </span><span class="cp">{{</span> <span class="nv">value</span><span class="o">|</span><span class="nf">time</span><span class="s2">:"H:i"</span> <span class="cp">}}</span><span class="x"></span>
+</pre>
+ </div> 
+ <h3>7. default</h3> 
+ <p>为变量提供一个默认值。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{{</span> <span class="nv">value</span><span class="o">|</span><span class="nf">default</span><span class="s2">:"nothing"</span> <span class="cp">}}</span><span class="x"></span>
+</pre>
+ </div> 
+ <h3>8. default_if_none</h3> 
+ <p>如果（且仅当）value为None，则使用给定的默认值。 </p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{{</span> <span class="nv">value</span><span class="o">|</span><span class="nf">default_if_none</span><span class="s2">:"nothing"</span> <span class="cp">}}</span><span class="x"></span>
+</pre>
+ </div> 
+ <h3>9. dictsort</h3> 
+ <p>接受一个包含字典元素的列表，并返回按参数中给出的键排序后的列表。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{{</span> <span class="nv">value</span><span class="o">|</span><span class="nf">dictsort</span><span class="s2">:"name"</span> <span class="cp">}}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>如果value为：</p> 
+ <div class="codehilite">
+  <pre><span></span>[
+    {'name': 'zed', 'age': 19},
+    {'name': 'amy', 'age': 22},
+    {'name': 'joe', 'age': 31},
+]
+</pre>
+ </div> 
+ <p>那么输出将是：</p> 
+ <div class="codehilite">
+  <pre><span></span>[
+    {'name': 'amy', 'age': 22},
+    {'name': 'joe', 'age': 31},
+    {'name': 'zed', 'age': 19},
+]
+</pre>
+ </div> 
+ <p>还也可以做更复杂的事情，如：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{%</span> <span class="k">for</span> <span class="nv">book</span> <span class="k">in</span> <span class="nv">books</span><span class="o">|</span><span class="nf">dictsort</span><span class="s2">:"author.age"</span> <span class="cp">%}</span><span class="x"></span>
+<span class="x">    * </span><span class="cp">{{</span> <span class="nv">book.title</span> <span class="cp">}}</span><span class="x"> (</span><span class="cp">{{</span> <span class="nv">book.author.name</span> <span class="cp">}}</span><span class="x">)</span>
+<span class="cp">{%</span> <span class="k">endfor</span> <span class="cp">%}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>如果books是：</p> 
+ <div class="codehilite">
+  <pre><span></span>[
+    {'title': '1984', 'author': {'name': 'George', 'age': 45}},
+    {'title': 'Timequake', 'author': {'name': 'Kurt', 'age': 75}},
+    {'title': 'Alice', 'author': {'name': 'Lewis', 'age': 33}},
+]
+</pre>
+ </div> 
+ <p>那么输出将是：</p> 
+ <div class="codehilite">
+  <pre><span></span>* Alice (Lewis)
+* 1984 (George)
+* Timequake (Kurt)
+</pre>
+ </div> 
+ <p>dictsort也可以按指定索引对多维列表进行排序，像这样：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{{</span> <span class="nv">value</span><span class="o">|</span><span class="nf">dictsort</span><span class="o">:</span><span class="m">0</span> <span class="cp">}}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>如果value为：</p> 
+ <div class="codehilite">
+  <pre><span></span>[
+    ('a', '42'),
+    ('c', 'string'),
+    ('b', 'foo'),
+]
+</pre>
+ </div> 
+ <p>那么输出将是：</p> 
+ <div class="codehilite">
+  <pre><span></span>[
+    ('a', '42'),
+    ('b', 'foo'),
+    ('c', 'string'),
+]
+</pre>
+ </div> 
+ <p>必须提供整数索引，不能是字符串。 以下产生空输出：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{{</span> <span class="nv">values</span><span class="o">|</span><span class="nf">dictsort</span><span class="s2">:"0"</span> <span class="cp">}}</span><span class="x"></span>
+</pre>
+ </div> 
+ <h3>10. dictsortreversed</h3> 
+ <p>前面过滤器的反序功能。</p> 
+ <h3>11. divisibleby</h3> 
+ <p>如果value可以被参数整除，则返回True。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{{</span> <span class="nv">value</span><span class="o">|</span><span class="nf">divisibleby</span><span class="s2">:"3"</span> <span class="cp">}}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>如果value是21，则输出True。</p> 
+ <h3>12. escape</h3> 
+ <p>转义字符串的HTML。 </p> 
+ <p>转义仅在字符串输出时应用，因此在链接的过滤器序列中escape的位置无关紧要，就像它是最后一个过滤器。 如果要立即应用转义，请使用<code>force_escape</code>过滤器。</p> 
+ <h3>13. escapejs</h3> 
+ <p>转义用于JavaScript字符串的字符。 确保在使用模板生成JavaScript / JSON时避免语法错误。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{{</span> <span class="nv">value</span><span class="o">|</span><span class="nf">escapejs</span> <span class="cp">}}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>如果value为<code>testing\r\njavascript \'string" &lt;b&gt;escaping&lt;/b&gt;</code>，输出将为<code>testing\\u000D\\u000Ajavascript \\u0027string\\u0022 \\u003Cb\\u003Eescaping\\u003C/b\\u003E</code>。</p> 
+ <h3>14. filesizeformat</h3> 
+ <p>格式化为直观的文件大小形式（即'13 KB', '4.1 MB', '102 bytes'等）。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{{</span> <span class="nv">value</span><span class="o">|</span><span class="nf">filesizeformat</span> <span class="cp">}}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>如果value为123456789，输出将是117.7 MB。</p> 
+ <h3>15. first</h3> 
+ <p>返回列表中的第一项。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{{</span> <span class="nv">value</span><span class="o">|</span><span class="nf">first</span> <span class="cp">}}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>如果value是列表['a'， 'b'， 'c'] ，输出将为'a'。</p> 
+ <h3>16. floatformat</h3> 
+ <p>当不使用参数时，将浮点数舍入到小数点后一位，但前提是要显示小数部分。 像这样：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="x">value           模板语法                输出</span>
+<span class="x">34.23234    </span><span class="cp">{{</span> <span class="nv">value</span> <span class="o">|</span> <span class="nf">floatformat</span> <span class="cp">}}</span><span class="x">   34.2</span>
+<span class="x">34.00000    </span><span class="cp">{{</span> <span class="nv">value</span> <span class="o">|</span> <span class="nf">floatformat</span> <span class="cp">}}</span><span class="x">   34</span>
+<span class="x">34.26000    </span><span class="cp">{{</span> <span class="nv">value</span> <span class="o">|</span> <span class="nf">floatformat</span> <span class="cp">}}</span><span class="x">   34.3</span>
+</pre>
+ </div> 
+ <p>如果与数字整数参数一起使用，将数字四舍五入为小数位数。 像这样：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="x">value           模板语法                输出</span>
+<span class="x">34.23234    </span><span class="cp">{{</span> <span class="nv">value</span> <span class="o">|</span> <span class="nf">floatformat</span><span class="err">：</span><span class="m">3</span> <span class="cp">}}</span><span class="x"> 34.232</span>
+<span class="x">34.00000    </span><span class="cp">{{</span> <span class="nv">value</span> <span class="o">|</span> <span class="nf">floatformat</span><span class="err">：</span><span class="m">3</span> <span class="cp">}}</span><span class="x"> 34.000</span>
+<span class="x">34.26000    </span><span class="cp">{{</span> <span class="nv">value</span> <span class="o">|</span> <span class="nf">floatformat</span><span class="err">：</span><span class="m">3</span> <span class="cp">}}</span><span class="x"> 34.260</span>
+</pre>
+ </div> 
+ <p>特别有用的是传递0（零）作为参数，它将使float浮动到最接近的整数。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="x">value           模板语法                输出</span>
+<span class="x">34.23234    </span><span class="cp">{{</span> <span class="nv">value</span> <span class="o">|</span> <span class="nf">floatformat</span><span class="err">：“</span><span class="m">0</span><span class="err">”</span> <span class="cp">}}</span><span class="x">   34</span>
+<span class="x">34.00000    </span><span class="cp">{{</span> <span class="nv">value</span> <span class="o">|</span> <span class="nf">floatformat</span><span class="err">：“</span><span class="m">0</span><span class="err">”</span> <span class="cp">}}</span><span class="x">   34</span>
+<span class="x">39.56000    </span><span class="cp">{{</span> <span class="nv">value</span> <span class="o">|</span> <span class="nf">floatformat</span><span class="err">：“</span><span class="m">0</span><span class="err">”</span> <span class="cp">}}</span><span class="x">   40</span>
+</pre>
+ </div> 
+ <p>如果传递给floatformat的参数为负，则会将一个数字四舍五入到小数点后的位置，但前提是要显示一个小数部分。 像这样：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="x">value           模板语法                输出</span>
+<span class="x">34.23234    </span><span class="cp">{{</span> <span class="nv">value</span> <span class="o">|</span> <span class="nf">floatformat</span><span class="err">：“</span> <span class="o">-</span> <span class="m">3</span><span class="err">”</span> <span class="cp">}}</span><span class="x">    34.232</span>
+<span class="x">34.00000    </span><span class="cp">{{</span> <span class="nv">value</span> <span class="o">|</span> <span class="nf">floatformat</span><span class="err">：“</span> <span class="o">-</span> <span class="m">3</span><span class="err">”</span> <span class="cp">}}</span><span class="x">    34</span>
+<span class="x">34.26000    </span><span class="cp">{{</span> <span class="nv">value</span> <span class="o">|</span> <span class="nf">floatformat</span><span class="err">：“</span> <span class="o">-</span> <span class="m">3</span><span class="err">”</span> <span class="cp">}}</span><span class="x">    34.260</span>
+</pre>
+ </div> 
+ <h3>17. force_escape</h3> 
+ <p>立即转义HTML字符串。</p> 
+ <h3>18. get_digit</h3> 
+ <p>给定一个整数，返回所请求的数字，1表示最右边的数字，2表示第二个最右边的数字，以此类推。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{{</span> <span class="nv">value</span><span class="o">|</span><span class="nf">get_digit</span><span class="s2">:"2"</span> <span class="cp">}}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>如果value为123456789，则输出8。</p> 
+ <h3>19. iriencode</h3> 
+ <p>将IRI（国际化资源标识符）转换为适合包含在URL中的字符串。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{{</span> <span class="nv">value</span><span class="o">|</span><span class="nf">iriencode</span> <span class="cp">}}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>如果value是<code>?test=1&amp;me=2</code>，输出则是<code>?test=1&amp;amp;me=2</code>。</p> 
+ <h3>20. join</h3> 
+ <p>使用字符串连接列表，类似Python的str.join(list)</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{{</span> <span class="nv">value</span><span class="o">|</span><span class="nf">join</span><span class="s2">:" // "</span> <span class="cp">}}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>如果value是列表['a'， 'b'， 'c'] ，输出为<code>a // b // c</code>。</p> 
+ <h3>21. last</h3> 
+ <p>返回列表中的最后一个项目。类似first过滤器。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{{</span> <span class="nv">value</span><span class="o">|</span><span class="nf">last</span> <span class="cp">}}</span><span class="x"></span>
+</pre>
+ </div> 
+ <h3>22. length</h3> 
+ <p>返回对象的长度。 这适用于字符串和列表。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{{</span> <span class="nv">value</span><span class="o">|</span><span class="nf">length</span> <span class="cp">}}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>如果value是['a'， 'b'， 'c'， 'd']或"abcd"，输出将为4。</p> 
+ <p>对于未定义的变量，过滤器返回0。</p> 
+ <h3>23. length_is</h3> 
+ <p>如果对象的长度等于参数值，则返回True，否则返回False。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{{</span> <span class="nv">value</span><span class="o">|</span><span class="nf">length_is</span><span class="s2">:"4"</span> <span class="cp">}}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>如果value是['a'， 'b'， 'c'， 'd']或"abcd"，输出将为True。</p> 
+ <h3>24. linebreaks</h3> 
+ <p>替换纯文本中的换行符为<code>&lt;p&gt;</code>标签。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{{</span> <span class="nv">value</span><span class="o">|</span><span class="nf">linebreaks</span> <span class="cp">}}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>如果value是<code>Joel\nis a slug</code>，输出将为<code>&lt;p&gt;Joel&lt;br /&gt;is a slug&lt;/p&gt;</code>。</p> 
+ <h3>25. linebreaksbr</h3> 
+ <p>替换纯文本中的换行符为<code>&lt;br /&gt;</code>标签。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{{</span> <span class="nv">value</span><span class="o">|</span><span class="nf">linebreaksbr</span> <span class="cp">}}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>如果value是<code>Joel\nis a slug</code>，输出将为<code>Joel&lt;br /&gt;is a slug</code>。</p> 
+ <h3>26. linenumbers</h3> 
+ <p>显示带行号的文本。</p> 
+ <p>{{ value|linenumbers }}</p> 
+ <p>如果value为：</p> 
+ <div class="codehilite">
+  <pre><span></span>one
+two
+three
+</pre>
+ </div> 
+ <p>输出将是：</p> 
+ <div class="codehilite">
+  <pre><span></span>1. one
+2. two
+3. three
+</pre>
+ </div> 
+ <h3>27. ljust</h3> 
+ <p>给定宽度下左对齐。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="x">"</span><span class="cp">{{</span> <span class="nv">value</span><span class="o">|</span><span class="nf">ljust</span><span class="s2">:"10"</span> <span class="cp">}}</span><span class="x">"</span>
+</pre>
+ </div> 
+ <p>如果value为Django，则输出为<code>Django</code>。</p> 
+ <h3>28. lower</h3> 
+ <p>将字符串转换为全部小写。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{{</span> <span class="nv">value</span><span class="o">|</span><span class="nf">lower</span> <span class="cp">}}</span><span class="x"></span>
+</pre>
+ </div> 
+ <h3>29. make_list</h3> 
+ <p>将对象转换为字符的列表。对于字符串，直接拆分为单个字符的列表。对于整数，在创建列表之前将参数强制转换为unicode字符串。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{{</span> <span class="nv">value</span><span class="o">|</span><span class="nf">make_list</span> <span class="cp">}}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>如果value是字符串"Joel"，输出将是列表['J'， 'o' ， 'e'， 'l']。</p> 
+ <p>如果value为123，输出为列表['1'， '2'， '3']。</p> 
+ <h3>30. phone2numeric</h3> 
+ <p>将电话号码（可能包含字母）转换为其等效数字。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{{</span> <span class="nv">value</span><span class="o">|</span><span class="nf">phone2numeric</span> <span class="cp">}}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>如果value为<code>800-COLLECT</code>，输出将为800-2655328。</p> 
+ <h3>31. pluralize</h3> 
+ <p>如果值不是1,则返回一个复数形式，通常在后面添加's'表示。</p> 
+ <p>例如：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="x">You have </span><span class="cp">{{</span> <span class="nv">num_messages</span> <span class="cp">}}</span><span class="x"> message</span><span class="cp">{{</span> <span class="nv">num_messages</span><span class="o">|</span><span class="nf">pluralize</span> <span class="cp">}}</span><span class="x">.</span>
+</pre>
+ </div> 
+ <p>如果<code>num_messages</code>是1，则输出为<code>You have 1 message</code>。 如果num_messages是2，输出为<code>You have 2 messages</code>。</p> 
+ <p>另外如果需要的不是's'后缀的话, 可以提供一个备选的参数给过滤器：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="x">You have </span><span class="cp">{{</span> <span class="nv">num_walruses</span> <span class="cp">}}</span><span class="x"> walrus</span><span class="cp">{{</span> <span class="nv">num_walruses</span><span class="o">|</span><span class="nf">pluralize</span><span class="s2">:"es"</span> <span class="cp">}}</span><span class="x">.</span>
+</pre>
+ </div> 
+ <p>对于非一般形式的复数,可以同时指定单复数形式，用逗号隔开。例如：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="x">You have </span><span class="cp">{{</span> <span class="nv">num_cherries</span> <span class="cp">}}</span><span class="x"> cherr</span><span class="cp">{{</span> <span class="nv">num_cherries</span><span class="o">|</span><span class="nf">pluralize</span><span class="s2">:"y,ies"</span> <span class="cp">}}</span><span class="x">.</span>
+</pre>
+ </div> 
+ <h3>32. pprint</h3> 
+ <p>用于调试的过滤器。</p> 
+ <h3>33. random</h3> 
+ <p>返回给定列表中的随机项。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{{</span> <span class="nv">value</span><span class="o">|</span><span class="nf">random</span> <span class="cp">}}</span><span class="x"></span>
+</pre>
+ </div> 
+ <h3>34. rjust</h3> 
+ <p>右对齐给定宽度字段中的值。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="x">"</span><span class="cp">{{</span> <span class="nv">value</span><span class="o">|</span><span class="nf">rjust</span><span class="s2">:"10"</span> <span class="cp">}}</span><span class="x">"</span>
+</pre>
+ </div> 
+ <h3>35. safe</h3> 
+ <p>将字符串标记为安全，不需要转义。不再赘述。</p> 
+ <h3>36. safeseq</h3> 
+ <p>将safe过滤器应用于序列的每个元素。 与对序列进行其他过滤操作（例如join）一起使用时非常有用。 </p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{{</span> <span class="nv">some_list</span><span class="o">|</span><span class="nf">safeseq</span><span class="o">|</span><span class="nf">join</span><span class="s2">:", "</span> <span class="cp">}}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>在这种情况下，不能直接使用safe过滤器，因为它首先将变量转换为字符串，而不是使用序列的各个元素。</p> 
+ <h3>37. slice</h3> 
+ <p>返回列表的一部分。也就是切片，与Python的列表切片相同的语法。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{{</span> <span class="nv">some_list</span><span class="o">|</span><span class="nf">slice</span><span class="s2">:":2"</span> <span class="cp">}}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>如果some_list是['a'， 'b'， 'c'] ，输出将为['a'， 'b']。</p> 
+ <h3>38. slugify</h3> 
+ <p>转换为ASCII。空格转换为连字符。删除不是字母数字，下划线或连字符的字符。转换为小写。还会去除前导和尾随空格。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{{</span> <span class="nv">value</span><span class="o">|</span><span class="nf">slugify</span> <span class="cp">}}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>如果value是<code>Joel is a slug</code>，输出为<code>joel-is-a-slug</code>。</p> 
+ <h3>39. stringformat</h3> 
+ <p>根据参数，格式化变量。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{{</span> <span class="nv">value</span><span class="o">|</span><span class="nf">stringformat</span><span class="s2">:"E"</span> <span class="cp">}}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>如果value为10，输出将为1.000000E+01。</p> 
+ <h3>40. striptags</h3> 
+ <p>尽可能的去除HTML中的标签。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{{</span> <span class="nv">value</span><span class="o">|</span><span class="nf">striptags</span> <span class="cp">}}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>如果value是<code>&lt;b&gt;Joel&lt;/b&gt; &lt;button&gt;is&lt;/button&gt; a &lt;span&gt;slug&lt;/span&gt;</code>，输出<code>Joel is a slug</code>。</p> 
+ <h3>41. time</h3> 
+ <p>根据给定的格式，格式化时间。给定格式可以是预定义的<code>TIME_FORMAT</code>，也可以是与date过滤器相同的自定义格式。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{{</span> <span class="nv">value</span><span class="o">|</span><span class="nf">time</span><span class="s2">:"H:i"</span> <span class="cp">}}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>如果value等于datetime.datetime.now()，则输出字符串<code>01:23</code>。</p> 
+ <p>time过滤器只接受格式字符串中与时间相关的参数，而不是日期。如果需要格式化date值，请改用date过滤器。</p> 
+ <h3>42. timesince</h3> 
+ <p>将日期格式设为自该日期起的时间（例如，“4天，6小时”）。</p> 
+ <p>采用一个可选参数，它是一个包含用作比较点的日期的变量。例如，如果<code>blog_date</code>是表示2006年6月1日午夜的日期实例，并且<code>comment_date</code>是2006年6月1日08:00，则以下将返回“8 hours”：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{{</span> <span class="nv">blog_date</span><span class="o">|</span><span class="nf">timesince</span><span class="o">:</span><span class="nv">comment_date</span> <span class="cp">}}</span><span class="x"></span>
+</pre>
+ </div> 
+ <h3>43. timeuntil</h3> 
+ <p>类似于timesince，它测量从现在开始直到给定日期或日期时间的时间。例如，如果今天是2006年6月1日，而<code>conference_date</code>是2006年6月29日，则<code>{{ conference_date | timeuntil }}</code>将返回“4 weeks”。</p> 
+ <p>可选参数是一个包含用作比较点的日期变量。如果<code>from_date</code>为2006年6月22日，则以下内容将返回“1 weeks”：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{{</span> <span class="nv">conference_date</span><span class="o">|</span><span class="nf">timeuntil</span><span class="o">:</span><span class="nv">from_date</span> <span class="cp">}}</span><span class="x"></span>
+</pre>
+ </div> 
+ <h3>44. title</h3> 
+ <p>将所有单词的首字母大写，其它字母小写。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{{</span> <span class="nv">value</span><span class="o">|</span><span class="nf">title</span> <span class="cp">}}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>如果value为“my FIRST post”，输出将为“My First Post”。</p> 
+ <h3>45. truncatechars</h3> 
+ <p>如果字符串包含的字符总个数多于指定的字符数量，那么会被截断掉后面的部分。截断的字符串将以“...”结尾。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{{</span> <span class="nv">value</span><span class="o">|</span><span class="nf">truncatechars</span><span class="o">:</span><span class="m">9</span> <span class="cp">}}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>如果value是<code>Joel is a slug</code>，输出为<code>Joel i...</code>。</p> 
+ <h3>46. truncatechars_html</h3> 
+ <p>类似于truncatechars，但是会保留HTML标记。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{{</span> <span class="nv">value</span><span class="o">|</span><span class="nf">truncatechars_html</span><span class="o">:</span><span class="m">9</span> <span class="cp">}}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>如果value是<code>&lt;p&gt;Joel is a slug&lt;/p&gt;</code>，输出<code>&lt;p&gt;Joel i...&lt;/p&gt;</code>。</p> 
+ <h3>47. truncatewords</h3> 
+ <p>在一定数量的字数后截断字符串。与truncatechars不同的是，这个以字的个数计数，而不是字符计数。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{{</span> <span class="nv">value</span><span class="o">|</span><span class="nf">truncatewords</span><span class="o">:</span><span class="m">2</span> <span class="cp">}}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>如果value 是<code>Joel is a slug</code>, 输出为<code>Joel is ...</code>。</p> 
+ <p>字符串中的换行符将被删除。</p> 
+ <h3>48. truncatewords_html</h3> 
+ <p>类似于truncatewords，但是保留HTML标记。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{{</span> <span class="nv">value</span><span class="o">|</span><span class="nf">truncatewords_html</span><span class="o">:</span><span class="m">2</span> <span class="cp">}}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>HTML内容中的换行符将保留。</p> 
+ <h3>49. unordered_list</h3> 
+ <p>接收一个嵌套的列表，返回一个HTML的无序列表，但不包含开始和结束的<code>&lt;ul&gt;</code>标签。</p> 
+ <p>例如，如果var 包含['States', ['Kansas', ['Lawrence', 'Topeka'], 'Illinois']]， 那么<code>{{ var|unordered_list }}</code>将返回：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="nt">&lt;li&gt;</span>States
+<span class="nt">&lt;ul&gt;</span>
+        <span class="nt">&lt;li&gt;</span>Kansas
+        <span class="nt">&lt;ul&gt;</span>
+                <span class="nt">&lt;li&gt;</span>Lawrence<span class="nt">&lt;/li&gt;</span>
+                <span class="nt">&lt;li&gt;</span>Topeka<span class="nt">&lt;/li&gt;</span>
+        <span class="nt">&lt;/ul&gt;</span>
+        <span class="nt">&lt;/li&gt;</span>
+        <span class="nt">&lt;li&gt;</span>Illinois<span class="nt">&lt;/li&gt;</span>
+<span class="nt">&lt;/ul&gt;</span>
+<span class="nt">&lt;/li&gt;</span>
+</pre>
+ </div> 
+ <h3>50. upper</h3> 
+ <p>将字符串转换为全部大写的形式：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{{</span> <span class="nv">value</span><span class="o">|</span><span class="nf">upper</span> <span class="cp">}}</span><span class="x"></span>
+</pre>
+ </div> 
+ <h3>51. urlencode</h3> 
+ <p>转义要在URL中使用的值。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{{</span> <span class="nv">value</span><span class="o">|</span><span class="nf">urlencode</span> <span class="cp">}}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>如果value为<code>https://www.example.org/foo?a=b&amp;c=d</code>，输出<code>https%3A//www.example.org/foo%3Fa%3Db%26c%3Dd</code>。</p> 
+ <h3>52. urlize</h3> 
+ <p>将文字中的网址和电子邮件地址转换为可点击的链接。</p> 
+ <p>该模板标签适用于前缀为<code>http://</code>，<code>https://</code>的链接，或者<code>www</code>。</p> 
+ <p>由urlize生成的链接会向其中添加rel="nofollow"属性。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{{</span> <span class="nv">value</span><span class="o">|</span><span class="nf">urlize</span> <span class="cp">}}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>如果value是<code>Check out www.djangoproject.com</code>，输出<code>Check out &lt;a href="http://www.djangoproject.com" rel="nofollow"&gt;www.djangoproject.com&lt;/a&gt;</code>。</p> 
+ <p>除了超级链接之外，urlize也会将电子邮件地址转换为邮件地址链接。 如果value是<code>Send questions to foo@example.com</code>，输出将是<code>Send questions to &lt;a href="mailto:foo@example.com"&gt;foo@example.com&lt;/a&gt;</code>。</p> 
+ <h3>53. urlizetrunc</h3> 
+ <p>将网址和电子邮件地址转换为可点击的链接，就像urlize，但截断长度超过给定字符数限制的网址。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{{</span> <span class="nv">value</span><span class="o">|</span><span class="nf">urlizetrunc</span><span class="o">:</span><span class="m">15</span> <span class="cp">}}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>如果value是<code>Check out www.djangoproject.com</code>，将输出<code>Check out &lt;a href="http://www.djangoproject.com" rel="nofollow"&gt;www.djangopr...&lt;/a&gt;'</code>.</p> 
+ <p>与urlize一样，此过滤器应仅应用于纯文本。</p> 
+ <h3>54. wordcount</h3> 
+ <p>返回单词的个数。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{{</span> <span class="nv">value</span><span class="o">|</span><span class="nf">wordcount</span> <span class="cp">}}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>如果value是<code>Joel is a slug</code>，输出4。</p> 
+ <h3>55. wordwrap</h3> 
+ <p>以指定的行长度，换行单词。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{{</span> <span class="nv">value</span><span class="o">|</span><span class="nf">wordwrap</span><span class="o">:</span><span class="m">5</span> <span class="cp">}}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>如果value是<code>Joel is a slug</code>，输出为：</p> 
+ <div class="codehilite">
+  <pre><span></span>Joel
+is a
+slug
+</pre>
+ </div> 
+ <h3>56. yesno</h3> 
+ <p>将True，False和None，映射成字符串‘yes’，‘no’，‘maybe’。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{{</span> <span class="nv">value</span><span class="o">|</span><span class="nf">yesno</span><span class="s2">:"yeah,no,maybe"</span> <span class="cp">}}</span><span class="x"></span>
+</pre>
+ </div> 
+ <h2>国际化标签和过滤器</h2> 
+ <p>Django还提供了一些模板标签和过滤器，用以控制模板中国际化的每个方面。它们允许对翻译，格式化和时区转换进行粒度控制。</p> 
+ <h3>1. i18n</h3> 
+ <p>此标签允许在模板中指定可翻译文本。要启用它，请将<code>USE_I18N</code>设置为True，然后加载<code>{％ load i18n ％}</code>。</p> 
+ <h3>2. l10n</h3> 
+ <p>此标签提供对模板的本地化控制，只需要使用<code>{％ load l10n ％}</code>。通常将<code>USE_L10N</code>设置为True，以便本地化默认处于活动状态。</p> 
+ <h3>3. tz</h3> 
+ <p>此标签对模板中的时区进行控制。 像l10n，只需要使用<code>{％ load tz }</code>，但通常还会将<code>USE_TZ</code>设置为True，以便默认情况下转换为本地时间。</p> 
+ <h2>其他标签和过滤器库</h2> 
+ <p>Django附带了一些其他模板标签，必须在<code>INSTALLED_APPS</code>设置中显式启用，并在模板中启用<code>{% load %}</code>标记。</p> 
+ <h3>1. django.contrib.humanize</h3> 
+ <p>一组Django模板过滤器，用于向数据添加“人性化”，更加可读。 </p> 
+ <h3>2. static</h3> 
+ <p>static标签用于链接保存在<code>STATIC_ROOT</code>中的静态文件。例如：</p> 
+ <div class="codehilite">
+  <pre><span></span>{% load static %}
+&lt;img src="{% static "images/hi.jpg" %}" alt="Hi!" /&gt;
+</pre>
+ </div> 
+ <p>还可以使用变量：</p> 
+ <div class="codehilite">
+  <pre><span></span>{% load static %}
+&lt;link rel="stylesheet" href="{% static user_stylesheet %}" type="text/css" media="screen" /&gt;
+</pre>
+ </div> 
+ <p>还可以像下面这么使用：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{%</span> <span class="k">load</span> <span class="nv">static</span> <span class="cp">%}</span>
+<span class="cp">{%</span> <span class="k">static</span> <span class="s2">"images/hi.jpg"</span> <span class="k">as</span> <span class="nv">myphoto</span> <span class="cp">%}</span>
+<span class="nt">&lt;img</span> <span class="na">src=</span><span class="s">"</span><span class="cp">{{</span> <span class="nv">myphoto</span> <span class="cp">}}</span><span class="s">"</span><span class="nt">&gt;&lt;/img&gt;</span>
+</pre>
+ </div> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/146"> <i class="fa fa-arrow-left"></i>&nbsp;Django内置模板标签</a> 
+  <a class="float-right" href="/course/django/148"> 特殊的标签和过滤器&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 3</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/147">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.540.540.50/ea7dd574jw8eqsab0tnq3j20f00f0751.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>必须提供整数索引，不能是字符串。 以下产生空输出： {{ values|dictsort:"0" }} 应该是{{ value|dictsort:"0" }}</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 水木foreveryu </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年5月7日 19:39</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/462">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.540.540.50/ea7dd574jw8eqsab0tnq3j20f00f0751.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>看错了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 水木foreveryu &nbsp;&nbsp;回复&nbsp;&nbsp; 水木foreveryu </span> 
+      <em>2018年5月7日 19:42</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/463">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.996.996.50/006xIWURly8fo72mpzt8ej30ro0rogmj.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>wordcount过滤器貌似对单词有效，而对中文无效，也就是不能计算出中文的字数。。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 蔷薇-Nina </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年2月7日 22:27</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/205">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

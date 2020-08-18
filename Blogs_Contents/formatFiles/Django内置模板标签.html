@@ -1,0 +1,1067 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>Django内置模板标签</h1> 
+ <small>阅读:&nbsp;31671&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：13 </small> 
+ <hr> 
+ <h2>Django内置标签总览</h2> 
+ <p>可以查询下表来总览Django的内置标签：</p> 
+ <table> 
+  <thead> 
+   <tr> 
+    <th>标签</th> 
+    <th>说明</th> 
+   </tr> 
+  </thead> 
+  <tbody> 
+   <tr> 
+    <td>autoescape</td> 
+    <td>自动转义开关</td> 
+   </tr> 
+   <tr> 
+    <td>block</td> 
+    <td>块引用</td> 
+   </tr> 
+   <tr> 
+    <td>comment</td> 
+    <td>注释</td> 
+   </tr> 
+   <tr> 
+    <td>csrf_token</td> 
+    <td>CSRF令牌</td> 
+   </tr> 
+   <tr> 
+    <td>cycle</td> 
+    <td>循环对象的值</td> 
+   </tr> 
+   <tr> 
+    <td>debug</td> 
+    <td>调试模式</td> 
+   </tr> 
+   <tr> 
+    <td>extends</td> 
+    <td>继承模版</td> 
+   </tr> 
+   <tr> 
+    <td>filter</td> 
+    <td>过滤功能</td> 
+   </tr> 
+   <tr> 
+    <td>firstof</td> 
+    <td>输出第一个不为False的参数</td> 
+   </tr> 
+   <tr> 
+    <td>for</td> 
+    <td>循环对象</td> 
+   </tr> 
+   <tr> 
+    <td>for … empty</td> 
+    <td>带empty说明的循环</td> 
+   </tr> 
+   <tr> 
+    <td>if</td> 
+    <td>条件判断</td> 
+   </tr> 
+   <tr> 
+    <td>ifequal</td> 
+    <td>如果等于</td> 
+   </tr> 
+   <tr> 
+    <td>ifnotequal</td> 
+    <td>如果不等于</td> 
+   </tr> 
+   <tr> 
+    <td>ifchanged</td> 
+    <td>如果有变化，则..</td> 
+   </tr> 
+   <tr> 
+    <td>include</td> 
+    <td>导入子模版的内容</td> 
+   </tr> 
+   <tr> 
+    <td>load</td> 
+    <td>加载标签和过滤器</td> 
+   </tr> 
+   <tr> 
+    <td>lorem</td> 
+    <td>生成无用的废话</td> 
+   </tr> 
+   <tr> 
+    <td>now</td> 
+    <td>当前时间</td> 
+   </tr> 
+   <tr> 
+    <td>regroup</td> 
+    <td>根据对象重组集合</td> 
+   </tr> 
+   <tr> 
+    <td>resetcycle</td> 
+    <td>重置循环</td> 
+   </tr> 
+   <tr> 
+    <td>spaceless</td> 
+    <td>去除空白</td> 
+   </tr> 
+   <tr> 
+    <td>templatetag</td> 
+    <td>转义模版标签符号</td> 
+   </tr> 
+   <tr> 
+    <td>url</td> 
+    <td>获取url字符串</td> 
+   </tr> 
+   <tr> 
+    <td>verbatim</td> 
+    <td>禁用模版引擎</td> 
+   </tr> 
+   <tr> 
+    <td>widthratio</td> 
+    <td>宽度比例</td> 
+   </tr> 
+   <tr> 
+    <td>with</td> 
+    <td>上下文变量管理器</td> 
+   </tr> 
+  </tbody> 
+ </table> 
+ <h3>1. autoescape</h3> 
+ <p>控制自动转义是否可用。参数是on或off。 该标签会以一个endautoescape作为结束标签.</p> 
+ <p>例如：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{%</span> <span class="k">autoescape</span> <span class="nv">on</span> <span class="cp">%}</span><span class="x"></span>
+<span class="x">    </span><span class="cp">{{</span> <span class="nv">body</span> <span class="cp">}}</span><span class="x"></span>
+<span class="cp">{%</span> <span class="k">endautoescape</span> <span class="cp">%}</span><span class="x"></span>
+</pre>
+ </div> 
+ <h3>2. block</h3> 
+ <p>block标签可以被子模板覆盖。</p> 
+ <h3>3. comment</h3> 
+ <p>在<code>{% comment %}</code>和<code>{% endcomment %}</code>之间的内容会被忽略，作为注释。 </p> 
+ <p>比如，当要注释掉一些代码时，可以用此来记录代码被注释掉的原因。</p> 
+ <p>例如：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="nt">&lt;p&gt;</span>Rendered text with <span class="cp">{{</span> <span class="nv">pub_date</span><span class="o">|</span><span class="nf">date</span><span class="s2">:"c"</span> <span class="cp">}}</span><span class="nt">&lt;/p&gt;</span>
+<span class="cp">{%</span> <span class="k">comment</span> <span class="s2">"Optional note"</span> <span class="cp">%}</span>
+    <span class="nt">&lt;p&gt;</span>Commented out text with <span class="cp">{{</span> <span class="nv">create_date</span><span class="o">|</span><span class="nf">date</span><span class="s2">:"c"</span> <span class="cp">}}</span><span class="nt">&lt;/p&gt;</span>
+<span class="cp">{%</span> <span class="k">endcomment</span> <span class="cp">%}</span>
+</pre>
+ </div> 
+ <p>comment标签不能嵌套使用。</p> 
+ <h3>4. csrf_token</h3> 
+ <p>这个标签用于跨站请求伪造保护。常用于为form表单提供csrf令牌。</p> 
+ <h3>5. cycle</h3> 
+ <p>每当这个标签被访问,返回它的下一个元素。第一次访问返回第一个元素,第二次访问返回第二个参数,以此类推. 一旦所有的变量都被访问过了，就会回到最开始的地方，重复下去。这个标签在循环中特别有用:</p> 
+ <div class="codehilite">
+  <pre><span></span>{% for o in some_list %}
+    <span class="nt">&lt;tr</span> <span class="na">class=</span><span class="s">"{% cycle 'row1' 'row2'%}"</span><span class="nt">&gt;</span>
+        ...
+    <span class="nt">&lt;/tr&gt;</span>
+{% endfor %}
+</pre>
+ </div> 
+ <p>第一次迭代产生的HTML引用了row1类，第二次则是row2类，第三次又是row1 类，如此类推。</p> 
+ <p>cycle的本质是根据某个规律，提供某种特性，比如想循环给表格的行添加底色等等。</p> 
+ <p>也可以使用变量， 例如，如果你有两个模版变量：rowvalue1和rowvalue2, 可以让他们的值像这样替换:</p> 
+ <div class="codehilite">
+  <pre><span></span>{% for o in some_list %}
+    <span class="nt">&lt;tr</span> <span class="na">class=</span><span class="s">"{% cycle rowvalue1 rowvalue2 %}"</span><span class="nt">&gt;</span>
+        ...
+    <span class="nt">&lt;/tr&gt;</span>
+{% endfor %}
+</pre>
+ </div> 
+ <p>被包含在cycle中的变量将会被转义。 可以禁止自动转义:</p> 
+ <div class="codehilite">
+  <pre><span></span>{% for o in some_list %}
+    <span class="nt">&lt;tr</span> <span class="na">class=</span><span class="s">"{% autoescape off %}{% cycle rowvalue1 rowvalue2 %}{% endautoescape %}"</span><span class="nt">&gt;</span>
+        ...
+    <span class="nt">&lt;/tr&gt;</span>
+{% endfor %}
+</pre>
+ </div> 
+ <p>可以混合使用变量和字符串：</p> 
+ <div class="codehilite">
+  <pre><span></span>{% for o in some_list %}
+    <span class="nt">&lt;tr</span> <span class="na">class=</span><span class="s">"{% cycle 'row1' rowvalue2 'row3' %}"</span><span class="nt">&gt;</span>
+        ...
+    <span class="nt">&lt;/tr&gt;</span>
+{% endfor %}
+</pre>
+ </div> 
+ <p>在某些情况下，可能需要连续引用一个当前循环的值，而不前进到下一个循环值。要达到这个目的，只需使用<code>as</code>来给<code>{％ cycle ％}</code>取一个别名，就像这样：</p> 
+ <div class="codehilite">
+  <pre><span></span>{% cycle 'row1' 'row2' as rowcolors %}
+</pre>
+ </div> 
+ <p>从那时起（设置别名后），你可以将别名当作一个模板变量进行引用，从而随意在模板中插入当前循环的值。 如果要将循环值移动到原始cycle标记的下一个值，可以使用另一个cycle标记并指定变量的名称。看下面的例子：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="nt">&lt;tr&gt;</span>
+    <span class="nt">&lt;td</span> <span class="na">class=</span><span class="s">"</span><span class="cp">{%</span> <span class="k">cycle</span> <span class="s1">'row1'</span> <span class="s1">'row2'</span> <span class="k">as</span> <span class="nv">rowcolors</span> <span class="cp">%}</span><span class="s">"</span><span class="nt">&gt;</span>...<span class="nt">&lt;/td&gt;</span>
+    <span class="nt">&lt;td</span> <span class="na">class=</span><span class="s">"</span><span class="cp">{{</span> <span class="nv">rowcolors</span> <span class="cp">}}</span><span class="s">"</span><span class="nt">&gt;</span>...<span class="nt">&lt;/td&gt;</span>
+<span class="nt">&lt;/tr&gt;</span>
+<span class="nt">&lt;tr&gt;</span>
+    <span class="nt">&lt;td</span> <span class="na">class=</span><span class="s">"</span><span class="cp">{%</span> <span class="k">cycle</span> <span class="nv">rowcolors</span> <span class="cp">%}</span><span class="s">"</span><span class="nt">&gt;</span>...<span class="nt">&lt;/td&gt;</span>
+    <span class="nt">&lt;td</span> <span class="na">class=</span><span class="s">"</span><span class="cp">{{</span> <span class="nv">rowcolors</span> <span class="cp">}}</span><span class="s">"</span><span class="nt">&gt;</span>...<span class="nt">&lt;/td&gt;</span>
+<span class="nt">&lt;/tr&gt;</span>
+</pre>
+ </div> 
+ <p>将输出：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="nt">&lt;tr&gt;</span>
+    <span class="nt">&lt;td</span> <span class="na">class=</span><span class="s">"row1"</span><span class="nt">&gt;</span>...<span class="nt">&lt;/td&gt;</span>
+    <span class="nt">&lt;td</span> <span class="na">class=</span><span class="s">"row1"</span><span class="nt">&gt;</span>...<span class="nt">&lt;/td&gt;</span>
+<span class="nt">&lt;/tr&gt;</span>
+<span class="nt">&lt;tr&gt;</span>
+    <span class="nt">&lt;td</span> <span class="na">class=</span><span class="s">"row2"</span><span class="nt">&gt;</span>...<span class="nt">&lt;/td&gt;</span>
+    <span class="nt">&lt;td</span> <span class="na">class=</span><span class="s">"row2"</span><span class="nt">&gt;</span>...<span class="nt">&lt;/td&gt;</span>
+<span class="nt">&lt;/tr&gt;</span>
+</pre>
+ </div> 
+ <p>cycle 标签中，通过空格分割，可以使用任意数量的值。被包含在单引号(')或者双引号(")中的值被认为是可迭代字符串，相反，没有被引号包围的值被当作模版变量。</p> 
+ <h3>6. debug</h3> 
+ <p>输出整个调试信息，包括当前上下文和导入的模块。</p> 
+ <h3>7. extends</h3> 
+ <p>表示当前模板继承自一个父模板。</p> 
+ <p>这个标签可以有两种用法:</p> 
+ <ul> 
+  <li>{% extends "base.html" %}：继承名为"base.html"的父模板</li> 
+  <li>{％ extends variable ％}:使用variable变量表示的模版</li> 
+ </ul> 
+ <p>Django1.10中添加了使用相对路径的能力。通常模板名称是相对于模板加载器的根目录。字符串参数也可以是以<code>./</code>或<code>../</code>开头的相对路径。 例如，假设有以下目录结构：</p> 
+ <div class="codehilite">
+  <pre><span></span>dir1/
+    template.html
+    base2.html
+    my/
+        base3.html
+base1.html
+</pre>
+ </div> 
+ <p>在template.html中，以下路径将有效：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{%</span> <span class="k">extends</span> <span class="s2">"./base2.html"</span> <span class="cp">%}</span><span class="x"></span>
+<span class="cp">{%</span> <span class="k">extends</span> <span class="s2">"../base1.html"</span> <span class="cp">%}</span><span class="x"></span>
+<span class="cp">{%</span> <span class="k">extends</span> <span class="s2">"./my/base3.html"</span> <span class="cp">%}</span><span class="x"></span>
+</pre>
+ </div> 
+ <h3>8. filter</h3> 
+ <p>通过一个或多个过滤器对内容过滤。需要结束标签endfilter。</p> 
+ <p>例如：</p> 
+ <div class="codehilite">
+  <pre><span></span>{% filter force_escape|lower %}
+    This text will be HTML-escaped, and will appear in all lowercase.
+{% endfilter %}
+</pre>
+ </div> 
+ <h3>9. firstof</h3> 
+ <p>输出第一个不为False参数。 如果传入的所有变量都为False，就什么也不输出。</p> 
+ <p>例如：</p> 
+ <div class="codehilite">
+  <pre><span></span>{% firstof var1 var2 var3 %}
+</pre>
+ </div> 
+ <p>它等价于：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{%</span> <span class="k">if</span> <span class="nv">var1</span> <span class="cp">%}</span><span class="x"></span>
+<span class="x">    </span><span class="cp">{{</span> <span class="nv">var1</span> <span class="cp">}}</span><span class="x"></span>
+<span class="cp">{%</span> <span class="k">elif</span> <span class="nv">var2</span> <span class="cp">%}</span><span class="x"></span>
+<span class="x">    </span><span class="cp">{{</span> <span class="nv">var2</span> <span class="cp">}}</span><span class="x"></span>
+<span class="cp">{%</span> <span class="k">elif</span> <span class="nv">var3</span> <span class="cp">%}</span><span class="x"></span>
+<span class="x">    </span><span class="cp">{{</span> <span class="nv">var3</span> <span class="cp">}}</span><span class="x"></span>
+<span class="cp">{%</span> <span class="k">endif</span> <span class="cp">%}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>当然也可以用一个默认字符串作为输出以防止传入的所有变量都是False：</p> 
+ <div class="codehilite">
+  <pre><span></span>{% firstof var1 var2 var3 "fallback value" %}
+</pre>
+ </div> 
+ <h3>10. for</h3> 
+ <p>循环对象中的每一个元素</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="nt">&lt;ul&gt;</span>
+<span class="cp">{%</span> <span class="k">for</span> <span class="nv">athlete</span> <span class="k">in</span> <span class="nv">athlete_list</span> <span class="cp">%}</span>
+    <span class="nt">&lt;li&gt;</span><span class="cp">{{</span> <span class="nv">athlete.name</span> <span class="cp">}}</span><span class="nt">&lt;/li&gt;</span>
+<span class="cp">{%</span> <span class="k">endfor</span> <span class="cp">%}</span>
+<span class="nt">&lt;/ul&gt;</span>
+</pre>
+ </div> 
+ <p>可以使用<code>{% for obj in list reversed %}</code>进行反向循环。</p> 
+ <p>如果循环对象points的每个元素都是(x,y)这样的二元元组，可以像以下面一样输出：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{%</span> <span class="k">for</span> <span class="nv">x</span><span class="o">,</span> <span class="nv">y</span> <span class="k">in</span> <span class="nv">points</span> <span class="cp">%}</span><span class="x"></span>
+<span class="x">    There is a point at </span><span class="cp">{{</span> <span class="nv">x</span> <span class="cp">}}</span><span class="x">,</span><span class="cp">{{</span> <span class="nv">y</span> <span class="cp">}}</span><span class="x"></span>
+<span class="cp">{%</span> <span class="k">endfor</span> <span class="cp">%}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>如果你想访问一个字典中的键值，这个方法同样有用：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{%</span> <span class="k">for</span> <span class="nv">key</span><span class="o">,</span> <span class="nv">value</span> <span class="k">in</span> <span class="nv">data.items</span> <span class="cp">%}</span><span class="x"></span>
+<span class="x">    </span><span class="cp">{{</span> <span class="nv">key</span> <span class="cp">}}</span><span class="x">: </span><span class="cp">{{</span> <span class="nv">value</span> <span class="cp">}}</span><span class="x"></span>
+<span class="cp">{%</span> <span class="k">endfor</span> <span class="cp">%}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>请记住，对于点运算符，字典键查找优先于方法查找。 </p> 
+ <p>下面是Django为for标签内置的一些属性，可以当作变量一样使用<code>{{ }}</code>在模版中使用。</p> 
+ <ul> 
+  <li>forloop.counter：循环的当前索引值，从1开始计数；常用于生成一个表格或者列表的序号！</li> 
+  <li>forloop.counter0：循环的当前索引值，从0开始计数；</li> 
+  <li>forloop.revcounter： 循环结束的次数（从1开始）</li> 
+  <li>forloop.revcounter0 循环结束的次数（从0开始）</li> 
+  <li>forloop.first：判断当前是否循环的第一次，是的话，该变量的值为True。我们经常要为第一行加点特殊的对待，就用得上这个判断了，结合if。</li> 
+  <li>forloop.last：如果这是最后一次循环，则为真</li> 
+  <li>forloop.parentloop：对于嵌套循环，返回父循环所在的循环次数。某些场景下，这是个大杀器，能解决你很多头疼的问题。</li> 
+ </ul> 
+ <h3>11. for ... empty</h3> 
+ <p>for标签带有一个可选的<code>{% empty %}</code>从句，以便在循环对象是空的或者没有被找到时，可以有所操作和提示。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="nt">&lt;ul&gt;</span>
+<span class="cp">{%</span> <span class="k">for</span> <span class="nv">athlete</span> <span class="k">in</span> <span class="nv">athlete_list</span> <span class="cp">%}</span>
+    <span class="nt">&lt;li&gt;</span><span class="cp">{{</span> <span class="nv">athlete.name</span> <span class="cp">}}</span><span class="nt">&lt;/li&gt;</span>
+<span class="cp">{%</span> <span class="k">empty</span> <span class="cp">%}</span>
+    <span class="nt">&lt;li&gt;</span>Sorry, no athletes in this list.<span class="nt">&lt;/li&gt;</span>
+<span class="cp">{%</span> <span class="k">endfor</span> <span class="cp">%}</span>
+<span class="nt">&lt;/ul&gt;</span>
+</pre>
+ </div> 
+ <p>它和下面的例子作用相等，但是更简洁、更清晰甚至可能运行起来更快：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="nt">&lt;ul&gt;</span>
+  <span class="cp">{%</span> <span class="k">if</span> <span class="nv">athlete_list</span> <span class="cp">%}</span>
+    <span class="cp">{%</span> <span class="k">for</span> <span class="nv">athlete</span> <span class="k">in</span> <span class="nv">athlete_list</span> <span class="cp">%}</span>
+      <span class="nt">&lt;li&gt;</span><span class="cp">{{</span> <span class="nv">athlete.name</span> <span class="cp">}}</span><span class="nt">&lt;/li&gt;</span>
+    <span class="cp">{%</span> <span class="k">endfor</span> <span class="cp">%}</span>
+  <span class="cp">{%</span> <span class="k">else</span> <span class="cp">%}</span>
+    <span class="nt">&lt;li&gt;</span>Sorry, no athletes in this list.<span class="nt">&lt;/li&gt;</span>
+  <span class="cp">{%</span> <span class="k">endif</span> <span class="cp">%}</span>
+<span class="nt">&lt;/ul&gt;</span>
+</pre>
+ </div> 
+ <h3>12. if</h3> 
+ <p><code>{% if %}</code>会对一个变量求值，如果它的值是“True”（存在、不为空、且不是boolean类型的False值），这个内容块就会输出：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{%</span> <span class="k">if</span> <span class="nv">athlete_list</span> <span class="cp">%}</span><span class="x"></span>
+<span class="x">    Number of athletes: </span><span class="cp">{{</span> <span class="nv">athlete_list</span><span class="o">|</span><span class="nf">length</span> <span class="cp">}}</span><span class="x"></span>
+<span class="cp">{%</span> <span class="k">elif</span> <span class="nv">athlete_in_locker_room_list</span> <span class="cp">%}</span><span class="x"></span>
+<span class="x">    Athletes should be out of the locker room soon!</span>
+<span class="cp">{%</span> <span class="k">else</span> <span class="cp">%}</span><span class="x"></span>
+<span class="x">    No athletes.</span>
+<span class="cp">{%</span> <span class="k">endif</span> <span class="cp">%}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>上述例子中，如果<code>athlete_list</code>不为空，就会通过使用<code>{{ athlete_list|length }}</code>过滤器展示出athletes的数量。</p> 
+ <p>if标签之后可以带有一个或者多个<code>{% elif %}</code>从句，也可以带有一个<code>{% else %}</code>从句以便在之前的所有条件不成立的情况下完成执行。这些从句都是可选的。</p> 
+ <p><strong>布尔运算符</strong>:</p> 
+ <p>if标签可以使用not，and或or来测试布尔值：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{%</span> <span class="k">if</span> <span class="nv">athlete_list</span> <span class="k">and</span> <span class="nv">coach_list</span> <span class="cp">%}</span><span class="x"></span>
+<span class="x">    Both athletes and coaches are available.</span>
+<span class="cp">{%</span> <span class="k">endif</span> <span class="cp">%}</span><span class="x"></span>
+
+<span class="cp">{%</span> <span class="k">if</span> <span class="k">not</span> <span class="nv">athlete_list</span> <span class="cp">%}</span><span class="x"></span>
+<span class="x">    There are no athletes.</span>
+<span class="cp">{%</span> <span class="k">endif</span> <span class="cp">%}</span><span class="x"></span>
+
+<span class="cp">{%</span> <span class="k">if</span> <span class="nv">athlete_list</span> <span class="k">or</span> <span class="nv">coach_list</span> <span class="cp">%}</span><span class="x"></span>
+<span class="x">    There are some athletes or some coaches.</span>
+<span class="cp">{%</span> <span class="k">endif</span> <span class="cp">%}</span><span class="x"></span>
+
+<span class="cp">{%</span> <span class="k">if</span> <span class="k">not</span> <span class="nv">athlete_list</span> <span class="k">or</span> <span class="nv">coach_list</span> <span class="cp">%}</span><span class="x"></span>
+<span class="x">    There are no athletes or there are some coaches.</span>
+<span class="cp">{%</span> <span class="k">endif</span> <span class="cp">%}</span><span class="x"></span>
+
+<span class="cp">{%</span> <span class="k">if</span> <span class="nv">athlete_list</span> <span class="k">and</span> <span class="k">not</span> <span class="nv">coach_list</span> <span class="cp">%}</span><span class="x"></span>
+<span class="x">    There are some athletes and absolutely no coaches.</span>
+<span class="cp">{%</span> <span class="k">endif</span> <span class="cp">%}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>允许同时使用and和or子句，and的优先级高于or ：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{%</span> <span class="k">if</span> <span class="nv">athlete_list</span> <span class="k">and</span> <span class="nv">coach_list</span> <span class="k">or</span> <span class="nv">cheerleader_list</span> <span class="cp">%}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>将解释如下：</p> 
+ <div class="codehilite">
+  <pre><span></span>if (athlete_list and coach_list) or cheerleader_list
+</pre>
+ </div> 
+ <p><strong>在if标签中使用实际括号是错误的语法，这点不同于Python。</strong>如果需要为它们指示优先级，应使用嵌套的if标签。</p> 
+ <p>if标签允许使用这些操作符：<code>==</code>, <code>!=</code>, <code>&lt;</code>, <code>&gt;</code>, <code>&lt;=</code>, <code>&gt;=</code>, <code>in</code>, <code>not in</code>, <code>is</code>, <code>is not</code>,如下面的列子所示：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{%</span> <span class="k">if</span> <span class="nv">somevar</span> <span class="o">==</span> <span class="s2">"x"</span> <span class="cp">%}</span><span class="x"></span>
+<span class="x">  This appears if variable somevar equals the string "x"</span>
+<span class="cp">{%</span> <span class="k">endif</span> <span class="cp">%}</span><span class="x"></span>
+
+<span class="cp">{%</span> <span class="k">if</span> <span class="nv">somevar</span> <span class="p">!</span><span class="o">=</span> <span class="s2">"x"</span> <span class="cp">%}</span><span class="x"></span>
+<span class="x">  This appears if variable somevar does not equal the string "x",</span>
+<span class="x">  or if somevar is not found in the context</span>
+<span class="cp">{%</span> <span class="k">endif</span> <span class="cp">%}</span><span class="x"></span>
+
+<span class="cp">{%</span> <span class="k">if</span> <span class="nv">somevar</span> <span class="o">&lt;</span> <span class="m">100</span> <span class="cp">%}</span><span class="x"></span>
+<span class="x">  This appears if variable somevar is less than 100.</span>
+<span class="cp">{%</span> <span class="k">endif</span> <span class="cp">%}</span><span class="x"></span>
+
+<span class="cp">{%</span> <span class="k">if</span> <span class="nv">somevar</span> <span class="o">&gt;</span> <span class="m">0</span> <span class="cp">%}</span><span class="x"></span>
+<span class="x">  This appears if variable somevar is greater than 0.</span>
+<span class="cp">{%</span> <span class="k">endif</span> <span class="cp">%}</span><span class="x"></span>
+
+<span class="cp">{%</span> <span class="k">if</span> <span class="nv">somevar</span> <span class="o">&lt;=</span> <span class="m">100</span> <span class="cp">%}</span><span class="x"></span>
+<span class="x">  This appears if variable somevar is less than 100 or equal to 100.</span>
+<span class="cp">{%</span> <span class="k">endif</span> <span class="cp">%}</span><span class="x"></span>
+
+<span class="cp">{%</span> <span class="k">if</span> <span class="nv">somevar</span> <span class="o">&gt;=</span> <span class="m">1</span> <span class="cp">%}</span><span class="x"></span>
+<span class="x">  This appears if variable somevar is greater than 1 or equal to 1.</span>
+<span class="cp">{%</span> <span class="k">endif</span> <span class="cp">%}</span><span class="x"></span>
+
+<span class="cp">{%</span> <span class="k">if</span> <span class="s2">"bc"</span> <span class="k">in</span> <span class="s2">"abcdef"</span> <span class="cp">%}</span><span class="x"></span>
+<span class="x">  This appears since "bc" is a substring of "abcdef"</span>
+<span class="cp">{%</span> <span class="k">endif</span> <span class="cp">%}</span><span class="x"></span>
+
+<span class="cp">{%</span> <span class="k">if</span> <span class="s2">"hello"</span> <span class="k">in</span> <span class="nv">greetings</span> <span class="cp">%}</span><span class="x"></span>
+<span class="x">  If greetings is a list or set, one element of which is the string</span>
+<span class="x">  "hello", this will appear.</span>
+<span class="cp">{%</span> <span class="k">endif</span> <span class="cp">%}</span><span class="x"></span>
+
+<span class="cp">{%</span> <span class="k">if</span> <span class="nv">user</span> <span class="k">not</span> <span class="k">in</span> <span class="nv">users</span> <span class="cp">%}</span><span class="x"></span>
+<span class="x">  If users is a QuerySet, this will appear if user is not an</span>
+<span class="x">  instance that belongs to the QuerySet.</span>
+<span class="cp">{%</span> <span class="k">endif</span> <span class="cp">%}</span><span class="x"></span>
+
+<span class="cp">{%</span> <span class="k">if</span> <span class="nv">somevar</span> <span class="k">is</span> <span class="nf">True</span> <span class="cp">%}</span><span class="x"></span>
+<span class="x">  This appears if and only if somevar is True.</span>
+<span class="cp">{%</span> <span class="k">endif</span> <span class="cp">%}</span><span class="x"></span>
+
+<span class="cp">{%</span> <span class="k">if</span> <span class="nv">somevar</span> <span class="k">is</span> <span class="nf">None</span> <span class="cp">%}</span><span class="x"></span>
+<span class="x">  This appears if somevar is None, or if somevar is not found in the context.</span>
+<span class="cp">{%</span> <span class="k">endif</span> <span class="cp">%}</span><span class="x"></span>
+
+<span class="cp">{%</span> <span class="k">if</span> <span class="nv">somevar</span> <span class="k">is</span> <span class="k">not</span> <span class="nf">True</span> <span class="cp">%}</span><span class="x"></span>
+<span class="x">  This appears if somevar is not True, or if somevar is not found in the</span>
+<span class="x">  context.</span>
+<span class="cp">{%</span> <span class="k">endif</span> <span class="cp">%}</span><span class="x"></span>
+
+<span class="cp">{%</span> <span class="k">if</span> <span class="nv">somevar</span> <span class="k">is</span> <span class="k">not</span> <span class="nf">None</span> <span class="cp">%}</span><span class="x"></span>
+<span class="x">  This appears if and only if somevar is not None.</span>
+<span class="cp">{%</span> <span class="k">endif</span> <span class="cp">%}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>也可以在if表达式中使用过滤器。 像这样：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{%</span> <span class="k">if</span> <span class="nv">messages</span><span class="o">|</span><span class="nf">length</span> <span class="o">&gt;=</span> <span class="m">100</span> <span class="cp">%}</span><span class="x"></span>
+<span class="x">   You have lots of messages today!</span>
+<span class="cp">{%</span> <span class="k">endif</span> <span class="cp">%}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>所有上述操作符都可以组合以形成复杂表达式。对于这样的表达式，重要的是优先级规则。操作符的优先级从低至高如下：</p> 
+ <div class="codehilite">
+  <pre><span></span>or
+and
+not
+in
+==，!=，&lt;，&gt;，&lt;= ，&gt;=
+</pre>
+ </div> 
+ <p>与Python的规则是一样的。 所以，对于下面的复杂if标签：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{%</span> <span class="k">if</span> <span class="nv">a</span> <span class="o">==</span> <span class="nv">b</span> <span class="k">or</span> <span class="nv">c</span> <span class="o">==</span> <span class="nv">d</span> <span class="k">and</span> <span class="nv">e</span> <span class="cp">%}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>将被解释为：</p> 
+ <div class="codehilite">
+  <pre><span></span>(a == b) or ((c == d) and e)
+</pre>
+ </div> 
+ <p>如果想要不同的优先级，那么你需要使用嵌套的if标签，而不能使用圆括号。 </p> 
+ <p><strong>比较运算符不能像Python或数学符号中那样“链接”。</strong> 例如，不能使用：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{%</span> <span class="k">if</span> <span class="nv">a</span> <span class="o">&gt;</span> <span class="nv">b</span> <span class="o">&gt;</span> <span class="nv">c</span> <span class="cp">%}</span><span class="x">  (错误的用法)</span>
+</pre>
+ </div> 
+ <p>应该使用：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{%</span> <span class="k">if</span> <span class="nv">a</span> <span class="o">&gt;</span> <span class="nv">b</span> <span class="k">and</span> <span class="nv">b</span> <span class="o">&gt;</span> <span class="nv">c</span> <span class="cp">%}</span><span class="x"></span>
+</pre>
+ </div> 
+ <h3>13. ifequal和ifnotequal</h3> 
+ <p><code>{％ ifequal a b ％} ... {％ endifequal ％}</code>是一种过时的写法，等同于<code>{％ if a == b ％} ... {％ endif ％}</code>。 同样， <code>{％ ifnotequal a b ％} ... {％ endifnotequal ％}</code>等同于<code>{％ if a ！= b ％} ... {％ endif ％}</code>。这两个标签将在以后的版本中弃用。</p> 
+ <h3>14. ifchanged</h3> 
+ <p>检查一个值是否在上一次的迭代中被改变了。</p> 
+ <p><code>{% ifchanged %}</code>标签通常用在循环里。它有两个用处：</p> 
+ <p>检查已经渲染过的内容的当前状态。并且只会显示发生改变的内容。例如，以下的代码是输出days的列表项，不过它只会输出被修改过月份的项:</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="nt">&lt;h1&gt;</span>Archive for <span class="cp">{{</span> <span class="nv">year</span> <span class="cp">}}</span><span class="nt">&lt;/h1&gt;</span>
+
+<span class="cp">{%</span> <span class="k">for</span> <span class="nv">date</span> <span class="k">in</span> <span class="nv">days</span> <span class="cp">%}</span>
+    <span class="cp">{%</span> <span class="k">ifchanged</span> <span class="cp">%}</span><span class="nt">&lt;h3&gt;</span><span class="cp">{{</span> <span class="nv">date</span><span class="o">|</span><span class="nf">date</span><span class="s2">:"F"</span> <span class="cp">}}</span><span class="nt">&lt;/h3&gt;</span><span class="cp">{%</span> <span class="k">endifchanged</span> <span class="cp">%}</span>
+    <span class="nt">&lt;a</span> <span class="na">href=</span><span class="s">"</span><span class="cp">{{</span> <span class="nv">date</span><span class="o">|</span><span class="nf">date</span><span class="s2">:"M/d"</span><span class="o">|</span><span class="nf">lower</span> <span class="cp">}}</span><span class="s">/"</span><span class="nt">&gt;</span><span class="cp">{{</span> <span class="nv">date</span><span class="o">|</span><span class="nf">date</span><span class="s2">:"j"</span> <span class="cp">}}</span><span class="nt">&lt;/a&gt;</span>
+<span class="cp">{%</span> <span class="k">endfor</span> <span class="cp">%}</span>
+</pre>
+ </div> 
+ <p>如果标签内有多个值时,则会比较每一个值是否与上一次不同。例如，以下显示每次更改时的日期，如果小时或日期已更改，则显示小时：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{%</span> <span class="k">for</span> <span class="nv">date</span> <span class="k">in</span> <span class="nv">days</span> <span class="cp">%}</span><span class="x"></span>
+<span class="x">    </span><span class="cp">{%</span> <span class="k">ifchanged</span> <span class="nv">date.date</span> <span class="cp">%}</span><span class="x"> </span><span class="cp">{{</span> <span class="nv">date.date</span> <span class="cp">}}</span><span class="x"> </span><span class="cp">{%</span> <span class="k">endifchanged</span> <span class="cp">%}</span><span class="x"></span>
+<span class="x">    </span><span class="cp">{%</span> <span class="k">ifchanged</span> <span class="nv">date.hour</span> <span class="nv">date.date</span> <span class="cp">%}</span><span class="x"></span>
+<span class="x">        </span><span class="cp">{{</span> <span class="nv">date.hour</span> <span class="cp">}}</span><span class="x"></span>
+<span class="x">    </span><span class="cp">{%</span> <span class="k">endifchanged</span> <span class="cp">%}</span><span class="x"></span>
+<span class="cp">{%</span> <span class="k">endfor</span> <span class="cp">%}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>ifchanged标记也可以采用可选的<code>{％ else ％}</code>将显示值没有改变的情况：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{%</span> <span class="k">for</span> <span class="nv">match</span> <span class="k">in</span> <span class="nv">matches</span> <span class="cp">%}</span>
+    <span class="nt">&lt;div</span> <span class="na">style=</span><span class="s">"background-color:</span>
+        <span class="cp">{%</span> <span class="k">ifchanged</span> <span class="nv">match.ballot_id</span> <span class="cp">%}</span>
+            <span class="cp">{%</span> <span class="k">cycle</span> <span class="s2">"red"</span> <span class="s2">"blue"</span> <span class="cp">%}</span>
+        <span class="cp">{%</span> <span class="k">else</span> <span class="p">％</span><span class="o">}</span>
+            <span class="nv">gray</span>
+        <span class="o">{</span><span class="p">%</span> <span class="nv">endifchanged</span> <span class="p">％</span><span class="o">}</span>
+    <span class="p">"</span><span class="o">&gt;{{</span> <span class="nv">match</span> <span class="o">}}&lt;/</span><span class="nv">div</span><span class="o">&gt;</span>
+<span class="o">{</span><span class="p">%</span> <span class="nv">endfor</span> <span class="cp">%}</span>
+</pre>
+ </div> 
+ <h3>15. include</h3> 
+ <p>加载指定的模板并以标签内的参数渲染。这是一种引入别的模板的方法，一定要将include和extend区分开！include类似Python的import。</p> 
+ <div class="codehilite">
+  <pre><span></span>{% include "foo/bar.html" %}
+</pre>
+ </div> 
+ <p>也可以使用变量名<code>template_name</code>：</p> 
+ <div class="codehilite">
+  <pre><span></span>{% include template_name %}
+</pre>
+ </div> 
+ <p>下面这个示例生成输出“Hello, John!”：</p> 
+ <p>context：变量greeting="Hello"，变量person="John"。</p> 
+ <p>模板：</p> 
+ <div class="codehilite">
+  <pre><span></span>{% include "name_snippet.html" %}
+</pre>
+ </div> 
+ <p>name_snippet.html模板：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{{</span> <span class="nv">greeting</span> <span class="cp">}}</span><span class="x">, </span><span class="cp">{{</span> <span class="nv">person</span><span class="o">|</span><span class="nf">default</span><span class="s2">:"friend"</span> <span class="cp">}}</span><span class="x">!</span>
+</pre>
+ </div> 
+ <p>可以使用关键字参数将额外的上下文传递到模板：</p> 
+ <div class="codehilite">
+  <pre><span></span>{% include "name_snippet.html" with person="Jane" greeting="Hello" %}
+</pre>
+ </div> 
+ <p>如果仅使用提供的变量来渲染上下文，添加only选项。 </p> 
+ <div class="codehilite">
+  <pre><span></span>{% include "name_snippet.html" with greeting="Hi" only %}
+</pre>
+ </div> 
+ <p>include标签应该被理解为是一种"将子模版渲染并嵌入当前HTML中"的变种方法,而不应该看作是"解析子模版并在被父模版包含的情况下展现其被父模版定义的内容"。这意味着在不同的被包含的子模版之间并不共享父模版的状态,每一个子包含都是完全独立的渲染过程。</p> 
+ <h3>16. load</h3> 
+ <p>加载自定义模板标签。</p> 
+ <p>下面的模板将会从somelibrary和package包中的otherlibrary中载入所有已经注册的标签和过滤器:</p> 
+ <div class="codehilite">
+  <pre><span></span>{% load somelibrary package.otherlibrary %}
+</pre>
+ </div> 
+ <p>还可以使用from参数从库中选择性加载单个过滤器或标记。</p> 
+ <div class="codehilite">
+  <pre><span></span>{% load foo bar from somelibrary %}
+</pre>
+ </div> 
+ <h3>17. lorem</h3> 
+ <p>这个标签是用来在模版中提供文字样本以供测试用的。使用场景是什么？</p> 
+ <p>比如你要写个demo，里面要有一大段的文字和篇章，你不可能真的去写一篇文章吧？如果懒得去网上COPY，又不愿意使用一堆毫无意义杂乱的乱码，那么使用这个方法，可以帮你自动填充一些可以阅读的内容。</p> 
+ <p>PS：Django考虑得真细.....</p> 
+ <p>用法：</p> 
+ <div class="codehilite">
+  <pre><span></span>{% lorem [count] [method] [random] %}
+</pre>
+ </div> 
+ <p>可以使用零个，一个，两个或三个参数。 这些参数是：</p> 
+ <ul> 
+  <li>count ：一个数字（或变量），其中包含要生成的段落或字数（默认值为1）。</li> 
+  <li>method：HTML中使用p标签、还是w标签、还是b标签，决定文本格式。默认是“b”。</li> 
+  <li>random：如果给出的话，random这个词在生成文本时不会使用公共段落。 例子：</li> 
+ </ul> 
+ <div class="codehilite">
+  <pre><span></span>{％ lorem ％}将输出常见的“lorem ipsum”段落。
+{％ lorem 3 p ％}输出常用的“lorem ipsum”段落和两个随机段落，每段包裹在HTML`&lt;p&gt;`标签中。
+{% lorem 2 w random %}将输出两个随机拉丁字。
+</pre>
+ </div> 
+ <h3>18. now</h3> 
+ <p>显示当前的日期或时间。可以指定显示的格式。 例如：</p> 
+ <div class="codehilite">
+  <pre><span></span>It is {% now "jS F Y H:i" %}
+</pre>
+ </div> 
+ <p>下面的例子中，“o”和“f”都被反斜杠转义：</p> 
+ <div class="codehilite">
+  <pre><span></span>It is the {% now "jS \o\f F" %}
+</pre>
+ </div> 
+ <p>这将显示为“It is the 4th of September”。</p> 
+ <p>还可以使用语法<code>{％ now “Y” as current_year ％}</code>将输出存储在变量中。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{%</span> <span class="k">now</span> <span class="s2">"Y"</span> <span class="k">as</span> <span class="nv">current_year</span> <span class="cp">%}</span><span class="x"></span>
+<span class="cp">{%</span> <span class="k">blocktrans</span> <span class="cp">%}</span><span class="x">Copyright </span><span class="cp">{{</span> <span class="nv">current_year</span> <span class="cp">}}{%</span> <span class="k">endblocktrans</span> <span class="cp">%}</span><span class="x"></span>
+</pre>
+ </div> 
+ <h3>19. regroup</h3> 
+ <p>用对象间共有的属性重组列表。</p> 
+ <p>对于下面的数据：</p> 
+ <div class="codehilite">
+  <pre><span></span>cities = [
+    {'name': 'Mumbai', 'population': '19,000,000', 'country': 'India'},
+    {'name': 'Calcutta', 'population': '15,000,000', 'country': 'India'},
+    {'name': 'New York', 'population': '20,000,000', 'country': 'USA'},
+    {'name': 'Chicago', 'population': '7,000,000', 'country': 'USA'},
+    {'name': 'Tokyo', 'population': '33,000,000', 'country': 'Japan'},
+]
+</pre>
+ </div> 
+ <p>如果你想显示按国家/地区排序的分层列表，如下所示：</p> 
+ <div class="codehilite">
+  <pre><span></span>India
+    Mumbai: 19,000,000
+    Calcutta: 15,000,000
+USA
+    New York: 20,000,000
+    Chicago: 7,000,000
+Japan
+    Tokyo: 33,000,000
+</pre>
+ </div> 
+ <p>可以使用<code>{% regroup %}</code>标签来给每个国家的城市分组：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{%</span> <span class="k">regroup</span> <span class="nv">cities</span> <span class="nv">by</span> <span class="nv">country</span> <span class="k">as</span> <span class="nv">country_list</span> <span class="cp">%}</span>
+
+<span class="nt">&lt;ul&gt;</span>
+<span class="cp">{%</span> <span class="k">for</span> <span class="nv">country</span> <span class="k">in</span> <span class="nv">country_list</span> <span class="cp">%}</span>
+    <span class="nt">&lt;li&gt;</span><span class="cp">{{</span> <span class="nv">country.grouper</span> <span class="cp">}}</span>
+    <span class="nt">&lt;ul&gt;</span>
+        <span class="cp">{%</span> <span class="k">for</span> <span class="nv">city</span> <span class="k">in</span> <span class="nv">country.list</span> <span class="cp">%}</span>
+          <span class="nt">&lt;li&gt;</span><span class="cp">{{</span> <span class="nv">city.name</span> <span class="cp">}}</span>: <span class="cp">{{</span> <span class="nv">city.population</span> <span class="cp">}}</span><span class="nt">&lt;/li&gt;</span>
+        <span class="cp">{%</span> <span class="k">endfor</span> <span class="cp">%}</span>
+    <span class="nt">&lt;/ul&gt;</span>
+    <span class="nt">&lt;/li&gt;</span>
+<span class="cp">{%</span> <span class="k">endfor</span> <span class="cp">%}</span>
+<span class="nt">&lt;/ul&gt;</span>
+</pre>
+ </div> 
+ <p>让我们来看看这个例子。<code>{% regroup %}</code>有三个参数： 要重组的列表、用来分组的属性、结果列表的名字。在这里，我们通过<code>country</code>属性重新分组cities列表，并将结果保存在<code>country_list</code>中。</p> 
+ <p><code>country_list</code>的每个元素是具有两个字段的<code>namedtuple()</code>的实例：</p> 
+ <ul> 
+  <li>grouper - 分组的项目（例如，字符串“India”或“Japan”）。</li> 
+  <li>list - 此群组中所有项目的列表（例如，所有城市的列表，其中country ='India'）。</li> 
+ </ul> 
+ <h3>20. resetcycle</h3> 
+ <p>Django1.11中的新功能。</p> 
+ <p>重置先前的循环，以便在下一次循环时从其第一个项目重新启动。如果没有参数，<code>{％ resetcycle ％}</code>将重置最后一个<code>{% cycle %}</code>。</p> 
+ <p>用法示例：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{%</span> <span class="k">for</span> <span class="nv">coach</span> <span class="k">in</span> <span class="nv">coach_list</span> <span class="cp">%}</span>
+    <span class="nt">&lt;h1&gt;</span><span class="cp">{{</span> <span class="nv">coach.name</span> <span class="cp">}}</span><span class="nt">&lt;/h1&gt;</span>
+    <span class="cp">{%</span> <span class="k">for</span> <span class="nv">athlete</span> <span class="k">in</span> <span class="nv">coach.athlete_set.all</span> <span class="cp">%}</span>
+        <span class="nt">&lt;p</span> <span class="na">class=</span><span class="s">"</span><span class="cp">{%</span> <span class="k">cycle</span> <span class="s1">'odd'</span> <span class="s1">'even'</span> <span class="cp">%}</span><span class="s">"</span><span class="nt">&gt;</span><span class="cp">{{</span> <span class="nv">athlete.name</span> <span class="cp">}}</span><span class="nt">&lt;/p&gt;</span>
+    <span class="cp">{%</span> <span class="k">endfor</span> <span class="cp">%}</span>
+    <span class="cp">{%</span> <span class="k">resetcycle</span> <span class="cp">%}</span>
+<span class="cp">{%</span> <span class="k">endfor</span> <span class="cp">%}</span>
+</pre>
+ </div> 
+ <p>这个示例将返回下面的HTML：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="nt">&lt;h1&gt;</span>José Mourinho<span class="nt">&lt;/h1&gt;</span>
+<span class="nt">&lt;p</span> <span class="na">class=</span><span class="s">"odd"</span><span class="nt">&gt;</span>Thibaut Courtois<span class="nt">&lt;/p&gt;</span>
+<span class="nt">&lt;p</span> <span class="na">class=</span><span class="s">"even"</span><span class="nt">&gt;</span>John Terry<span class="nt">&lt;/p&gt;</span>
+<span class="nt">&lt;p</span> <span class="na">class=</span><span class="s">"odd"</span><span class="nt">&gt;</span>Eden Hazard<span class="nt">&lt;/p&gt;</span>
+
+<span class="nt">&lt;h1&gt;</span>Carlo Ancelotti<span class="nt">&lt;/h1&gt;</span>
+<span class="nt">&lt;p</span> <span class="na">class=</span><span class="s">"odd"</span><span class="nt">&gt;</span>Manuel Neuer<span class="nt">&lt;/p&gt;</span>
+<span class="nt">&lt;p</span> <span class="na">class=</span><span class="s">"even"</span><span class="nt">&gt;</span>Thomas Müller<span class="nt">&lt;/p&gt;</span>
+</pre>
+ </div> 
+ <p>注意第一个块以class="odd"结束，新的以class="odd"开头。没有<code>{％ resetcycle ％}</code>标签，第二个块将以class="even"开始。</p> 
+ <p>还可以重置循环标签：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{%</span> <span class="k">for</span> <span class="nv">item</span> <span class="k">in</span> <span class="nv">list</span> <span class="cp">%}</span>
+    <span class="nt">&lt;p</span> <span class="na">class=</span><span class="s">"</span><span class="cp">{%</span> <span class="k">cycle</span> <span class="s1">'odd'</span> <span class="s1">'even'</span> <span class="k">as</span> <span class="nv">stripe</span> <span class="cp">%}</span><span class="s"> </span><span class="cp">{%</span> <span class="k">cycle</span> <span class="s1">'major'</span> <span class="s1">'minor'</span> <span class="s1">'minor'</span> <span class="s1">'minor'</span> <span class="s1">'minor'</span> <span class="k">as</span> <span class="nv">tick</span> <span class="cp">%}</span><span class="s">"</span><span class="nt">&gt;</span>
+        <span class="cp">{{</span> <span class="nv">item.data</span> <span class="cp">}}</span>
+    <span class="nt">&lt;/p&gt;</span>
+    <span class="cp">{%</span> <span class="k">ifchanged</span> <span class="nv">item.category</span> <span class="cp">%}</span>
+        <span class="nt">&lt;h1&gt;</span><span class="cp">{{</span> <span class="nv">item.category</span> <span class="cp">}}</span><span class="nt">&lt;/h1&gt;</span>
+        <span class="cp">{%</span> <span class="k">if</span> <span class="k">not</span> <span class="nb">forloop</span><span class="nv">.first</span> <span class="cp">%}{%</span> <span class="k">resetcycle</span> <span class="nv">tick</span> <span class="cp">%}{%</span> <span class="k">endif</span> <span class="cp">%}</span>
+    <span class="cp">{%</span> <span class="k">endifchanged</span> <span class="cp">%}</span>
+<span class="cp">{%</span> <span class="k">endfor</span> <span class="cp">%}</span>
+</pre>
+ </div> 
+ <p>在这个例子中，我们有交替的奇数/偶数行和每五行出现一次的‘major’行。当类别更改时，只有五行周期被重置。</p> 
+ <h3>21. spaceless</h3> 
+ <p>删除HTML标签之间的空白，包括制表符和换行。</p> 
+ <p>用法示例：</p> 
+ <div class="codehilite">
+  <pre><span></span>{% spaceless %}
+    <span class="nt">&lt;p&gt;</span>
+        <span class="nt">&lt;a</span> <span class="na">href=</span><span class="s">"foo/"</span><span class="nt">&gt;</span>Foo<span class="nt">&lt;/a&gt;</span>
+    <span class="nt">&lt;/p&gt;</span>
+{% endspaceless %}
+</pre>
+ </div> 
+ <p>这个示例将返回下面的HTML：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="nt">&lt;p&gt;&lt;a</span> <span class="na">href=</span><span class="s">"foo/"</span><span class="nt">&gt;</span>Foo<span class="nt">&lt;/a&gt;&lt;/p&gt;</span>
+</pre>
+ </div> 
+ <p>仅会删除tags之间的空格，不会删除标签和文本之间的。下面的例子中，Hello周围的空格不会被删除：</p> 
+ <div class="codehilite">
+  <pre><span></span>{% spaceless %}
+    <span class="nt">&lt;strong&gt;</span>
+        Hello
+    <span class="nt">&lt;/strong&gt;</span>
+{% endspaceless %}
+</pre>
+ </div> 
+ <h3>22. templatetag</h3> 
+ <p>输出用于构成模板标签的语法字符。</p> 
+ <p>由于模板系统没有“转义”的概念，无法在HTML中使用‘\’转义出类似<code>{%</code>的字符。为了显示模板标签本身，必须使用<code>{％ templatetag ％}</code>标签，并添加相应的参数：</p> 
+ <ul> 
+  <li>openblock：<code>{％</code></li> 
+  <li>closeblock： <code>％}</code></li> 
+  <li>openvariable： <code>{{</code></li> 
+  <li>closevariable： <code>}}</code></li> 
+  <li>openbrace ：<code>{</code></li> 
+  <li>closebrace： <code>}</code></li> 
+  <li>opencomment： <code>{＃</code></li> 
+  <li>closecomment： <code>＃}</code></li> 
+ </ul> 
+ <p>例如：</p> 
+ <div class="codehilite">
+  <pre><span></span>{% templatetag openblock %} url 'entry_list' {% templatetag closeblock %}
+</pre>
+ </div> 
+ <h3>23. url</h3> 
+ <p>返回与给定视图和可选参数匹配的绝对路径引用（不带域名的URL）。在解析后返回的结果路径字符串中，每个特殊字符将使用<code>iri_to_uri()</code>编码。这可以避免在模板中硬编码超级链接路径。</p> 
+ <div class="codehilite">
+  <pre><span></span>{% url 'some-url-name' v1 v2 %}
+</pre>
+ </div> 
+ <p>第一个参数是<code>url()</code>的名字。 它可以是一个被引号引起来的字符串或者其他的上下文变量。其他参数是可选的并且以空格隔开，这些值会在URL中以参数的形式传递。上面的例子展示了如何传递位置参数，当然也可以使用关键字参数。</p> 
+ <div class="codehilite">
+  <pre><span></span>{% url 'some-url-name' arg1=v1 arg2=v2 %}
+</pre>
+ </div> 
+ <p>不要把位置参数和关键字参数混在一起使用。URLconf所需的所有参数都应该提供。</p> 
+ <p>例如，假设有一个视图<code>app_views.client</code>，其URLconf接受客户端ID，并如下所示：</p> 
+ <div class="codehilite">
+  <pre><span></span>('^client/([0-9]+)/$', app_views.client, name='app-views-client')
+</pre>
+ </div> 
+ <p>如果你的应用中的URLconf已经被包含到项目URLconf中，比如下面这样</p> 
+ <div class="codehilite">
+  <pre><span></span>('^clients/', include('project_name.app_name.urls'))
+</pre>
+ </div> 
+ <p>然后，在模板中，你可以创建一个此视图的链接，如下所示：</p> 
+ <div class="codehilite">
+  <pre><span></span>{% url 'app-views-client' client.id %}
+</pre>
+ </div> 
+ <p>模板标签会输出字符串:<code>/clients/client/123/</code></p> 
+ <p>如果希望在不显示网址的情况下检索网址，可以使用略有不同的调用：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{%</span> <span class="k">url</span> <span class="s1">'some-url-name'</span> <span class="nv">arg</span> <span class="nv">arg2</span> <span class="k">as</span> <span class="nv">the_url</span> <span class="cp">%}</span>
+<span class="nt">&lt;a</span> <span class="na">href=</span><span class="s">"</span><span class="cp">{{</span> <span class="nv">the_url</span> <span class="cp">}}</span><span class="s">"</span><span class="nt">&gt;</span>I'm linking to <span class="cp">{{</span> <span class="nv">the_url</span> <span class="cp">}}</span><span class="nt">&lt;/a&gt;</span>
+</pre>
+ </div> 
+ <p>如果视图不存在，<code>{％ url ... as var ％}</code>语法不会导致错误。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{%</span> <span class="k">url</span> <span class="s1">'some-url-name'</span> <span class="k">as</span> <span class="nv">the_url</span> <span class="cp">%}</span>
+<span class="cp">{%</span> <span class="k">if</span> <span class="nv">the_url</span> <span class="cp">%}</span>
+  <span class="nt">&lt;a</span> <span class="na">href=</span><span class="s">"</span><span class="cp">{{</span> <span class="nv">the_url</span> <span class="cp">}}</span><span class="s">"</span><span class="nt">&gt;</span>Link to optional stuff<span class="nt">&lt;/a&gt;</span>
+<span class="cp">{%</span> <span class="k">endif</span> <span class="cp">%}</span>
+</pre>
+ </div> 
+ <p>如果使用urlconf的名称空间网址，通过<strong>冒号</strong>指定完全名称，如下所示：</p> 
+ <div class="codehilite">
+  <pre><span></span>{% url 'myapp:view-name' %}
+</pre>
+ </div> 
+ <p><strong>再次强调，是冒号，不是圆点不是斜杠！</strong></p> 
+ <h3>24. verbatim</h3> 
+ <p>禁止模版引擎在该标签中进行渲染工作。</p> 
+ <p>常见的用法是允许与Django语法冲突的JavaScript模板图层工作。 像这样：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{</span><span class="o">%</span> <span class="na">verbatim</span> <span class="o">%</span><span class="cp">}</span><span class="x"></span>
+<span class="x">    </span><span class="cp">{{</span><span class="na">if</span> <span class="na">dying</span><span class="cp">}}</span><span class="x">Still alive.</span><span class="cp">{{</span><span class="o">/</span><span class="na">if</span><span class="cp">}}</span><span class="x"></span>
+<span class="cp">{</span><span class="o">%</span> <span class="na">endverbatim</span> <span class="o">%</span><span class="cp">}</span><span class="x"></span>
+</pre>
+ </div> 
+ <h3>25. widthratio</h3> 
+ <p>为了创建柱状形图，此标签计算给定值与最大值的比率，然后将该比率应用于常量。</p> 
+ <p>像这样：</p> 
+ <div class="codehilite">
+  <pre><span></span>&lt;img src="bar.png" alt="Bar"
+     height="10" width="{% widthratio this_value max_value max_width %}" /&gt;
+</pre>
+ </div> 
+ <p>如果<code>this_value</code>是175，<code>max_value</code>是200，并且<code>max_width</code>是100，则上述示例中的图像将是88像素宽（因为175 / 200 = .875； .875 * 100 = 87.5，四舍五入入为88）。</p> 
+ <h3>26. with</h3> 
+ <p>使用一个简单地名字缓存一个复杂的变量，当你需要使用一个代价较大的方法（比如访问数据库）很多次的时候这是非常有用的。</p> 
+ <p>像这样：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{%</span> <span class="k">with</span> <span class="nv">total</span><span class="o">=</span><span class="nv">business.employees.count</span> <span class="cp">%}</span><span class="x"></span>
+<span class="x">    </span><span class="cp">{{</span> <span class="nv">total</span> <span class="cp">}}</span><span class="x"> employee</span><span class="cp">{{</span> <span class="nv">total</span><span class="o">|</span><span class="nf">pluralize</span> <span class="cp">}}</span><span class="x"></span>
+<span class="cp">{%</span> <span class="k">endwith</span> <span class="cp">%}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>total只在with标签内部有效。</p> 
+ <p>可以分配多个变量：</p> 
+ <div class="codehilite">
+  <pre><span></span>{% with alpha=1 beta=2 %}
+    ...
+{% endwith %}
+</pre>
+ </div> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/145"> <i class="fa fa-arrow-left"></i>&nbsp;Django模板语言详解</a> 
+  <a class="float-right" href="/course/django/147"> Django内置过滤器&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 13</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/146">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.540.540.50/ea7dd574jw8eqsab0tnq3j20f00f0751.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>应该是context：变量greeting="Hello"，变量person="John"吧</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 水木foreveryu </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年5月7日 19:08</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/461">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>请问，{%now %}如何更改时区？比如改成北京时间东八区。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 蔷薇-Nina </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年2月6日 16:15</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/200">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>TIME_ZONE = 'Asia/Shanghai'</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 蔷薇-Nina </span> 
+      <em>2018年2月6日 17:13</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/202">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.190.190.50/006xIWURly8fo6t5wwzrdj309i05c0vp.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>你好，博主，怎么使用？可以写一下栗子吗？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 蔷薇-Nina &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2018年2月6日 19:36</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/203">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 12em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.0.0.996.996.50/8c46c436ly8ff8lyx0n7ij20ro0rptb0.jpg?KID=imgbed,tva&amp;Expires=1570770884&amp;ssig=0KsovEf06d" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>在setting.py那里有个TIME_ZONE字段，修改成TIME_ZONE = 'Asia/Beijing'就好</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 你的记忆我的想念 &nbsp;&nbsp;回复&nbsp;&nbsp; 蔷薇-Nina </span> 
+      <em>2019年10月11日 10:15</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1650">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.996.996.50/006xIWURly8fo72mpzt8ej30ro0rogmj.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>博主有空举个实例呗。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 蔷薇-Nina &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2018年2月7日 23:15</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/208">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.0.0.960.960.50/eb8b3905ly8fjsqhgn10sj20qo0qojru.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>如题</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> DarklessOne &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2019年1月4日 23:23</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1002">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>博主，若var1 var2 var3均为假，为什么{% firstof var1 var2 var3 "&lt;strong&gt;fallback value&lt;/strong&gt;" %}和{% firstof var1 var2 var3 "&lt;strong&gt;fallback value&lt;/strong&gt;|safe" %}结果是一样的？不信你试试。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户5995128989 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年2月5日 22:36</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/194">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>{% autoescape off %} {% firstof var1 var2 var3 "&lt;strong&gt;fallback value&lt;/strong&gt;" %} {% endautoescape %}</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 用户5995128989 </span> 
+      <em>2018年2月6日 09:08</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/195">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>无论用不用过滤器save，无论用标签{%autoescape on%}还是{%autoescape off%}，其结果都一致（禁止转义了！），都是加粗显示。请博主亲自测一下。谢谢。。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 用户5995128989 &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2018年2月6日 10:57</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/197">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 12em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>Django只对由视图传过来的变量进行自动转义，而对这种直接写在HTML文件中的字符串，貌似是不做转义的。这么看来，官方文档也有错误。我试试能不能给官方发个邮件，咨询一下。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 用户5995128989 </span> 
+      <em>2018年2月6日 11:55</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/198">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 16em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>和博主一起研究Django，共同进步！官方如有解释，有劳博主在此回复哈！我是汪春旺，谢谢。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 用户5995128989 &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2018年2月6日 15:30</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/199">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 20em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.960.960.50/006xIWURly8fymbr91qcaj30qo0qo40k.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>看得很仔细，大家一起切磋，讨论，进步。哈哈。。。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 蔷薇-Nina &nbsp;&nbsp;回复&nbsp;&nbsp; 用户5995128989 </span> 
+      <em>2019年5月24日 18:50</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1353">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

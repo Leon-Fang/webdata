@@ -1,0 +1,62 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>特殊的标签和过滤器</h1> 
+ <small>阅读:&nbsp;13305&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：0 </small> 
+ <hr> 
+ <h2>国际化标签和过滤器</h2> 
+ <p>Django还提供了一些模板标签和过滤器，用以控制模板中国际化的每个方面。它们允许对翻译，格式化和时区转换进行粒度控制。</p> 
+ <h3>1. i18n</h3> 
+ <p>此标签允许在模板中指定可翻译文本。要启用它，请将<code>USE_I18N</code>设置为True，然后加载<code>{％ load i18n ％}</code>。</p> 
+ <h3>2. l10n</h3> 
+ <p>此标签提供对模板的本地化控制，只需要使用<code>{％ load l10n ％}</code>。通常将<code>USE_L10N</code>设置为True，以便本地化默认处于活动状态。</p> 
+ <h3>3. tz</h3> 
+ <p>此标签对模板中的时区进行控制。 像l10n，只需要使用<code>{％ load tz }</code>，但通常还会将<code>USE_TZ</code>设置为True，以便默认情况下转换为本地时间。</p> 
+ <h2>其他标签和过滤器</h2> 
+ <p>Django附带了一些其他模板标签，必须在<code>INSTALLED_APPS</code>设置中显式启用，并在模板中启用<code>{% load %}</code>标记。</p> 
+ <h3>1. django.contrib.humanize</h3> 
+ <p>一组Django模板过滤器，用于向数据添加“人性化”，更加可读。 </p> 
+ <h3>2. static</h3> 
+ <p>static标签用于链接保存在<code>STATIC_ROOT</code>中的静态文件。例如：</p> 
+ <div class="codehilite">
+  <pre><span></span>{% load static %}
+&lt;img src="{% static "images/hi.jpg" %}" alt="Hi!" /&gt;
+</pre>
+ </div> 
+ <p>还可以使用变量：</p> 
+ <div class="codehilite">
+  <pre><span></span>{% load static %}
+&lt;link rel="stylesheet" href="{% static user_stylesheet %}" type="text/css" media="screen" /&gt;
+</pre>
+ </div> 
+ <p>还可以像下面这么使用：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{%</span> <span class="k">load</span> <span class="nv">static</span> <span class="cp">%}</span>
+<span class="cp">{%</span> <span class="k">static</span> <span class="s2">"images/hi.jpg"</span> <span class="k">as</span> <span class="nv">myphoto</span> <span class="cp">%}</span>
+<span class="nt">&lt;img</span> <span class="na">src=</span><span class="s">"</span><span class="cp">{{</span> <span class="nv">myphoto</span> <span class="cp">}}</span><span class="s">"</span><span class="nt">&gt;&lt;/img&gt;</span>
+</pre>
+ </div> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/147"> <i class="fa fa-arrow-left"></i>&nbsp;Django内置过滤器</a> 
+  <a class="float-right" href="/course/django/149"> 人类可读性&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 0</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/148">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

@@ -1,0 +1,379 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>视图函数及快捷方式</h1> 
+ <small>阅读:&nbsp;24592&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：6 </small> 
+ <hr> 
+ <p>视图函数，简称视图，本质上是一个简单的Python函数，它接受Web请求并且返回Web响应。</p> 
+ <p>响应的内容可以是HTML网页、重定向、404错误，XML文档或图像等任何东西。但是，无论视图本身是个什么处理逻辑，最好都返回某种响应。</p> 
+ <p>视图函数的代码写在哪里也无所谓，只要它在你的Python目录下面。但是通常我们约定将视图放置在项目或应用程序目录中的名为views.py的文件中。</p> 
+ <h1>一、简单的视图</h1> 
+ <p>下面是一个返回当前日期和时间作为HTML文档的视图：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.http</span> <span class="kn">import</span> <span class="n">HttpResponse</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+
+<span class="k">def</span> <span class="nf">current_datetime</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="n">now</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+    <span class="n">html</span> <span class="o">=</span> <span class="s2">"&lt;html&gt;&lt;body&gt;It is now </span><span class="si">%s</span><span class="s2">.&lt;/body&gt;&lt;/html&gt;"</span> <span class="o">%</span> <span class="n">now</span>
+    <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="n">html</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>让我们逐行分析一下上面的代码：</p> 
+ <ul> 
+  <li>首先，从<code>django.http</code>模块导入了<code>HttpResponse</code>类，以及Python的datetime库。</li> 
+  <li>接着，我们定义了<code>current_datetime</code>视图函数。</li> 
+  <li>每个视图函数都接收一个HttpRequest对象作为第一位置参数，一般取名为request，你可以取别的名字，但这不符合潜规则，最好不要那么做。</li> 
+  <li>视图函数的名称没有强制规则，但尽量不要和Python及Django内置的各种名称重名，并且尽量精确地反映出它的功能，比如这里的<code>current_datetime</code>。</li> 
+  <li>该视图返回一个HttpResponse对象，其中包含生成的HTML页面。 </li> 
+ </ul> 
+ <h1>二、返回错误</h1> 
+ <p>在Django中返回HTTP错误代码是非常简单的。</p> 
+ <p>HttpResponse的许多子类对应着除了200（代表“OK”）以外的一些常用的HTTP状态码。</p> 
+ <p>为了标示一个错误，可以直接返回那些子类中的一个实例，而不是普通的HttpResponse。像下面这样：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.http</span> <span class="kn">import</span> <span class="n">HttpResponse</span><span class="p">,</span> <span class="n">HttpResponseNotFound</span>
+
+<span class="k">def</span> <span class="nf">my_view</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="c1"># ...</span>
+    <span class="k">if</span> <span class="n">foo</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">HttpResponseNotFound</span><span class="p">(</span><span class="s1">'&lt;h1&gt;Page not found&lt;/h1&gt;'</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="s1">'&lt;h1&gt;Page was found&lt;/h1&gt;'</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>Django为404错误提供了一个特化的子类HttpResponseNotFound。由于一些状态码不太常用，所以不是每个状态码都有一个特化的子类。</p> 
+ <p>也可以向HttpResponse的构造器传递HTTP状态码，来创建你想要的任何状态码的返回类。 像下面这样：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.http</span> <span class="kn">import</span> <span class="n">HttpResponse</span>
+
+<span class="k">def</span> <span class="nf">my_view</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="c1"># ...</span>
+
+    <span class="c1"># Return a "created" (201) response code.</span>
+    <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="mi">201</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>关键是在返回中提供<code>status=201</code>参数。别的什么303之类的错误都可以参照上面的例子。</p> 
+ <h1>三、Http404异常</h1> 
+ <p>class django.http.Http404</p> 
+ <p>这是一个Django内置的异常类。可以在需要的地方认为弹出它，Django会捕获它，并且带上HTTP404错误码返回你当前app的标准错误页面或者自定义错误页面。像下面这样：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.http</span> <span class="kn">import</span> <span class="n">Http404</span>
+<span class="kn">from</span> <span class="nn">django.shortcuts</span> <span class="kn">import</span> <span class="n">render</span>
+<span class="kn">from</span> <span class="nn">polls.models</span> <span class="kn">import</span> <span class="n">Poll</span>
+
+<span class="k">def</span> <span class="nf">detail</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">poll_id</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">Poll</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="n">poll_id</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">Poll</span><span class="o">.</span><span class="n">DoesNotExist</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">Http404</span><span class="p">(</span><span class="s2">"Poll does not exist"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'polls/detail.html'</span><span class="p">,</span> <span class="p">{</span><span class="s1">'poll'</span><span class="p">:</span> <span class="n">p</span><span class="p">})</span>
+</pre>
+ </div> 
+ <p>为了在Django返回404时显示自定义的HTML，可以创建一个名为404.html的HTML模板，并将其放置在模板树的顶层。 当DEBUG设置为False时，此模板将被自动使用。当DEBUG为True时，可以向Http404提供消息，它将显示在标准的内置404调试模板中，可以使用这些消息进行调试。</p> 
+ <h1>三、Django内置的快捷方法</h1> 
+ <p>Django在<code>django.shortcuts</code>模块中，为我们提供了很多快捷方便的类和方法，它们都很重要，使用频率很高。</p> 
+ <h2>1. render()</h2> 
+ <p>render(request, template_name, context=None, content_type=None, status=None, using=None)[source]</p> 
+ <p>结合一个给定的模板和一个给定的上下文字典，返回一个渲染后的HttpResponse对象。</p> 
+ <p><strong>必需参数：</strong></p> 
+ <ul> 
+  <li><strong>request</strong>：视图函数处理的当前请求，封装了请求头的所有数据，其实就是视图参数request。</li> 
+  <li><strong>template_name</strong>：要使用的模板的完整名称或者模板名称的列表。如果是一个列表，将使用其中能够查找到的第一个模板。</li> 
+ </ul> 
+ <p><strong>可选参数：</strong></p> 
+ <ul> 
+  <li><strong>context</strong>：添加到模板上下文的一个数据字典。默认是一个空字典。可以将认可需要提供给模板的数据以字典的格式添加进去。这里有个小技巧，使用Python内置的locals()方法，可以方便的将函数作用于内的所有变量一次性添加。</li> 
+  <li><strong>content_type</strong>：用于生成的文档的MIME类型。 默认为<code>DEFAULT_CONTENT_TYPE</code>设置的值。</li> 
+  <li><strong>status</strong>：响应的状态代码。 默认为200。</li> 
+  <li><strong>using</strong>：用于加载模板使用的模板引擎的NAME。</li> 
+ </ul> 
+ <p><strong>范例：</strong></p> 
+ <p>下面的例子将渲染模板<code>myapp/index.html</code>，MIME类型为<code>application/xhtml+xml</code>：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.shortcuts</span> <span class="kn">import</span> <span class="n">render</span>
+
+<span class="k">def</span> <span class="nf">my_view</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="c1"># View code here...</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'myapp/index.html'</span><span class="p">,</span> <span class="p">{</span>
+        <span class="s1">'foo'</span><span class="p">:</span> <span class="s1">'bar'</span><span class="p">,</span>
+    <span class="p">},</span> <span class="n">content_type</span><span class="o">=</span><span class="s1">'application/xhtml+xml'</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>这个示例等同于：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.http</span> <span class="kn">import</span> <span class="n">HttpResponse</span>
+<span class="kn">from</span> <span class="nn">django.template</span> <span class="kn">import</span> <span class="n">loader</span>
+
+<span class="k">def</span> <span class="nf">my_view</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="c1"># View code here...</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">loader</span><span class="o">.</span><span class="n">get_template</span><span class="p">(</span><span class="s1">'myapp/index.html'</span><span class="p">)</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'foo'</span><span class="p">:</span> <span class="s1">'bar'</span><span class="p">}</span>
+    <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">request</span><span class="p">),</span> <span class="n">content_type</span><span class="o">=</span><span class="s1">'application/xhtml+xml'</span><span class="p">)</span>
+</pre>
+ </div> 
+ <h2>2. render_to_response()</h2> 
+ <p>render_to_response(template_name, context=None, content_type=None, status=None, using=None)[source]</p> 
+ <p>此功能在引入render()之前进行，不推荐，以后可能会被弃用。</p> 
+ <h2>3. redirect()</h2> 
+ <p>redirect(to, permanent=False, <em>args, </em>*kwargs)[source]</p> 
+ <p>根据传递进来的url参数，返回HttpResponseRedirect。</p> 
+ <p>参数to可以是：</p> 
+ <ul> 
+  <li>一个模型：将调用模型的<code>get_absolute_url()</code>函数，反向解析出目的url；</li> 
+  <li>视图名称：可能带有参数：reverse()将用于反向解析url；</li> 
+  <li>一个绝对的或相对的URL：将原封不动的作为重定向的目标位置。</li> 
+ </ul> 
+ <p>默认情况下是临时重定向，如果设置<code>permanent=True</code>将永久重定向。</p> 
+ <p><strong>范例：</strong></p> 
+ <p>1.调用对象的<code>get_absolute_url()</code>方法来重定向URL：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.shortcuts</span> <span class="kn">import</span> <span class="n">redirect</span>
+
+<span class="k">def</span> <span class="nf">my_view</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="o">...</span>
+    <span class="nb">object</span> <span class="o">=</span> <span class="n">MyModel</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="nb">object</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>2.传递视图名，使用reverse()方法反向解析url：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="k">def</span> <span class="nf">my_view</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="o">...</span>
+    <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'some-view-name'</span><span class="p">,</span> <span class="n">foo</span><span class="o">=</span><span class="s1">'bar'</span><span class="p">)</span>
+</pre>
+ </div> 
+ <ol> 
+  <li>重定向到硬编码的URL：</li> 
+ </ol> 
+ <div class="codehilite">
+  <pre><span></span><span class="k">def</span> <span class="nf">my_view</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="o">...</span>
+    <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'/some/url/'</span><span class="p">)</span>
+</pre>
+ </div> 
+ <ol> 
+  <li>重定向到一个完整的URL：</li> 
+ </ol> 
+ <div class="codehilite">
+  <pre><span></span><span class="k">def</span> <span class="nf">my_view</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="o">...</span>
+    <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'https://example.com/'</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>所有上述形式都接受permanent参数；如果设置为True，将返回永久重定向：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="k">def</span> <span class="nf">my_view</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="o">...</span>
+    <span class="nb">object</span> <span class="o">=</span> <span class="n">MyModel</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="nb">object</span><span class="p">,</span> <span class="n">permanent</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</pre>
+ </div> 
+ <h2>4. get_object_or_404()</h2> 
+ <p>get_object_or_404(klass, <em>args, </em>*kwargs)[source]</p> 
+ <p>这个方法，非常有用，请一定熟记。常用于查询某个对象，找到了则进行下一步处理，如果未找到则给用户返回404页面。</p> 
+ <p>在后台，Django其实是调用了模型管理器的get()方法，只会返回一个对象。不同的是，如果get()发生异常，会引发Http404异常，从而返回404页面，而不是模型的DoesNotExist异常。</p> 
+ <p><strong>必需参数</strong>：</p> 
+ <ul> 
+  <li><strong>klass</strong>：要获取的对象的Model类名或者Queryset等；</li> 
+  <li><code>**kwargs</code>:查询的参数，格式应该可以被get()接受。</li> 
+ </ul> 
+ <p><strong>范例：</strong></p> 
+ <p>1.从MyModel中使用主键1来获取对象：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.shortcuts</span> <span class="kn">import</span> <span class="n">get_object_or_404</span>
+
+<span class="k">def</span> <span class="nf">my_view</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="n">my_object</span> <span class="o">=</span> <span class="n">get_object_or_404</span><span class="p">(</span><span class="n">MyModel</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>这个示例等同于：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.http</span> <span class="kn">import</span> <span class="n">Http404</span>
+
+<span class="k">def</span> <span class="nf">my_view</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">my_object</span> <span class="o">=</span> <span class="n">MyModel</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">MyModel</span><span class="o">.</span><span class="n">DoesNotExist</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">Http404</span><span class="p">(</span><span class="s2">"No MyModel matches the given query."</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>2.除了传递Model名称，还可以传递一个QuerySet实例：</p> 
+ <div class="codehilite">
+  <pre><span></span>queryset = Book.objects.filter(title__startswith='M')
+get_object_or_404(queryset, pk=1)
+</pre>
+ </div> 
+ <p>上面的示例不够简洁，因为它等同于：</p> 
+ <div class="codehilite">
+  <pre><span></span>get_object_or_404(Book, title__startswith='M', pk=1)
+</pre>
+ </div> 
+ <p>但是如果你的queryset来自其它地方，它就会很有用了。</p> 
+ <p>3.还可以使用Manager。 如果你自定义了管理器，这将很有用：</p> 
+ <div class="codehilite">
+  <pre><span></span>get_object_or_404(Book.dahl_objects, title='Matilda')
+</pre>
+ </div> 
+ <p>4.还可以使用related managers：</p> 
+ <div class="codehilite">
+  <pre><span></span>author = Author.objects.get(name='Roald Dahl')
+get_object_or_404(author.book_set, title='Matilda')
+</pre>
+ </div> 
+ <p>与get()一样，如果找到多个对象将引发一个MultipleObjectsReturned异常。</p> 
+ <h2>5. get_list_or_404()</h2> 
+ <p>get_list_or_404(klass, <em>args, </em>*kwargs)[source]</p> 
+ <p>这其实就是<code>get_object_or_404</code>多值获取版本。</p> 
+ <p>在后台，返回一个给定模型管理器上filter()的结果，并将结果映射为一个列表，如果结果为空则弹出Http404异常。</p> 
+ <p><strong>必需参数</strong>：</p> 
+ <ul> 
+  <li><strong>klass</strong>：获取该列表的一个Model、Manager或QuerySet实例。</li> 
+  <li><code>**kwargs</code>：查询的参数，格式应该可以被filter()接受。</li> 
+ </ul> 
+ <p><strong>范例：</strong></p> 
+ <p>下面的示例从MyModel中获取所有发布出来的对象：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.shortcuts</span> <span class="kn">import</span> <span class="n">get_list_or_404</span>
+
+<span class="k">def</span> <span class="nf">my_view</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="n">my_objects</span> <span class="o">=</span> <span class="n">get_list_or_404</span><span class="p">(</span><span class="n">MyModel</span><span class="p">,</span> <span class="n">published</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>这个示例等同于：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.http</span> <span class="kn">import</span> <span class="n">Http404</span>
+
+<span class="k">def</span> <span class="nf">my_view</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="n">my_objects</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">MyModel</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">published</span><span class="o">=</span><span class="bp">True</span><span class="p">))</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">my_objects</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">Http404</span><span class="p">(</span><span class="s2">"No MyModel matches the given query."</span><span class="p">)</span>
+</pre>
+ </div> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/136"> <i class="fa fa-arrow-left"></i>&nbsp;反向解析和命名空间</a> 
+  <a class="float-right" href="/course/django/138"> HttpRequest对象&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 6</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/137">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.0.996.996.50/684b4357jw8f6i1rp6013j20ro0romyl.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>context：添加到模板上下文的一个数据字典。默认是一个空字典。可以将认可需要提供给模板的数据以字典的格式添加进去。 “认可”应该是任何。博主写错了哈</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 带着寂寞闯天涯 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年7月20日 11:08</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/622">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.960.960.50/006xIWURly8fo9wxo24vzj30qo0qoaaz.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>在3. redirect()内容中，第2点的return redirect('some-view-name', foo='bar')，其中some-view-name是个视图名，所以不应该是return redirect(reverse('some-view-name'), foo='bar')吗？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 蔷薇-Nina </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年5月14日 10:13</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/482">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.0.0.1242.1242.50/007dTGP8ly8ftt8mk4iwpj30yi0yiacf.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>redirect 会自动调用 reverse 反向解析出 URL，所以 redirect(reverse(...)) 和直接 redirect(...) 是一样的。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 团子大圆帅 &nbsp;&nbsp;回复&nbsp;&nbsp; 蔷薇-Nina </span> 
+      <em>2019年6月23日 21:36</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1414">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.0.0.996.996.50/006xIWURly8gehjmghiqfj30ro0roq53.jpg?KID=imgbed,tva&amp;Expires=1591289035&amp;ssig=NX%2BU5OBrH%2F" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>咦，你亲自测试过吗？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 蔷薇-Nina &nbsp;&nbsp;回复&nbsp;&nbsp; 团子大圆帅 </span> 
+      <em>2020年6月8日 21:47</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2110">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva2.sinaimg.cn/crop.0.0.180.180.50/a6adf22djw1e8qgp5bmzyj2050050aa8.jpg?KID=imgbed,tva&amp;Expires=1587286724&amp;ssig=dPpLx873mO" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>reverse会自动调用的。同样地，传入一个类型（model a）的时候，也会自动调用 a.get_absolute_url()</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 吉了个继 &nbsp;&nbsp;回复&nbsp;&nbsp; 蔷薇-Nina </span> 
+      <em>2020年4月19日 14:28</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2046">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>讲解得很到位。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户5995128989 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年1月29日 21:11</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/171">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

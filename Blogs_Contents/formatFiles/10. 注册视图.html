@@ -1,0 +1,1119 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>10. 注册视图</h1> 
+ <small>阅读:&nbsp;35733&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：46 </small> 
+ <hr> 
+ <p>前面我们已经完成了项目大部分内容，现在还剩下重要的注册功能没有实现。</p> 
+ <h2>一、创建forms</h2> 
+ <p>显而易见，我们的注册页面也需要一个form表单。同样地，在<code>/login/forms.py</code>中添加一个新的表单类：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="k">class</span> <span class="nc">RegisterForm</span><span class="p">(</span><span class="n">forms</span><span class="o">.</span><span class="n">Form</span><span class="p">):</span>
+    <span class="n">gender</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="p">(</span><span class="s1">'male'</span><span class="p">,</span> <span class="s2">"男"</span><span class="p">),</span>
+        <span class="p">(</span><span class="s1">'female'</span><span class="p">,</span> <span class="s2">"女"</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">username</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">"用户名"</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span> <span class="n">widget</span><span class="o">=</span><span class="n">forms</span><span class="o">.</span><span class="n">TextInput</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s1">'class'</span><span class="p">:</span> <span class="s1">'form-control'</span><span class="p">}))</span>
+    <span class="n">password1</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">"密码"</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span> <span class="n">widget</span><span class="o">=</span><span class="n">forms</span><span class="o">.</span><span class="n">PasswordInput</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s1">'class'</span><span class="p">:</span> <span class="s1">'form-control'</span><span class="p">}))</span>
+    <span class="n">password2</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">"确认密码"</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span> <span class="n">widget</span><span class="o">=</span><span class="n">forms</span><span class="o">.</span><span class="n">PasswordInput</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s1">'class'</span><span class="p">:</span> <span class="s1">'form-control'</span><span class="p">}))</span>
+    <span class="n">email</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">EmailField</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">"邮箱地址"</span><span class="p">,</span> <span class="n">widget</span><span class="o">=</span><span class="n">forms</span><span class="o">.</span><span class="n">EmailInput</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s1">'class'</span><span class="p">:</span> <span class="s1">'form-control'</span><span class="p">}))</span>
+    <span class="n">sex</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">ChoiceField</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s1">'性别'</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="n">gender</span><span class="p">)</span>
+    <span class="n">captcha</span> <span class="o">=</span> <span class="n">CaptchaField</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s1">'验证码'</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>说明：</p> 
+ <ul> 
+  <li>gender字典和User模型中的一样，其实可以拉出来作为常量共用，为了直观，特意重写一遍；</li> 
+  <li>password1和password2，用于输入两遍密码，并进行比较，防止误输密码；</li> 
+  <li>email是一个邮箱输入框；</li> 
+  <li>sex是一个select下拉框；</li> 
+  <li>没有添加更多的input属性</li> 
+ </ul> 
+ <h2>二、完善register.html</h2> 
+ <p>同样地，类似login.html文件，我们手工在register.html中编写forms相关条目：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{%</span> <span class="k">load</span> <span class="nv">static</span> <span class="cp">%}</span>
+<span class="cp">&lt;!doctype html&gt;</span>
+<span class="nt">&lt;html</span> <span class="na">lang=</span><span class="s">"en"</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;head&gt;</span>
+    <span class="c">&lt;!-- Required meta tags --&gt;</span>
+    <span class="nt">&lt;meta</span> <span class="na">charset=</span><span class="s">"utf-8"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;meta</span> <span class="na">name=</span><span class="s">"viewport"</span> <span class="na">content=</span><span class="s">"width=device-width, initial-scale=1, shrink-to-fit=no"</span><span class="nt">&gt;</span>
+    <span class="c">&lt;!-- 上述meta标签*必须*放在最前面，任何其他内容都*必须*跟随其后！ --&gt;</span>
+    <span class="c">&lt;!-- Bootstrap CSS --&gt;</span>
+    <span class="nt">&lt;link</span> <span class="na">href=</span><span class="s">"https://cdn.bootcss.com/twitter-bootstrap/4.3.1/css/bootstrap.min.css"</span> <span class="na">rel=</span><span class="s">"stylesheet"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;link</span> <span class="na">href=</span><span class="s">"</span><span class="cp">{%</span> <span class="k">static</span> <span class="s1">'login/css/register.css'</span> <span class="cp">%}</span><span class="s">"</span> <span class="na">rel=</span><span class="s">"stylesheet"</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;title&gt;</span>注册<span class="nt">&lt;/title&gt;</span>
+  <span class="nt">&lt;/head&gt;</span>
+  <span class="nt">&lt;body&gt;</span>
+    <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">"container"</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">"col"</span><span class="nt">&gt;</span>
+                <span class="nt">&lt;form</span> <span class="na">class=</span><span class="s">"form-register"</span> <span class="na">action=</span><span class="s">"/register/"</span> <span class="na">method=</span><span class="s">"post"</span><span class="nt">&gt;</span>
+
+                    <span class="cp">{%</span> <span class="k">if</span> <span class="nv">register_form.captcha.errors</span> <span class="cp">%}</span>
+                        <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">"alert alert-warning"</span><span class="nt">&gt;</span><span class="cp">{{</span> <span class="nv">register_form.captcha.errors</span> <span class="cp">}}</span><span class="nt">&lt;/div&gt;</span>
+                    <span class="cp">{%</span> <span class="k">elif</span> <span class="nv">message</span> <span class="cp">%}</span>
+                        <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">"alert alert-warning"</span><span class="nt">&gt;</span><span class="cp">{{</span> <span class="nv">message</span> <span class="cp">}}</span><span class="nt">&lt;/div&gt;</span>
+                    <span class="cp">{%</span> <span class="k">endif</span> <span class="cp">%}</span>
+
+                  <span class="cp">{%</span> <span class="k">csrf_token</span> <span class="cp">%}</span>
+                  <span class="nt">&lt;h3</span> <span class="na">class=</span><span class="s">"text-center"</span><span class="nt">&gt;</span>欢迎注册<span class="nt">&lt;/h3&gt;</span>
+
+                  <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">"form-group"</span><span class="nt">&gt;</span>
+                      <span class="cp">{{</span> <span class="nv">register_form.username.label_tag</span> <span class="cp">}}</span>
+                      <span class="cp">{{</span> <span class="nv">register_form.username</span><span class="cp">}}</span>
+                  <span class="nt">&lt;/div&gt;</span>
+                  <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">"form-group"</span><span class="nt">&gt;</span>
+                      <span class="cp">{{</span> <span class="nv">register_form.password1.label_tag</span> <span class="cp">}}</span>
+                      <span class="cp">{{</span> <span class="nv">register_form.password1</span> <span class="cp">}}</span>
+                  <span class="nt">&lt;/div&gt;</span>
+                  <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">"form-group"</span><span class="nt">&gt;</span>
+                      <span class="cp">{{</span> <span class="nv">register_form.password2.label_tag</span> <span class="cp">}}</span>
+                      <span class="cp">{{</span> <span class="nv">register_form.password2</span> <span class="cp">}}</span>
+                  <span class="nt">&lt;/div&gt;</span>
+                  <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">"form-group"</span><span class="nt">&gt;</span>
+                      <span class="cp">{{</span> <span class="nv">register_form.email.label_tag</span> <span class="cp">}}</span>
+                      <span class="cp">{{</span> <span class="nv">register_form.email</span> <span class="cp">}}</span>
+                  <span class="nt">&lt;/div&gt;</span>
+                  <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">"form-group"</span><span class="nt">&gt;</span>
+                      <span class="cp">{{</span> <span class="nv">register_form.sex.label_tag</span> <span class="cp">}}</span>
+                      <span class="cp">{{</span> <span class="nv">register_form.sex</span> <span class="cp">}}</span>
+                  <span class="nt">&lt;/div&gt;</span>
+                  <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">"form-group"</span><span class="nt">&gt;</span>
+                      <span class="cp">{{</span> <span class="nv">register_form.captcha.label_tag</span> <span class="cp">}}</span>
+                      <span class="cp">{{</span> <span class="nv">register_form.captcha</span> <span class="cp">}}</span>
+                  <span class="nt">&lt;/div&gt;</span>
+
+                  <span class="nt">&lt;div&gt;</span>
+                      <span class="nt">&lt;a</span> <span class="na">href=</span><span class="s">"/login/"</span>  <span class="nt">&gt;&lt;ins&gt;</span>直接登录<span class="nt">&lt;/ins&gt;&lt;/a&gt;</span>
+                      <span class="nt">&lt;button</span> <span class="na">type=</span><span class="s">"submit"</span> <span class="na">class=</span><span class="s">"btn btn-primary float-right"</span><span class="nt">&gt;</span>注册<span class="nt">&lt;/button&gt;</span>
+                  <span class="nt">&lt;/div&gt;</span>
+                <span class="nt">&lt;/form&gt;</span>
+            <span class="nt">&lt;/div&gt;</span>
+    <span class="nt">&lt;/div&gt;</span> <span class="c">&lt;!-- /container --&gt;</span>
+
+    <span class="c">&lt;!-- Optional JavaScript --&gt;</span>
+    <span class="c">&lt;!-- jQuery first, then Popper.js, then Bootstrap JS --&gt;</span>
+    <span class="c">{#    以下三者的引用顺序是固定的#}</span>
+    <span class="nt">&lt;script</span> <span class="na">src=</span><span class="s">"https://cdn.bootcss.com/jquery/3.3.1/jquery.js"</span><span class="nt">&gt;&lt;/script&gt;</span>
+    <span class="nt">&lt;script</span> <span class="na">src=</span><span class="s">"https://cdn.bootcss.com/popper.js/1.15.0/umd/popper.js"</span><span class="nt">&gt;&lt;/script&gt;</span>
+    <span class="nt">&lt;script</span> <span class="na">src=</span><span class="s">"https://cdn.bootcss.com/twitter-bootstrap/4.3.1/js/bootstrap.min.js"</span><span class="nt">&gt;&lt;/script&gt;</span>
+
+  <span class="nt">&lt;/body&gt;</span>
+<span class="nt">&lt;/html&gt;</span>
+</pre>
+ </div> 
+ <p>需要注意的是：</p> 
+ <ul> 
+  <li>编写了一个register.css样式文件</li> 
+  <li>form标签的action地址为<code>/register/</code>，class为<code>form-register</code></li> 
+  <li>from中传递过来的表单变量名字为<code>register_form</code></li> 
+  <li>最下面的链接修改为直接登录的链接</li> 
+ </ul> 
+ <p>register.css样式文件的代码很简单，如下所示：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="nt">body</span> <span class="p">{</span>
+  <span class="k">height</span><span class="p">:</span> <span class="mi">100</span><span class="kt">%</span><span class="p">;</span>
+  <span class="k">background-image</span><span class="p">:</span> <span class="nb">url</span><span class="p">(</span><span class="s1">'../image/bg.jpg'</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="p">.</span><span class="nc">form-register</span> <span class="p">{</span>
+  <span class="k">width</span><span class="p">:</span> <span class="mi">100</span><span class="kt">%</span><span class="p">;</span>
+  <span class="k">max-width</span><span class="p">:</span> <span class="mi">400</span><span class="kt">px</span><span class="p">;</span>
+  <span class="k">padding</span><span class="p">:</span> <span class="mi">15</span><span class="kt">px</span><span class="p">;</span>
+  <span class="k">margin</span><span class="p">:</span> <span class="mi">0</span> <span class="kc">auto</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="p">.</span><span class="nc">form-group</span> <span class="p">{</span>
+  <span class="k">margin-bottom</span><span class="p">:</span> <span class="mi">5</span><span class="kt">px</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="nt">form</span> <span class="nt">a</span><span class="p">{</span>
+  <span class="k">display</span><span class="p">:</span> <span class="kc">inline-block</span><span class="p">;</span>
+  <span class="k">margin-top</span><span class="p">:</span><span class="mi">25</span><span class="kt">px</span><span class="p">;</span>
+  <span class="k">line-height</span><span class="p">:</span> <span class="mi">10</span><span class="kt">px</span><span class="p">;</span>
+<span class="p">}</span>
+</pre>
+ </div> 
+ <h2>三、实现注册视图</h2> 
+ <p>进入<code>/login/views.py</code>文件，现在来完善我们的<code>register()</code>视图：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="k">def</span> <span class="nf">register</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'is_login'</span><span class="p">,</span> <span class="bp">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'/index/'</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s1">'POST'</span><span class="p">:</span>
+        <span class="n">register_form</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">RegisterForm</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="p">)</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="s2">"请检查填写的内容！"</span>
+        <span class="k">if</span> <span class="n">register_form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">():</span>
+            <span class="n">username</span> <span class="o">=</span> <span class="n">register_form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'username'</span><span class="p">)</span>
+            <span class="n">password1</span> <span class="o">=</span> <span class="n">register_form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'password1'</span><span class="p">)</span>
+            <span class="n">password2</span> <span class="o">=</span> <span class="n">register_form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'password2'</span><span class="p">)</span>
+            <span class="n">email</span> <span class="o">=</span> <span class="n">register_form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'email'</span><span class="p">)</span>
+            <span class="n">sex</span> <span class="o">=</span> <span class="n">register_form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'sex'</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">password1</span> <span class="o">!=</span> <span class="n">password2</span><span class="p">:</span>
+                <span class="n">message</span> <span class="o">=</span> <span class="s1">'两次输入的密码不同！'</span>
+                <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/register.html'</span><span class="p">,</span> <span class="nb">locals</span><span class="p">())</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">same_name_user</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">username</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">same_name_user</span><span class="p">:</span>
+                    <span class="n">message</span> <span class="o">=</span> <span class="s1">'用户名已经存在'</span>
+                    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/register.html'</span><span class="p">,</span> <span class="nb">locals</span><span class="p">())</span>
+                <span class="n">same_email_user</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">email</span><span class="o">=</span><span class="n">email</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">same_email_user</span><span class="p">:</span>
+                    <span class="n">message</span> <span class="o">=</span> <span class="s1">'该邮箱已经被注册了！'</span>
+                    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/register.html'</span><span class="p">,</span> <span class="nb">locals</span><span class="p">())</span>
+
+                <span class="n">new_user</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">User</span><span class="p">()</span>
+                <span class="n">new_user</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">username</span>
+                <span class="n">new_user</span><span class="o">.</span><span class="n">password</span> <span class="o">=</span> <span class="n">password1</span>
+                <span class="n">new_user</span><span class="o">.</span><span class="n">email</span> <span class="o">=</span> <span class="n">email</span>
+                <span class="n">new_user</span><span class="o">.</span><span class="n">sex</span> <span class="o">=</span> <span class="n">sex</span>
+                <span class="n">new_user</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+
+                <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'/login/'</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/register.html'</span><span class="p">,</span> <span class="nb">locals</span><span class="p">())</span>
+    <span class="n">register_form</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">RegisterForm</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/register.html'</span><span class="p">,</span> <span class="nb">locals</span><span class="p">())</span>
+</pre>
+ </div> 
+ <p>从大体逻辑上，也是先实例化一个RegisterForm的对象，然后使用<code>is_valide()</code>验证数据，再从<code>cleaned_data</code>中获取数据。</p> 
+ <p>重点在于注册逻辑，首先两次输入的密码必须相同，其次不能存在相同用户名和邮箱，最后如果条件都满足，利用ORM的API，创建一个用户实例，然后保存到数据库内。</p> 
+ <p>对于注册的逻辑，不同的生产环境有不同的要求，请跟进实际情况自行完善，这里只是一个基本的注册过程，不能生搬照抄。</p> 
+ <p>让我们看一下注册的页面：</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/112-1.png"></p> 
+ <p>你可以尝试用不同的情况进行注册，然后观察错误信息的提示:</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/112-2.png"></p> 
+ <p>最后进行一次成功地注册，会自动跳转到登录页面。我们进入admin后台，查看一下用户列表：</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/112-3.png"></p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/112-4.png"></p> 
+ <h2>四、密码加密</h2> 
+ <p>等等！我们好像忘了什么！我们到现在都还一直在用明文的密码！</p> 
+ <p>对于如何加密密码，有很多不同的途径，其安全程度也高低不等。这里我们使用Python内置的hashlib库，使用哈希值的方式加密密码，可能安全等级不够高，但足够简单，方便使用，不是么？</p> 
+ <p>首先在<code>login/views.py</code>中编写一个hash函数：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">import</span> <span class="nn">hashlib</span>
+
+<span class="k">def</span> <span class="nf">hash_code</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">salt</span><span class="o">=</span><span class="s1">'mysite'</span><span class="p">):</span><span class="c1"># 加点盐</span>
+    <span class="n">h</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">()</span>
+    <span class="n">s</span> <span class="o">+=</span> <span class="n">salt</span>
+    <span class="n">h</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span>  <span class="c1"># update方法只接收bytes类型</span>
+    <span class="k">return</span> <span class="n">h</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+</pre>
+ </div> 
+ <p>使用了sha256算法，加了点盐。具体的内容可以参考站点内的Python教程中hashlib库章节。</p> 
+ <p>然后，我们还要对login()和register()视图进行一下修改：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.shortcuts</span> <span class="kn">import</span> <span class="n">render</span>
+<span class="kn">from</span> <span class="nn">django.shortcuts</span> <span class="kn">import</span> <span class="n">redirect</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">models</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">forms</span>
+<span class="kn">import</span> <span class="nn">hashlib</span>
+<span class="c1"># Create your views here.</span>
+
+
+<span class="k">def</span> <span class="nf">hash_code</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">salt</span><span class="o">=</span><span class="s1">'mysite'</span><span class="p">):</span>
+    <span class="n">h</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">()</span>
+    <span class="n">s</span> <span class="o">+=</span> <span class="n">salt</span>
+    <span class="n">h</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">h</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+
+
+<span class="k">def</span> <span class="nf">index</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'is_login'</span><span class="p">,</span> <span class="bp">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'/login/'</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/index.html'</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">login</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'is_login'</span><span class="p">,</span> <span class="bp">None</span><span class="p">):</span>  <span class="c1"># 不允许重复登录</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'/index/'</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s1">'POST'</span><span class="p">:</span>
+        <span class="n">login_form</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">UserForm</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="p">)</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="s1">'请检查填写的内容！'</span>
+        <span class="k">if</span> <span class="n">login_form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">():</span>
+            <span class="n">username</span> <span class="o">=</span> <span class="n">login_form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'username'</span><span class="p">)</span>
+            <span class="n">password</span> <span class="o">=</span> <span class="n">login_form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'password'</span><span class="p">)</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">user</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">username</span><span class="p">)</span>
+            <span class="k">except</span> <span class="p">:</span>
+                <span class="n">message</span> <span class="o">=</span> <span class="s1">'用户不存在！'</span>
+                <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/login.html'</span><span class="p">,</span> <span class="nb">locals</span><span class="p">())</span>
+
+            <span class="k">if</span> <span class="n">user</span><span class="o">.</span><span class="n">password</span> <span class="o">==</span> <span class="n">hash_code</span><span class="p">(</span><span class="n">password</span><span class="p">):</span>
+                <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="p">[</span><span class="s1">'is_login'</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
+                <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="p">[</span><span class="s1">'user_id'</span><span class="p">]</span> <span class="o">=</span> <span class="n">user</span><span class="o">.</span><span class="n">id</span>
+                <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="p">[</span><span class="s1">'user_name'</span><span class="p">]</span> <span class="o">=</span> <span class="n">user</span><span class="o">.</span><span class="n">name</span>
+                <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'/index/'</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">message</span> <span class="o">=</span> <span class="s1">'密码不正确！'</span>
+                <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/login.html'</span><span class="p">,</span> <span class="nb">locals</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/login.html'</span><span class="p">,</span> <span class="nb">locals</span><span class="p">())</span>
+
+    <span class="n">login_form</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">UserForm</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/login.html'</span><span class="p">,</span> <span class="nb">locals</span><span class="p">())</span>
+
+
+<span class="k">def</span> <span class="nf">register</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'is_login'</span><span class="p">,</span> <span class="bp">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'/index/'</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s1">'POST'</span><span class="p">:</span>
+        <span class="n">register_form</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">RegisterForm</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="p">)</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="s2">"请检查填写的内容！"</span>
+        <span class="k">if</span> <span class="n">register_form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">():</span>
+            <span class="n">username</span> <span class="o">=</span> <span class="n">register_form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'username'</span><span class="p">)</span>
+            <span class="n">password1</span> <span class="o">=</span> <span class="n">register_form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'password1'</span><span class="p">)</span>
+            <span class="n">password2</span> <span class="o">=</span> <span class="n">register_form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'password2'</span><span class="p">)</span>
+            <span class="n">email</span> <span class="o">=</span> <span class="n">register_form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'email'</span><span class="p">)</span>
+            <span class="n">sex</span> <span class="o">=</span> <span class="n">register_form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'sex'</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">password1</span> <span class="o">!=</span> <span class="n">password2</span><span class="p">:</span>
+                <span class="n">message</span> <span class="o">=</span> <span class="s1">'两次输入的密码不同！'</span>
+                <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/register.html'</span><span class="p">,</span> <span class="nb">locals</span><span class="p">())</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">same_name_user</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">username</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">same_name_user</span><span class="p">:</span>
+                    <span class="n">message</span> <span class="o">=</span> <span class="s1">'用户名已经存在'</span>
+                    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/register.html'</span><span class="p">,</span> <span class="nb">locals</span><span class="p">())</span>
+                <span class="n">same_email_user</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">email</span><span class="o">=</span><span class="n">email</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">same_email_user</span><span class="p">:</span>
+                    <span class="n">message</span> <span class="o">=</span> <span class="s1">'该邮箱已经被注册了！'</span>
+                    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/register.html'</span><span class="p">,</span> <span class="nb">locals</span><span class="p">())</span>
+
+                <span class="n">new_user</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">User</span><span class="p">()</span>
+                <span class="n">new_user</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">username</span>
+                <span class="n">new_user</span><span class="o">.</span><span class="n">password</span> <span class="o">=</span> <span class="n">hash_code</span><span class="p">(</span><span class="n">password1</span><span class="p">)</span>
+                <span class="n">new_user</span><span class="o">.</span><span class="n">email</span> <span class="o">=</span> <span class="n">email</span>
+                <span class="n">new_user</span><span class="o">.</span><span class="n">sex</span> <span class="o">=</span> <span class="n">sex</span>
+                <span class="n">new_user</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+
+                <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'/login/'</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/register.html'</span><span class="p">,</span> <span class="nb">locals</span><span class="p">())</span>
+    <span class="n">register_form</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">RegisterForm</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/register.html'</span><span class="p">,</span> <span class="nb">locals</span><span class="p">())</span>
+
+
+<span class="k">def</span> <span class="nf">logout</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'is_login'</span><span class="p">,</span> <span class="bp">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'/login/'</span><span class="p">)</span>
+
+    <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+    <span class="c1"># del request.session['is_login']</span>
+    <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s2">"/login/"</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>注意其中关于密码处理的部分！</p> 
+ <p>好了，我们可以来验证一下了!但是，<strong>请先在admin后台里，把我们前面创建的测试用户全部删除！</strong>因为它们的密码没有使用哈希算法加密，已经无效了。</p> 
+ <p>重启服务器，进入注册页面，新建一个用户，然后进入admin后台，查看用户的密码情况：</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/112-5.png"></p> 
+ <p>再使用该用户登录一下，大功告成！</p> 
+ <p>可以看到密码长度根据你哈希算法的不同，已经变得很长了，所以前面model中设置password字段时，不要想当然的将<code>max_length</code>设置为16这么小的数字。</p> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/111"> <i class="fa fa-arrow-left"></i>&nbsp;9. session会话</a> 
+  <a class="float-right" href="/course/django/113"> 11.Django发送邮件&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 46</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/112">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif?KID=imgbed,tva&amp;Expires=1594481872&amp;ssig=zxWC%2FLZBmE" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>models里面User表中补充电话吗？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; MicrosoftWindows10 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年7月11日 20:38</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2131">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif?KID=imgbed,tva&amp;Expires=1593958218&amp;ssig=4LmAyCKyxH" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>没报错，但是点击新用户注册后，出现页面只有直接登录和注册，然后点击注册才能到注册页面？？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; hidem2020 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年7月5日 19:12</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2126">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1595566769&amp;ssig=qVeSsp06gY" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>是不是表单Form没有渲染？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; hidem2020 </span> 
+      <em>2020年7月24日 10:21</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2160">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax3.sinaimg.cn/crop.0.0.640.640.50/005wPwfhly8fxpiiru71kj30hs0hs0tb.jpg?KID=imgbed,tva&amp;Expires=1590817971&amp;ssig=6iQNWtg8Ge" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>重定向问题怎么解决 一登录就直接反复横跳</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 老实憨厚的阿钰 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年5月30日 16:57</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2085">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax3.sinaimg.cn/crop.0.0.640.640.50/005wPwfhly8fxpiiru71kj30hs0hs0tb.jpg?KID=imgbed,tva&amp;Expires=1590817971&amp;ssig=6iQNWtg8Ge" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>浏览器提示重定向次数过多</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 老实憨厚的阿钰 &nbsp;&nbsp;回复&nbsp;&nbsp; 老实憨厚的阿钰 </span> 
+      <em>2020年5月30日 16:58</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2086">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1595566769&amp;ssig=qVeSsp06gY" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>再 检查一下代码吧</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 老实憨厚的阿钰 </span> 
+      <em>2020年7月24日 10:22</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2161">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva4.sinaimg.cn/crop.0.0.100.100.50/0065OpF3jw8eqyywiufyij302s02s744.jpg?KID=imgbed,tva&amp;Expires=1586955876&amp;ssig=4ecdIkWogh" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>注册的时候显示 表格不存在， ProgrammingError at /register/ (1146, "Table 'mysite.login_user' doesn't exist")</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 可爱的楼下 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年4月15日 18:06</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2034">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax2.sinaimg.cn/crop.0.0.700.700.50/006nKydlly8g46a005cwrj30jg0jgdo4.jpg?KID=imgbed,tva&amp;Expires=1585807871&amp;ssig=x2BK2nHGoi" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>注册之后登录显示密码错误的原因是：登录视图那里的密码没加密if user.password == hash_code(password):</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 一口一个糯米滋 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年4月3日 12:06</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2002">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva1.sinaimg.cn/crop.0.0.664.664.50/9af3491fjw8fai3eg8otfj20ig0ig74w.jpg?KID=imgbed,tva&amp;Expires=1585061677&amp;ssig=RJ4rnSmZtX" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>博主好，我想问下 通过模型的save()方法是如何直接保存到数据库的喃 源码看的我有点晕</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; stay_life </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年3月24日 19:55</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1977">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1586851613&amp;ssig=EAgcKENHyi" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>这个得从Django的ORM系统说起....看源码我也晕^-^</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; stay_life </span> 
+      <em>2020年4月14日 13:20</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2023">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif?KID=imgbed,tva&amp;Expires=1580792967&amp;ssig=Wmya2%2BC9ek" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>博主好，登录时候是哪个环节把user.password进行了hash加密呢？我们用明文登录的时候直接使用user.password获得了明文的密码和数据库中的密码进行了比对，但使用哈希了之后，同样用user.passwordr方式却获得了哈希后的值来和数据库的密文进行比对，不太理解在登录时点提交按钮是在哪一步把我们在密码框里输入的原始密码变成哈希值的</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; Hunt_mg </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年2月4日 10:13</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1865">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1580535067&amp;ssig=MT2I5MRwQN" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>在视图中对密码进行加密和对比</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; Hunt_mg </span> 
+      <em>2020年2月5日 09:37</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1868">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.0.0.751.751.50/97db3e91ly8frush279z7j20kv0kv0t0.jpg?KID=imgbed,tva&amp;Expires=1567368289&amp;ssig=X3w56lNsLk" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>博主，same_name_user = models.User.objects.filter(name=username)这段代码会报错，报错信息如下User matching query does not exist. 是否需要使用try..except进行一场处理？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 苏北金城武 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年9月2日 01:09</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1610">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva2.sinaimg.cn/crop.0.0.150.150.50/3d1e2b26jw1f4cwdff845j2046046jrc.jpg?KID=imgbed,tva&amp;Expires=1573424102&amp;ssig=5CEY4EdU0n" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>filter没查到不报错，get才会报错</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 张恒_恒星 &nbsp;&nbsp;回复&nbsp;&nbsp; 苏北金城武 </span> 
+      <em>2019年11月11日 03:15</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1707">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/default/images/default_avatar_male_50.gif?Expires=1564061566&amp;ssig=fbI2y1fiJI&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>register.html页面中间一堆标签能否向login.html那样一句{{ login_form }}来处理，需要在views.py怎么改？和login一样的思路吗</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户4057888807 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年7月27日 10:53</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1524">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?Expires=1564021609&amp;ssig=sDnqEcPtge&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>可以的。和登录视图一个思路。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 用户4057888807 </span> 
+      <em>2019年7月27日 17:05</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1526">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.664.664.50/006aMbHaly8g0joaooeawj30ig0igdgz.jpg?Expires=1563510626&amp;ssig=%2BQup1F9P6S&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>注册成功后，在登录界面总是显示密码不正确</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 墨阳阴晴 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年7月19日 11:31</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1500">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.0.0.480.480.50/005z3RVNly8g707ajbvn0j30dc0dc0w2.jpg?KID=imgbed,tva&amp;Expires=1573104781&amp;ssig=gRTWEBhs0A" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>是不是登录那里的密码没加密if user.password == hash_code(password):</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 这条街最得意的鱼鱼 &nbsp;&nbsp;回复&nbsp;&nbsp; 墨阳阴晴 </span> 
+      <em>2019年11月7日 10:34</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1701">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.0.0.996.996.50/007FOjP8ly8g110pu8dzvj30ro0ron0h.jpg?Expires=1563186805&amp;ssig=XLBxjaNWiS&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我的点击注册报错：InternalError at /register/ (1054, "Unknown column 'mysite_user.name' in 'field list'") 找过很多可能，但是还是这个错误</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 墨古_10734 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年7月16日 18:02</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1464">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?Expires=1563275830&amp;ssig=bpp9YzPFp%2F&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>提示：未知的name字段。所以需要检查一下你在模型、视图和你的模板中关于name的引用。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 墨古_10734 </span> 
+      <em>2019年7月16日 18:20</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1465">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.0.0.996.996.50/007FOjP8ly8g110pu8dzvj30ro0ron0h.jpg?Expires=1563287325&amp;ssig=grQrexy228&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>找了还是没找到，我的代码和博客上的是一样的</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 墨古_10734 &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2019年7月16日 21:39</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1472">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.0.0.996.996.50/007FOjP8ly8g110pu8dzvj30ro0ron0h.jpg?Expires=1563186805&amp;ssig=XLBxjaNWiS&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>您的login的url始终没有写路由</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 墨古_10734 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年7月15日 21:30</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1459">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?Expires=1563275830&amp;ssig=bpp9YzPFp%2F&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>有写，在第4节</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 墨古_10734 </span> 
+      <em>2019年7月16日 18:21</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1466">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.0.0.996.996.50/007FOjP8ly8g110pu8dzvj30ro0ron0h.jpg?Expires=1563186805&amp;ssig=XLBxjaNWiS&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>register函数中用户RegisterForm是一个类吧</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 墨古_10734 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年7月15日 20:08</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1458">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?Expires=1563275830&amp;ssig=bpp9YzPFp%2F&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>就是你在forms中写的那个类</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 墨古_10734 </span> 
+      <em>2019年7月16日 18:22</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1467">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>代码都一样，但是为什么密码没有输入框啊</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户5251132804 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年5月17日 11:57</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1336">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva3.sinaimg.cn/crop.0.0.640.640.50/3ece14b3jw8f331tpv4dwj20hs0hst9i.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>老师，验证码的错误信息出不来了，不知道咋回施</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; Lvo7 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年4月10日 17:26</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1238">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.0.664.664.50/9af3491fjw8fai3eg8otfj20ig0ig74w.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>注册总算搞定了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 西双版纳的风情 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年3月1日 20:58</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1093">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>搞定了 开心吧 我现在很开心。。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> a72hongjie &nbsp;&nbsp;回复&nbsp;&nbsp; 西双版纳的风情 </span> 
+      <em>2019年6月3日 02:54</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1382">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.9.0.481.481.50/005L5LNWjw8encx458j0wj30dw0dd0tb.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>验证码相关的语句就那么几句，应该如何查找当验证码输入错误时，页面直接跳转到新的注册页面，不提示验证码错误？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; wananwl </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年8月22日 14:37</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/702">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva4.sinaimg.cn/crop.0.0.180.180.50/77cea3ebjw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>在不同浏览器会同时登陆同个账户，如何能做到同个账户只能登陆一次，第二次直接顶掉原来的账户？？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; Virgo_郭文超 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年8月14日 17:13</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/679">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>保存所有用户的登陆状态。如果有一个来自不同ip的相同用户名登录，就将前面的ip注销掉。当然，也有别的办法。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; Virgo_郭文超 </span> 
+      <em>2018年8月14日 22:39</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/680">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.1006.1006.50/005PGwNIly8foh8221e8ej30ry0rygnh.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>这边注册之后的用户在/admin里面没办法登录啊</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 袅残烟喵 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年3月22日 17:54</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/319">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>只有使用或继承了Django内置的auth.User模型生成的用户，并且is_staff=True，才能登录admin后台管理。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 袅残烟喵 </span> 
+      <em>2018年3月22日 19:14</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/322">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.960.960.50/006xIWURly8fo9wxo24vzj30qo0qoaaz.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>完成</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 蔷薇-Nina </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年3月12日 00:11</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/290">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva3.sinaimg.cn/crop.69.0.228.228.50/497e4638gw1evczqjfct6j208i06eaah.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>解决方法：清空数据库user表的所有数据，重启服务就好了。此问题困扰了我许久...</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; infolee </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年1月27日 22:29</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/163">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.1080.1080.50/5ec2a85bjw8eh4ja956ryj20u00u0abc.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>怎么穷空数据库USER表的数据啊</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 秋秋秋秋方 &nbsp;&nbsp;回复&nbsp;&nbsp; infolee </span> 
+      <em>2018年3月7日 11:06</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/250">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.180.180.50/005yvsCMjw8eeyxaho8d4j3050050jre.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>注册失败，代码和你的一模一样，报的是Exception Type: IntegrityError Exception Value: UNIQUE constraint failed: login_user.email 这个怎么解决呀</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户x36q7f8qpz </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年1月10日 16:54</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/117">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>再试试</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 用户x36q7f8qpz </span> 
+      <em>2018年1月10日 17:17</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/118">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.180.180.50/005yvsCMjw8eeyxaho8d4j3050050jre.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>不行，一直都是报我贴的那个错误，都检查好多次了，不知道问题是哪里</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 用户x36q7f8qpz &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2018年1月11日 08:34</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/119">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 12em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>或者去github上下我的代码，然后运行。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 用户x36q7f8qpz </span> 
+      <em>2018年1月11日 08:53</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/120">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>报错了 怎么解决啊 UNIQUE constraint failed: login_user.email</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> rrr6463953166 &nbsp;&nbsp;回复&nbsp;&nbsp; 用户x36q7f8qpz </span> 
+      <em>2018年3月16日 17:44</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/311">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.996.996.50/dc82ebfcly8fo7vm6esqgj20ro0ro41n.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我也遇到相同的问题了，请问解决了吗</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 陈翔的小丽丽 &nbsp;&nbsp;回复&nbsp;&nbsp; rrr6463953166 </span> 
+      <em>2018年4月26日 15:00</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/412">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 12em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.996.996.50/dc82ebfcly8fo7vm6esqgj20ro0ro41n.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>new_user = models.User.objects.create(name=username, password=hash_code(password),sex=sex,email=email)</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 陈翔的小丽丽 &nbsp;&nbsp;回复&nbsp;&nbsp; 陈翔的小丽丽 </span> 
+      <em>2018年4月26日 15:12</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/413">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva4.sinaimg.cn/crop.0.0.180.180.50/a147e4a3jw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>同样的报错</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 正面小青年 &nbsp;&nbsp;回复&nbsp;&nbsp; rrr6463953166 </span> 
+      <em>2019年1月24日 20:47</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1035">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva2.sinaimg.cn/crop.0.0.150.150.50/3d1e2b26jw1f4cwdff845j2046046jrc.jpg?KID=imgbed,tva&amp;Expires=1573424102&amp;ssig=5CEY4EdU0n" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>这个是唯一约束失败，就是说现在提交的email数据库里已经存在了，因为数据库的email字段你写了属性unique=True。测试的时候注意每次注册新用户把email随便改一改</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 张恒_恒星 &nbsp;&nbsp;回复&nbsp;&nbsp; rrr6463953166 </span> 
+      <em>2019年11月11日 03:21</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1708">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

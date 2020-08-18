@@ -1,0 +1,2006 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>Django2.2教程</h1> 
+ <small>阅读:&nbsp;1022950&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：114 </small> 
+ <hr> 
+ <h2>最新《Vue从入门到工程化》视频教程：<a href="http://www.liujiangblog.com/video/16">点此查看</a></h2> 
+ <hr> 
+ <h4>博主倾心录制的Django2.2全栈视频教程：<a href="http://www.liujiangblog.com/video/">点此查看</a>（详细页面有试看下载链接）</h4> 
+ <hr> 
+ <h4>版权声明：禁止转载和抄袭本网站的所有博客和教程！博主保留一切权利！</h4> 
+ <hr> 
+ <h4>Django新手请先移步<a href="https://www.liujiangblog.com/blog/36/">《Django2.1新手图文入门教程》</a>，按内容同步做一遍。</h4> 
+ <hr> 
+ <p>Web开发是Python语言应用领域的重要部分，也是工作岗位最多的领域。如果你对基于Python的Web开发有兴趣，正打算开始学习使用Python做Web开发，或者已经是一个Web开发者有工作需要，要做自动化运维、数据的图形化展示等，那么学习一门基于Python的Web开发框架是必修课。</p> 
+ <p>Python作为当前最火爆最热门，也是最主要的Web开发语言，在其二十多年的历史中出现了数十种Web框架，比如Django、Tornado、Flask、Twisted、Bottle和Web.py等，它们有的历史悠久，有的发展迅速，还有的已经停止维护。</p> 
+ <p><strong>Django：</strong>发布于2003年，是当前Python世界里最负盛名且最成熟的Web框架，最初被用来制作在线新闻的Web站点。Django的各模块之间结合得比较紧密，所以在功能强大的同时又是一个相对封闭的系统（依然是可以自定义的），但是其健全的在线文档及开发社区，使开发者在遇到问题时能找到解决办法。</p> 
+ <p><strong>Tornado：</strong>一个强大的、支持协程、高效并发且可扩展的Web服务器，发布于2009年9月，应用于FriendFeed、Facebook等社交网站。它的强项在于可以利用异步协程机制实现高并发的服务。</p> 
+ <p><strong>Flask：</strong>Python Web框架家族里比较年轻的一个，发布于2010年，它吸收了其他框架的优点并且把自己的主要领域定义在了微小项目上，以短小精干，简洁明了著称。</p> 
+ <p><strong>Twisted：</strong>一个有着十多年历史的开源事件驱动框架。它不像前三种着眼于Web应用开发，而是适用从传输层到自定义应用协议的所有类型的网络程序的开发，并能在不同的操作系统上提供很高的运行效率。但是，目前对Python3的支持有限，建议使用Python2.7。</p> 
+ <hr> 
+ <p>有这么多的Web框架，我们没有那么多的精力全都学一遍，也不可能全部精通，必然要有所取舍，那么该如何选择呢？有哪些可以参考的原则呢？</p> 
+ <ul> 
+  <li>选择更主流的框架。因为它们的文档更齐全，技术积累更多，社区更繁盛，能得到更好的帮助和支持。</li> 
+  <li>选择更活跃的框架。关注项目在GitHub等环境中的更新频率、Issue和Pull Request的响应情况。如果一个项目长期没有更新，或者有一堆的问题需要解决但是没有得到响应，就不应该是你学习的对象。</li> 
+  <li>选择能够满足需求的框架。没有最好的框架，只有更合适的框架。你所选择的Web框架不仅需要满足当前的需求，还要充分考虑项目发展一段时间后的情况，即前瞻性，避免盲目选择而导致将来推倒重来的情况。</li> 
+  <li>选择时效性好的框架。在学习和使用框架的时候经常需要查阅和参考各种网络上的文章、博客和教程，但是需要注意他们的发表时间。有些框架的相关文章已经很老了，很久没更新了，应该放弃这种框架；有的框架一直以来都有不断的新文章、新博客出现，就是比较不错的选择。</li> 
+  <li>选择入门友好的框架。这条只对新手适用。详细的框架文档、官方教程对新手来说都是极大的帮助和鼓励。</li> 
+ </ul> 
+ <p>以上的几条原则不一定正确和完整，但可以作为基本的选择依据，因此推荐大家从Django开始学习！作为最知名、应用最广泛、功能最全面的Django，它能够满足从大型到小型各种应用的需求，在GitHub上非常活跃，版本迭代速度也非常快，包含大量的组件和常用工具，网络上的学习和参考文章非常多，是个非常好的选择。另外，对于新手而言，Django有着完整的工具链，不需要你费脑筋去琢磨用哪个不用哪个，更适合入门。简单的比喻，如果说Flask是“DIY组装台式机”，性能优良，性价比高，自定义灵活，但是你得要知道如何搭配平台，如何组装各部件，如何更换部件等等，那么，Django就是“苹果一体机”，你不用管它内部组件是如何搭配，如何安装的，直接开机使用就好了。</p> 
+ <hr> 
+ <p>想要熟练地使用Django进行Web开发，设计生产环境可用的，能够应对一定规模访问量的Web应用，开发者要学会的远远不止Django本身。Python基础、环境搭建、前端语言、API设计、网站架构、系统管理、持续集成、服务化、数据处理、并发处理等等，都是相关的知识领域，包括但不限于以下的内容：</p> 
+ <ul> 
+  <li>熟悉Python语言</li> 
+  <li>对前端的HTML\CSS\Javascript比较熟悉</li> 
+  <li>熟悉数据库、缓存、消息队列等技术的使用场景和使用方法</li> 
+  <li>日常能使用Linux或Mac系统工作（Windows属于标配）</li> 
+  <li>有性能优化经验，能快速定位问题</li> 
+ </ul> 
+ <p>除此之外，还要对业务有深刻理解，能够写出可维护性足够高的代码。当然，以上都是对经验丰富的开发者而言，对于新手刚入门者，我们朝着这个目标努力学习就好。</p> 
+ <p><strong>下面是基于Python的Web开发技术栈：</strong></p> 
+ <p><img alt="2-1.png" src="https://liujiangblog.com/static/images/course/2-1.png"></p> 
+ <h3>相关说明</h3> 
+ <p>本教程力争在简单轻松入门的基础上，成为一部可以随时查阅的参考文档。本教程尽量使用初学者容易理解的讲述方式，在最短的时间内跨过使用程序设计语言制作网站的门槛，立刻以Django建立自己的特色网站。</p> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="#"><i class="fa fa-arrow-left"></i>&nbsp;前面没有了....</a> 
+  <a class="float-right" href="/course/django/84"> Django简介&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 114</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/2">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.14.0.325.325.50/007YHM8ely8g79j3771yqj309i091glw.jpg?KID=imgbed,tva&amp;Expires=1597209383&amp;ssig=PAwa3Hlbjk" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>请问博主大佬可以提供一下网页中实现代码高亮的模板吗</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; ZJU_SLM </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年8月12日 10:17</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2174">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1596971213&amp;ssig=sUPI4jIHgg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>pip install markdown 然后研究一下这个库。还有一个pygments，也可以学学。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; ZJU_SLM </span> 
+      <em>2020年8月12日 16:16</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2175">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.14.0.325.325.50/007YHM8ely8g79j3771yqj309i091glw.jpg?KID=imgbed,tva&amp;Expires=1597209383&amp;ssig=PAwa3Hlbjk" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>谢谢博主</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> ZJU_SLM &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2020年8月12日 19:07</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2176">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.0.0.996.996.50/006xIWURly8gehjmghiqfj30ro0roq53.jpg?KID=imgbed,tva&amp;Expires=1592499791&amp;ssig=d5glsUHfb0" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>博主，增加一个评论删除功能吧！不小心写错了，都不能删除。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 失恋的蔷薇 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年6月20日 10:37</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2120">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1596971213&amp;ssig=sUPI4jIHgg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>危险也麻烦，暂时不提供。可以留言指定要删除哪条评论，我会帮忙删。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 失恋的蔷薇 </span> 
+      <em>2020年8月9日 16:09</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2172">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax2.sinaimg.cn/crop.0.0.896.896.50/005NtmT0ly8gerhcvduk9j30ow0ow0ug.jpg?KID=imgbed,tva&amp;Expires=1590488145&amp;ssig=mLWYbJJ1ru" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>刘哥，为啥主页访问延时比较高，优化一下吧</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; IIRROONN_Stark </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年5月26日 15:17</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2078">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1596971213&amp;ssig=sUPI4jIHgg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>因为图片加载的原因。找不到比较好的图床。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; IIRROONN_Stark </span> 
+      <em>2020年8月9日 16:07</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2171">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax2.sinaimg.cn/crop.0.0.1080.1080.50/006xIWURly8g3w3jk5kmcj30u00u03zs.jpg?KID=imgbed,tva&amp;Expires=1586080775&amp;ssig=yBTq4ccJDk" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>Tornado和Django，哪个在公司用得多？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 蔷薇-Nina </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年4月5日 15:11</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2007">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1586851613&amp;ssig=EAgcKENHyi" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>当然是Django</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 蔷薇-Nina </span> 
+      <em>2020年4月14日 13:27</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2026">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax3.sinaimg.cn/crop.0.0.1002.1002.50/7d65f85aly8g88ba8vkeej20ru0rudi1.jpg?KID=imgbed,tva&amp;Expires=1585567271&amp;ssig=MuZeDulj2O" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>请问一下Unknown command: 'makemigrations' Type 'manage.py help' for usage.，这种问题是什么原因？前几天还可以用这个命令，今天就提示这个了，网上百度了，没有找到解决办法？谢谢</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 花开一处男 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年3月30日 16:22</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1989">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1586851613&amp;ssig=EAgcKENHyi" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>信息太少</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 花开一处男 </span> 
+      <em>2020年4月14日 13:28</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2027">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax4.sinaimg.cn/crop.0.0.1002.1002.50/005I3HRFly8fxlpipfco6j30ru0rutar.jpg?KID=imgbed,tva&amp;Expires=1581503211&amp;ssig=IOIPeZiuTN" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>名字不错</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; Liu玉江 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年2月12日 15:27</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1890">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax3.sinaimg.cn/crop.0.0.1080.1080.50/006hOG2fly8fy0kza9llcj30u00u00uf.jpg?KID=imgbed,tva&amp;Expires=1574333058&amp;ssig=Wn0fa8DjQo" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>求老刘来个 vue + drf 的项目实战课？？？？？？？？？？？？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; Vitaureatea </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年11月21日 15:44</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1719">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1574349926&amp;ssig=jfGSd%2FDixS" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>Django等着3.0，Vue也等3.0。 无奈啊，要不然刚出的视频，版本就落后了！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; Vitaureatea </span> 
+      <em>2019年11月21日 20:26</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1720">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax3.sinaimg.cn/crop.0.0.1080.1080.50/006hOG2fly8fy0kza9llcj30u00u00uf.jpg?KID=imgbed,tva&amp;Expires=1574333058&amp;ssig=Wn0fa8DjQo" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>心疼老刘半秒</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> Vitaureatea &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2019年11月25日 20:26</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1726">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 12em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva4.sinaimg.cn/crop.0.0.100.100.50/005MSe7Mjw8ekymtqpn24j302s02sglg.jpg?KID=imgbed,tva&amp;Expires=1577977779&amp;ssig=iOP1s6yEbg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>哈哈哈哈</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> rt789777浩 &nbsp;&nbsp;回复&nbsp;&nbsp; Vitaureatea </span> 
+      <em>2020年1月2日 20:09</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1823">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 12em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva4.sinaimg.cn/crop.0.0.100.100.50/005MSe7Mjw8ekymtqpn24j302s02sglg.jpg?KID=imgbed,tva&amp;Expires=1577977779&amp;ssig=iOP1s6yEbg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>11</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> rt789777浩 &nbsp;&nbsp;回复&nbsp;&nbsp; Vitaureatea </span> 
+      <em>2020年1月2日 20:10</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1824">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 16em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax2.sinaimg.cn/crop.0.0.323.323.50/adccc8f3ly8fualjcqwmlj2090091qa0.jpg?KID=imgbed,tva&amp;Expires=1584296526&amp;ssig=TOQF7GT%2FD%2F" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>222</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 努力学减法 &nbsp;&nbsp;回复&nbsp;&nbsp; rt789777浩 </span> 
+      <em>2020年3月20日 09:06</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1974">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 20em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax2.sinaimg.cn/crop.0.0.323.323.50/adccc8f3ly8fualjcqwmlj2090091qa0.jpg?KID=imgbed,tva&amp;Expires=1584296526&amp;ssig=TOQF7GT%2FD%2F" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>评论是递归生成吗</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 努力学减法 &nbsp;&nbsp;回复&nbsp;&nbsp; 努力学减法 </span> 
+      <em>2020年3月20日 09:07</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1975">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 24em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax2.sinaimg.cn/crop.618.172.597.597.50/b63c55e1ly8figvnaiaixj21hc0u075j.jpg?KID=imgbed,tva&amp;Expires=1589961062&amp;ssig=%2BB2PcsCchx" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>2333333</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 码农tao &nbsp;&nbsp;回复&nbsp;&nbsp; 努力学减法 </span> 
+      <em>2020年5月20日 12:51</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2070">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva2.sinaimg.cn/crop.0.0.180.180.50/bc9119dfjw1e8qgp5bmzyj2050050aa8.jpg?KID=imgbed,tva&amp;Expires=1574100145&amp;ssig=orf1uw62Vw" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>博主好，我遇到一个问题，你的设备管理系统，如何进行批量化命令执行，也就是筛选在线的设备，类型，数量等，向这些选定的设备发送指令。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; vlkg-刘洪 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年11月18日 23:05</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1716">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1574349926&amp;ssig=jfGSd%2FDixS" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>一脸懵，我太难了，真没法回答^-^。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; vlkg-刘洪 </span> 
+      <em>2019年11月21日 20:50</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1722">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax2.sinaimg.cn/crop.0.0.40.40.50/007fYzVdly8fugl522c4tj3014014741.jpg?KID=imgbed,tva&amp;Expires=1571660179&amp;ssig=aL0h0gpf3%2F" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>刘老师，from . import views ImportError: cannot import name 'views' from '__main__' (C:/Users/xingchengbin/PycharmProjects/untitled1/polls/urls.py) 这是什么情况，一直解决不了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户6649012631 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年10月21日 17:17</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1676">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1574349926&amp;ssig=jfGSd%2FDixS" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>只能粗略判断是导入出了问题。再对比一下代码吧。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 用户6649012631 </span> 
+      <em>2019年11月21日 20:48</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1721">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva1.sinaimg.cn/crop.0.0.640.640.50/006ffszNjw8fbhehbbh6kj30hs0hsgm2.jpg?KID=imgbed,tva&amp;Expires=1569836870&amp;ssig=ipNioBE86d" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>博主好，我想问下我们实验室的项目要用1.11，我对着这个2.2版的教程学可以吗？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 移动废柴王小京 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年9月30日 14:48</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1644">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1569430444&amp;ssig=vl6QIV2PbU" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>可以。两者最主要的区别其实就是在url的写法上，其它的细微差别一般碰不到。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 移动废柴王小京 </span> 
+      <em>2019年9月30日 16:51</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1645">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax2.sinaimg.cn/crop.12.5.92.92.50/c650a962ly8g2u8cbn17jj203c02s3yl.jpg?KID=imgbed,tva&amp;Expires=1567100132&amp;ssig=s7cclP7dew" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我想请教的是您的博客栏目url后面对应是相关英文是怎么url路由的，我采取的是默认的/course/1/这种通过Id形式，您course/django/这个后面对应django是怎么设置的，难道是一个栏目要设计一个URL吗？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; juehuan182 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年8月29日 22:36</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1604">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?Expires=1566005137&amp;ssig=WT35MhxJ6H&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我这是为了方便。url的设计，一般要满足REST规范。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; juehuan182 </span> 
+      <em>2019年8月29日 23:51</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1606">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva1.sinaimg.cn/crop.0.0.180.180.50/6563f59djw1e8qgp5bmzyj2050050aa8.jpg?KID=imgbed,tva&amp;Expires=1566815348&amp;ssig=gYHf1FzF0J" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>刘江老师您好，我是清华大学出版社的编辑，看您在博客上分享了许多Django的知识干货，想问您是否有意向出版图书呢？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 林场的湖 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年8月26日 15:31</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1592">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?Expires=1566005137&amp;ssig=WT35MhxJ6H&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>邮箱联系吧</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 林场的湖 </span> 
+      <em>2019年8月29日 23:49</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1605">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva3.sinaimg.cn/crop.0.0.180.180.50/85227db6jw1e8qgp5bmzyj2050050aa8.jpg?Expires=1564374167&amp;ssig=dWzeNMUSRM&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>博主，你好 我想用Django搭建一个简单的设备管理 web界面，局域网访问，不需要高并发，请问Django合适吗，都需要哪些组件？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; Ceekay_Shen </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年7月29日 11:24</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1530">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?Expires=1564021609&amp;ssig=sDnqEcPtge&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>没有比这更合适的了，基本不需要别的库，Django足够强大，功能足够丰富。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; Ceekay_Shen </span> 
+      <em>2019年7月29日 19:12</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1531">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif?Expires=1563508945&amp;ssig=mRQgQBY%2FEU&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>好教程</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; JACK_123_45995 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年7月19日 11:06</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1498">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.400.400.50/e2a07f5aly8fqlhxvrj1nj20b40b4jsq.jpg?Expires=1562562451&amp;ssig=gRcPnq751p&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>UI 确实好看了，就是背景颜色太白了吧</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 始终和蔼善良的 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年7月8日 12:08</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1434">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?Expires=1562637611&amp;ssig=agpk2vGwLT&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>刚开始不习惯，慢慢就好了^-^</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 始终和蔼善良的 </span> 
+      <em>2019年7月9日 16:51</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1439">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.0.180.180.50/59bd64d7jw1e8qgp5bmzyj2050050aa8.jpg?Expires=1562483847&amp;ssig=nOlDLrS%2F3Q&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>以前的背景好像是黑色，还是习惯看黑色的背景啊！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 定期换名字啦啦 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年7月7日 14:19</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1432">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?Expires=1562637611&amp;ssig=agpk2vGwLT&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>以前是浅灰色</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 定期换名字啦啦 </span> 
+      <em>2019年7月9日 16:51</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1440">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?Expires=1562423843&amp;ssig=fJ%2FD0zv0Le&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>基于Bootstrap4，全新改版UI，希望大家喜欢！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年7月6日 23:40</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1430">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.0.180.180.50/59bd64d7jw1e8qgp5bmzyj2050050aa8.jpg?Expires=1562483847&amp;ssig=nOlDLrS%2F3Q&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>改版了再看，有点不习惯啊，可能看原来的UI习惯了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 定期换名字啦啦 &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2019年7月7日 14:18</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1431">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.996.996.50/be22484ely8fgbkah9jcej20ro0rojsp.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>博主，加下微信好友呀，运维狗一枚</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 七月的大蒙 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年5月29日 21:10</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1367">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>Sorry，不加微信好友的，望理解。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 七月的大蒙 </span> 
+      <em>2019年7月1日 14:53</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1418">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/default/images/default_avatar_female_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>博主好，可以提供下源码吗</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户6749441042 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年5月23日 23:10</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1350">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>你是指的文字教程的源码？这个没法提供，也不需要提供的呀。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 用户6749441042 </span> 
+      <em>2019年7月1日 14:54</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1419">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.0.664.664.50/006yUBgDjw8faqb2tnqbij30ig0ig3zc.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>博主你好 在你那看的视频 用微博登录的时候出现 错误代码21332，重定向地址不匹配，为什么，微博高级信息里有个回调接口，请问这个需要填吗，要填的话填哪个地址</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; LuKa_Xu </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年4月23日 22:21</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1281">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.0.664.664.50/006yUBgDjw8faqb2tnqbij30ig0ig3zc.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>是21322</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> LuKa_Xu &nbsp;&nbsp;回复&nbsp;&nbsp; LuKa_Xu </span> 
+      <em>2019年4月23日 22:23</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1282">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>根据需要选填</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; LuKa_Xu </span> 
+      <em>2019年7月1日 14:55</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1420">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.996.996.50/006SrEWNly8fzbt02svrsj30ro0ro0zu.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>哇好快</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 学到老单到老 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年4月19日 09:23</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1267">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/default/images/default_avatar_female_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>博主你好，请问一下，我把你的源代码下载下来了，然后自己运行就报错了。ImportError: No module named 'cmdb.settings' 。请问下这个怎么处理？感谢~</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户6824661707 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年4月12日 10:13</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1246">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>将cmdb下的settings.example.py改名为settings</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 用户6824661707 </span> 
+      <em>2019年4月13日 15:59</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1250">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/default/images/default_avatar_female_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>博主你好，又报了另外一个错误。TypeError: __init__() missing 1 required positional argument: 'on_delete'。请问要如何处理。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 用户6824661707 &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2019年4月17日 09:14</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1262">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 12em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.996.996.50/0062Z9Nxly8fqlec5nsl2j30ro0rodit.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>从表没有设置on_delete，自己百度都能查出来。没必要问</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 如此_25896 &nbsp;&nbsp;回复&nbsp;&nbsp; 用户6824661707 </span> 
+      <em>2019年5月7日 08:50</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1314">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.10.0.492.492.50/006fn4Wyly8fjtpx1a3q2j30e80dogm2.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>最近在一点点的深入学习Django框架 还希望博主能再发几个django搭建网站的实例 另外教程的两个实例作为学习使用，如果不搭建虚拟环境的话，会造成什么影响吗</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 我真的是唐铭泽 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年4月5日 17:42</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1220">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>搭建网站，推荐我的视频教程《企业级博客网站》，哈哈。 如果不建立虚拟环境，坏处太多，不需要细说，建立就对了。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 我真的是唐铭泽 </span> 
+      <em>2019年4月13日 16:01</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1251">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>统一回复：平时工作和学习也比较忙 ，很多大家的评论、建议和咨询问题我也不一定有时间看和回复。数量也比较多，也无法逐一回复，只能随缘了。我尽量，也恳请大家担待一下，多谢！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年3月6日 21:40</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1121">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.8.6.606.606.50/007rCxsily8fwy8ugo7gaj30ha0hagn6.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>博主，能把左边的菜单固定不随右边网页滚动吗？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 用户1382844313 &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2019年3月25日 22:19</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1179">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.8.6.606.606.50/007rCxsily8fwy8ugo7gaj30ha0hagn6.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>博主终于把恶心的评论标题给去除了！！赞！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户1382844313 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年2月26日 15:30</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1082">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.1.750.750.50/99d96c9cjw8fcc65ec4roj20ku0kwmyn.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>最好的Django中文教程！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 邵彬之梦 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年2月24日 11:06</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1076">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.15.718.718.50/006M4TfMly8fnkwt2jnumj30jy0ktac8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>提示我说我没有导入这个，但是我已经导入了。。。还是报出这个错误。。。博主知道这是咋回事吗？（捂脸）</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 冰花ice_firework </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年1月25日 22:27</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1040">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>from django.shortcuts import HttpResponse from django.http import HttpResponse</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 冰花ice_firework </span> 
+      <em>2019年1月28日 22:51</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1044">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.15.718.718.50/006M4TfMly8fnkwt2jnumj30jy0ktac8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>博主，这个教程同样适用于diango2.1.5吗？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 冰花ice_firework </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年1月25日 22:24</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1039">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>1.11和2.1.5只是在路由的编写上有较大差别，我已经撰文进行了比较，请参考相关章节。 如果不是将Django最底层的功能和接口用到了极致，对于一般和中度使用者，感觉差别不大。年内我会抽时间将文字教程迁移到最新版本上来，可能是Django2.2，这是一个LTS版。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 冰花ice_firework </span> 
+      <em>2019年1月28日 22:49</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1043">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva3.sinaimg.cn/crop.0.58.440.440.50/b8253f15jw8eayptqq27uj20c80fh755.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>希望博主可以增加dashboard仪表盘界面增删资源的方法，期待！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 衰老的粽子 &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2019年2月12日 16:22</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1062">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.8.6.606.606.50/007rCxsily8fwy8ugo7gaj30ha0hagn6.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>是的</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 用户1382844313 &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2019年2月26日 15:30</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1081">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.8.6.606.606.50/007rCxsily8fwy8ugo7gaj30ha0hagn6.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户1382844313 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年12月26日 15:58</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/982">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>忙于无人驾驶相关事宜，更新少了，抱歉。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 用户1382844313 </span> 
+      <em>2019年1月1日 11:33</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/997">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.8.6.606.606.50/007rCxsily8fwy8ugo7gaj30ha0hagn6.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>辛苦</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 用户1382844313 &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2019年1月1日 20:44</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1000">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 12em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.200.200.50/006etgZQjw8ewf1jptrzkj305k05kq2w.jpg?Expires=1564541029&amp;ssig=DZZ3TDW343&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>辛苦</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 特斯拉的猫 &nbsp;&nbsp;回复&nbsp;&nbsp; 用户1382844313 </span> 
+      <em>2019年7月31日 09:44</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1532">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.80.80.50/0061qcDQjw8ep6v23tnyzj3028028q2p.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>什么时候，出点数据分析和机器学习的视频？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 潇潇乐5517818454 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年12月12日 23:11</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/937">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>已经在日程上</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 潇潇乐5517818454 </span> 
+      <em>2019年1月1日 11:34</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/998">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.8.6.606.606.50/007rCxsily8fwy8ugo7gaj30ha0hagn6.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>已经出了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 用户1382844313 &nbsp;&nbsp;回复&nbsp;&nbsp; 潇潇乐5517818454 </span> 
+      <em>2019年2月26日 15:32</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1083">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>真不错的教程，适合初学者按照步骤一步步来，由浅入深，赞！！ 抽时间仔细看一下</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 龙成666 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年12月9日 00:19</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/931">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.180.180.50/939cc2b2jw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>非常好，满满的干货，我要给你宣传</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; hello地主家的傻儿子 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年11月13日 11:44</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/856">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>谢谢了！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; hello地主家的傻儿子 </span> 
+      <em>2018年11月13日 18:06</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/857">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.180.180.50/939cc2b2jw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>啥时候能把django2.0教程给弄出来</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> hello地主家的傻儿子 &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2018年11月14日 16:20</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/860">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/default/images/default_avatar_female_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>Django好找工作吗？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户1382844313 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年11月6日 12:48</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/827">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>不吹不黑。单靠Django，面还不够宽，但是围绕Python+Django+Linux+数据库的web开发，在中小企业中，甚至一些大企业中还是有点市场的。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 用户1382844313 </span> 
+      <em>2018年11月6日 16:09</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/829">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/default/images/default_avatar_female_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>很用心的教程，辛苦了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户1382844313 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年11月6日 12:40</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/826">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.0.0.224.224.50/0071sGL6ly8fmh51zj101j3068069744.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>江哥有没有发展这块，我想报第一期，系统的学一学。真心的</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户6434543712 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年10月23日 20:34</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/789">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>可以先看免费的文字版，免费又方便。如果觉得学习效率低，理解困难，可以购买我的视频课程。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 用户6434543712 </span> 
+      <em>2018年10月24日 14:49</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/792">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.0.0.664.664.50/dfb4159dly8fewkxyjya0j20ig0igabc.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>debug 一直提示 frames are not available，会是什么原因呢？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; III小倩III </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年10月19日 22:51</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/781">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.720.720.50/672be708jw8epjqn9w5m6j20k00k0jtf.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>江歌，你开视频课，我绝对听</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 酒剑仙逆天 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年10月18日 10:57</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/778">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.720.720.50/c1b446bbjw8eh3ipz350ej20k00k0acc.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>目前为止感觉最棒的Django教程，真的非常感谢博主。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; who抢了我的昵称 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年10月2日 12:34</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/758">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>看官方文檔，覺得太雜或看不懂，來這邊看一下就懂了，感謝大大寫出高質量文檔</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; synth092 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年8月19日 21:49</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/694">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.8.6.606.606.50/007rCxsily8fwy8ugo7gaj30ha0hagn6.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>是的</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 用户1382844313 &nbsp;&nbsp;回复&nbsp;&nbsp; synth092 </span> 
+      <em>2018年11月6日 12:49</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/828">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva4.sinaimg.cn/crop.0.0.664.664.50/006isNMMjw8eyatpz3vb5j30ig0ig0u9.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>如何在Django的views中导入另一个不是Django的项目</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 大娃sod密 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年8月14日 14:56</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/678">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>没有唯一的答案</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 大娃sod密 </span> 
+      <em>2018年8月14日 22:40</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/681">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.0.1080.1080.50/b0c8d365jw8exye2wtxyhj20u00u0jsx.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>博主，如果这套教程你编写成书籍并印刷一定会大卖，因为我现在就像把你的教程整理成书打印出来随时翻阅~毕竟相对于电子版的书籍我更喜欢纸质版的啦，嘻嘻</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 古影tx </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年8月2日 10:58</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/653">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>为了方便大家，提高阅读体验，没有广告，没有打赏，就靠一点视频教程维持网站运营，原创不易，所以还请大家多多支持！拜谢！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 古影tx </span> 
+      <em>2018年8月2日 16:22</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/654">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>没有之一</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; Acerjin1897 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年7月30日 21:40</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/645">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>谢谢肯定！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; Acerjin1897 </span> 
+      <em>2018年7月31日 09:05</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/647">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.960.960.50/006xIWURly8fo9wxo24vzj30qo0qoaaz.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>博主可以出Scrapy教程吗？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 蔷薇-Nina </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年7月10日 22:41</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/564">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.0.638.638.50/e791fe02gw1f3hhtuftkuj20hs0hsq6j.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>真不错的教程，适合初学者按照步骤一步步来，由浅入深，赞！！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 汉府刘臣臣 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年6月25日 00:16</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/542">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>看到的写的最好的关于django的文章，</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; DaiPenxiang </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年6月2日 22:46</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/515">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.960.960.50/006xIWURly8fo9wxo24vzj30qo0qoaaz.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>感谢博主！本教程完全可以作为学习和工作的参考书。希望博主永久不要下架。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 蔷薇-Nina </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年5月28日 20:55</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/505">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>有空多来逛逛，多帮忙宣传宣传，谢谢！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 蔷薇-Nina </span> 
+      <em>2018年5月28日 22:15</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/506">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.100.400.400.50/aa7e4bfejw8e7ffi6g8e1j20b40godga.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>国内很少有如此系统高质量讲解django的教程，钦佩博主布道精神！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 唯J王道 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年4月18日 11:51</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/392">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva4.sinaimg.cn/crop.0.0.996.996.50/006bkF7vjw8fbtucf9bgcj30ro0rodij.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>最近一直在研究celery但是一直没有进步，跪求博主可以更新一下这方面的文章。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 靖大树 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年3月28日 11:56</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/338">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>对celery研究不多，实在是羞于写作，不敢拿出来献丑。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 靖大树 </span> 
+      <em>2018年5月28日 22:16</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/507">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.0.0.750.750.50/94b6a687ly8ffxik7sf1aj20ku0ku763.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>良心教程呀，写这么多不容易，把 django 的基础都涵盖了。是否可以在 Django学习小组知乎专栏（5000+关注）推荐一下？好的东西应该让更多的人知道他的存在，可以看到作者非常用心。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 追梦人物 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年3月27日 17:03</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/331">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>感谢支持，请多提宝贵意见，谢谢！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 追梦人物 </span> 
+      <em>2018年3月27日 19:58</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/332">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.0.1.750.750.50/80a4fd7bly8fdx4t6pw0fj20ku0kxq4e.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>良心良心</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 吧嗒吧嗒的拖鞋 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年3月15日 15:31</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/309">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.960.960.50/006xIWURly8fo9wxo24vzj30qo0qoaaz.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>感谢博主精彩呈现——wangchunwang.</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 蔷薇-Nina </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年3月1日 20:42</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/233">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva3.sinaimg.cn/crop.0.0.180.180.50/8fbee390jw8fb1m9medxjj2050050745.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>教程很棒，推荐一下！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 双鱼开阳 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年2月2日 16:36</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/186">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.62.52.394.394.50/006P7ELxly8flka0on5fsj30e90di0tf.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>希望博主你可以出一些难度比较大一点的教程或者视频~~您觉得咋样</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 糖糖不吃糖sugar </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年1月15日 16:28</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/122">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>欢迎查询详情</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 糖糖不吃糖sugar </span> 
+      <em>2018年1月15日 21:05</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/126">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>内容很详实，不错，赞一个</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 橙言成语 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年1月5日 14:07</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/108">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.426.66.1066.1066.50/005EMUrrly8flohkwuo2uj31hc0xce81.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>博主加油</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户5183374309 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2017年11月20日 16:22</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/49">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.0.640.640.50/54d91545jw8evsglj29dpj20hs0hs74z.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>很好的教学博客。支持支持</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 熙雯爸的幸福生活 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2017年10月23日 16:15</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/26">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>请多提宝贵意见！谢谢！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 熙雯爸的幸福生活 </span> 
+      <em>2017年10月23日 19:33</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/27">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.180.180.50/62d22245gw1ehe06dchkej2050050glm.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>啊</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 有点乱的看天男孩 &nbsp;&nbsp;回复&nbsp;&nbsp; 熙雯爸的幸福生活 </span> 
+      <em>2018年12月13日 22:51</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/939">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva3.sinaimg.cn/crop.0.0.996.996.50/741e049bjw8faqjzbxotsj20ro0rodin.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>希望django教程没有那么枯燥，多一些自己的东西</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 卖拐卖车卖担架 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2017年10月12日 16:34</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/22">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva4.sinaimg.cn/crop.108.0.195.195.50/005U2Pdwjw8fa49r9ytb9j308w09s0td.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>加油！博主。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 自己的天空更蓝2 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2017年10月6日 11:56</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/20">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>欢迎经常来看看！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 自己的天空更蓝2 </span> 
+      <em>2017年10月7日 19:41</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/21">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>如果可以能给个联系方式嘛？我有个问题想咨询下</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> xiaohu811 &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2018年11月15日 18:40</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/864">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

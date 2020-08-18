@@ -1,0 +1,121 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>动态生成CSV文件</h1> 
+ <small>阅读:&nbsp;18507&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：0 </small> 
+ <hr> 
+ <p>CSV (Comma Separated Values)，以纯文本形式存储数字和文本数据的存储方式。纯文本意味着该文件是一个字符序列，不含必须像二进制数字那样的数据。CSV文件由任意数目的记录组成，记录间以某种换行符分隔；每条记录由字段组成，字段间的分隔符是其它字符或字符串，最常见的是逗号或制表符。通常，所有记录都有完全相同的字段序列。</p> 
+ <p>要在Django的视图中生成CSV文件，可以使用Python的CSV库或者Django的模板系统来实现。</p> 
+ <h2>一、使用Python的CSV库</h2> 
+ <p>Python自带处理CSV文件的标准库csv。csv模块的CSV文件创建功能作用于类似于文件对象创建，并且Django的HttpResponse对象也是类似于文件的对象。</p> 
+ <p>下面是个例子：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">import</span> <span class="nn">csv</span>
+<span class="kn">from</span> <span class="nn">django.http</span> <span class="kn">import</span> <span class="n">HttpResponse</span>
+
+<span class="k">def</span> <span class="nf">some_view</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="c1"># Create the HttpResponse object with the appropriate CSV header.</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="n">content_type</span><span class="o">=</span><span class="s1">'text/csv'</span><span class="p">)</span>
+    <span class="n">response</span><span class="p">[</span><span class="s1">'Content-Disposition'</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'attachment; filename="somefilename.csv"'</span>
+
+    <span class="n">writer</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">writer</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+    <span class="n">writer</span><span class="o">.</span><span class="n">writerow</span><span class="p">([</span><span class="s1">'First row'</span><span class="p">,</span> <span class="s1">'Foo'</span><span class="p">,</span> <span class="s1">'Bar'</span><span class="p">,</span> <span class="s1">'Baz'</span><span class="p">])</span>
+    <span class="n">writer</span><span class="o">.</span><span class="n">writerow</span><span class="p">([</span><span class="s1">'Second row'</span><span class="p">,</span> <span class="s1">'A'</span><span class="p">,</span> <span class="s1">'B'</span><span class="p">,</span> <span class="s1">'C'</span><span class="p">,</span> <span class="s1">'"Testing"'</span><span class="p">,</span> <span class="s2">"Here's a quote"</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">response</span>
+</pre>
+ </div> 
+ <p>相关说明：</p> 
+ <ul> 
+  <li>响应对象的MIME类型设置为<code>text/csv</code>，告诉浏览器，返回的是一个CSV文件而不是HTML文件。 </li> 
+  <li>响应对象设置了附加的<code>Content-Disposition</code>协议头，含有CSV文件的名称。文件名随便取，浏览器会在“另存为...”对话框等环境中使用它。</li> 
+  <li>要在生成CSV的API中使用钩子非常简单：只需要把response作为第一个参数传递给<code>csv.writer</code>。<code>csv.writer</code>方法接受一个类似于文件的对象，而HttpResponse对象正好就是这么个东西。</li> 
+  <li>对于CSV文件的每一行，调用<code>writer.writerow</code>，向它传递一个可迭代的对象比如列表或者元组。</li> 
+  <li>CSV模板会为你处理各种引用，不用担心没有转义字符串中的引号或者逗号。只需要向writerow()传递你的原始字符串，它就会执行正确的操作。</li> 
+ </ul> 
+ <p>当处理大尺寸文件时，可以使用Django的StreamingHttpResponse类，通过流式传输，避免负载均衡器在服务器生成响应的时候断掉连接，提高传输可靠性。</p> 
+ <p>在下面的例子中，利用Python的生成器来有效处理大尺寸CSV文件的拼接和传输：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">import</span> <span class="nn">csv</span>
+
+<span class="kn">from</span> <span class="nn">django.http</span> <span class="kn">import</span> <span class="n">StreamingHttpResponse</span>
+
+<span class="k">class</span> <span class="nc">Echo</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">"""An object that implements just the write method of the file-like</span>
+<span class="sd">    interface.</span>
+<span class="sd">    """</span>
+    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="sd">"""Write the value by returning it, instead of storing in a buffer."""</span>
+        <span class="k">return</span> <span class="n">value</span>
+
+<span class="k">def</span> <span class="nf">some_streaming_csv_view</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="sd">"""A view that streams a large CSV file."""</span>
+    <span class="c1"># Generate a sequence of rows. The range is based on the maximum number of</span>
+    <span class="c1"># rows that can be handled by a single sheet in most spreadsheet</span>
+    <span class="c1"># applications.</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="p">([</span><span class="s2">"Row {}"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">idx</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">idx</span><span class="p">)]</span> <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">65536</span><span class="p">))</span>
+    <span class="n">pseudo_buffer</span> <span class="o">=</span> <span class="n">Echo</span><span class="p">()</span>
+    <span class="n">writer</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">writer</span><span class="p">(</span><span class="n">pseudo_buffer</span><span class="p">)</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">StreamingHttpResponse</span><span class="p">((</span><span class="n">writer</span><span class="o">.</span><span class="n">writerow</span><span class="p">(</span><span class="n">row</span><span class="p">)</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">),</span>
+                                     <span class="n">content_type</span><span class="o">=</span><span class="s2">"text/csv"</span><span class="p">)</span>
+    <span class="n">response</span><span class="p">[</span><span class="s1">'Content-Disposition'</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'attachment; filename="somefilename.csv"'</span>
+    <span class="k">return</span> <span class="n">response</span>
+</pre>
+ </div> 
+ <h2>二、使用Django的模板系统</h2> 
+ <p>也可以使用Django的模板系统来生成CSV。比起便捷的Python-csv库，这样做比较低级，不建议这么做，这里只是展示一下有这种方式而已。</p> 
+ <p>思路是，传递一个项目的列表给你的模板，并且让模板在for循环中输出逗号。下面是一个例子，它像上面一样生成相同的CSV文件：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.http</span> <span class="kn">import</span> <span class="n">HttpResponse</span>
+<span class="kn">from</span> <span class="nn">django.template</span> <span class="kn">import</span> <span class="n">loader</span><span class="p">,</span> <span class="n">Context</span>
+
+<span class="k">def</span> <span class="nf">some_view</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="c1"># Create the HttpResponse object with the appropriate CSV header.</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="n">content_type</span><span class="o">=</span><span class="s1">'text/csv'</span><span class="p">)</span>
+    <span class="n">response</span><span class="p">[</span><span class="s1">'Content-Disposition'</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'attachment; filename="somefilename.csv"'</span>
+
+    <span class="c1"># The data is hard-coded here, but you could load it from a database or</span>
+    <span class="c1"># some other source.</span>
+    <span class="n">csv_data</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="p">(</span><span class="s1">'First row'</span><span class="p">,</span> <span class="s1">'Foo'</span><span class="p">,</span> <span class="s1">'Bar'</span><span class="p">,</span> <span class="s1">'Baz'</span><span class="p">),</span>
+        <span class="p">(</span><span class="s1">'Second row'</span><span class="p">,</span> <span class="s1">'A'</span><span class="p">,</span> <span class="s1">'B'</span><span class="p">,</span> <span class="s1">'C'</span><span class="p">,</span> <span class="s1">'"Testing"'</span><span class="p">,</span> <span class="s2">"Here's a quote"</span><span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="n">t</span> <span class="o">=</span> <span class="n">loader</span><span class="o">.</span><span class="n">get_template</span><span class="p">(</span><span class="s1">'my_template_name.txt'</span><span class="p">)</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">Context</span><span class="p">({</span>
+        <span class="s1">'data'</span><span class="p">:</span> <span class="n">csv_data</span><span class="p">,</span>
+    <span class="p">})</span>
+    <span class="n">response</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="n">c</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">response</span>
+</pre>
+ </div> 
+ <p>然后，创建模板<code>my_template_name.txt</code>，带有以下模板代码：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{%</span> <span class="k">for</span> <span class="nv">row</span> <span class="k">in</span> <span class="nv">data</span> <span class="cp">%}</span><span class="x">"</span><span class="cp">{{</span> <span class="nv">row.0</span><span class="o">|</span><span class="nf">addslashes</span> <span class="cp">}}</span><span class="x">", "</span><span class="cp">{{</span> <span class="nv">row.1</span><span class="o">|</span><span class="nf">addslashes</span> <span class="cp">}}</span><span class="x">", "</span><span class="cp">{{</span> <span class="nv">row.2</span><span class="o">|</span><span class="nf">addslashes</span> <span class="cp">}}</span><span class="x">", "</span><span class="cp">{{</span> <span class="nv">row.3</span><span class="o">|</span><span class="nf">addslashes</span> <span class="cp">}}</span><span class="x">", "</span><span class="cp">{{</span> <span class="nv">row.4</span><span class="o">|</span><span class="nf">addslashes</span> <span class="cp">}}</span><span class="x">"</span>
+<span class="cp">{%</span> <span class="k">endfor</span> <span class="cp">%}</span><span class="x"></span>
+</pre>
+ </div> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/141"> <i class="fa fa-arrow-left"></i>&nbsp;文件上传</a> 
+  <a class="float-right" href="/course/django/143"> 动态生成PDF文件&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 0</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/142">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

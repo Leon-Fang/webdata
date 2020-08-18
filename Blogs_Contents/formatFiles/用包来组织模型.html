@@ -1,0 +1,57 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>用包来组织模型</h1> 
+ <small>阅读:&nbsp;22539&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：1 </small> 
+ <hr> 
+ <p>在我们使用<code>python manage.py startapp xxx</code>命令创建新的应用时，Django会自动帮我们建立一个应用的基本文件组织结构，其中就包括一个<code>models.py</code>文件。通常，我们把当前应用的模型都编写在这个文件里，但是如果你的模型很多，那么将单独的<code>models.py</code>文件分割成一些独立的文件是个更好的做法。</p> 
+ <p>首先，我们需要在应用中新建一个叫做<code>models</code>的包，再在包下创建一个<code>__init__.py</code>文件，这样才能确立包的身份。然后将<code>models.py</code>文件中的模型分割到一些<code>.py</code>文件中，比如<code>organic.py</code>和<code>synthetic.py</code>，然后删除<code>models.py</code>文件。最后在<code>__init__.py</code>文件中导入所有的模型。如下例所示：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="c1">#  myapp/models/__init__.py</span>
+
+<span class="kn">from</span> <span class="nn">.organic</span> <span class="kn">import</span> <span class="n">Person</span>
+<span class="kn">from</span> <span class="nn">.synthetic</span> <span class="kn">import</span> <span class="n">Robot</span>
+</pre>
+ </div> 
+ <p>要显式明确地导入每一个模型，而不要使用<code>from .models import *</code>的方式，这样不会混淆命名空间，让代码更可读，更容易被分析工具使用。</p> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/100"> <i class="fa fa-arrow-left"></i>&nbsp;模型的继承</a> 
+  <a class="float-right" href="/course/django/129"> 查询操作&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 1</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/101">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.29.72.151.151.50/c345a2c6jw1egex1o75ogj205c071mx9.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>在pycharm或中创建python包可以直接生成一个空__init__.py模块</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 世外就是TaoYuan </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年1月19日 14:47</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/143">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

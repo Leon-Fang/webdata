@@ -1,0 +1,445 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>URL路由基础</h1> 
+ <small>阅读:&nbsp;44475&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：12 </small> 
+ <hr> 
+ <h3>路由的编写方式是Django2.0和1.11最大的区别所在。Django官方迫于压力和同行的影响，不得不将原来的正则匹配表达式，改为更加简单的path表达式，但依然通过re_path()方法保持对1.x版本的兼容。</h3> 
+ <hr> 
+ <p>URL是Web服务的入口，用户通过浏览器发送过来的任何请求，都是发送到一个指定的URL地址，然后被响应。</p> 
+ <p>在Django项目中编写路由，就是向外暴露我们接收哪些URL的请求，除此之外的任何URL都不被处理，也没有返回。通俗地理解，不恰当的形容，URL路由是你的Web服务对外暴露的API。</p> 
+ <p>Django奉行DRY主义，提倡使用简洁、优雅的URL，没有<code>.php</code>或<code>.cgi</code>这种后缀，更不会单独使用0、2097、1-1-1928、00这样无意义的东西，让你随心所欲设计你的URL，不受框架束缚。</p> 
+ <h2>一、概述</h2> 
+ <p>URL路由在Django项目中的体现就是<code>urls.py</code>文件，这个文件可以有很多个，但绝对不会在同一目录下。实际上Django提倡项目有个根<code>urls.py</code>，各app下分别有自己的一个<code>urls.py</code>，既集中又分治，是一种解耦的模式。</p> 
+ <p>随便新建一个Django项目，默认会自动为我们创建一个<code>/project_name/urls.py</code>文件，并且自动包含下面的内容，这就是项目的根URL：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="sd">"""dj_test URL Configuration</span>
+
+<span class="sd">The `urlpatterns` list routes URLs to views. For more information please see:</span>
+<span class="sd">    https://docs.djangoproject.com/en/2.0/topics/http/urls/</span>
+<span class="sd">Examples:</span>
+<span class="sd">Function views</span>
+<span class="sd">    1. Add an import:  from my_app import views</span>
+<span class="sd">    2. Add a URL to urlpatterns:  path('', views.home, name='home')</span>
+<span class="sd">Class-based views</span>
+<span class="sd">    1. Add an import:  from other_app.views import Home</span>
+<span class="sd">    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')</span>
+<span class="sd">Including another URLconf</span>
+<span class="sd">    1. Import the include() function: from django.urls import include, path</span>
+<span class="sd">    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))</span>
+<span class="sd">"""</span>
+<span class="kn">from</span> <span class="nn">django.contrib</span> <span class="kn">import</span> <span class="n">admin</span>
+<span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">path</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'admin/'</span><span class="p">,</span> <span class="n">admin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">urls</span><span class="p">),</span>
+<span class="p">]</span>
+</pre>
+ </div> 
+ <p>前面一堆帮助性的文字，我们不用管，关键是默认导入了path方法和admin模块，然后有一条指向admin后台的url路径。</p> 
+ <p>我们自己要编写的url路由，基本也是这个套路。</p> 
+ <h2>二、Django如何处理请求</h2> 
+ <p>当用户请求一个页面时，Django根据下面的逻辑执行操作：</p> 
+ <ol> 
+  <li><strong>决定要使用的根URLconf模块。</strong>通常，这是<code>ROOT_URLCONF</code>设置的值，但是如果传入的HttpRequest对象具有urlconf属性（由中间件设置），则其值将被用于代替<code>ROOT_URLCONF</code>设置。通俗的讲，就是你可以自定义项目入口url是哪个文件！</li> 
+  <li><strong>加载该模块并寻找可用的urlpatterns。</strong> 它是<code>django.urls.path()</code>或者<code>django.urls.re_path()</code>实例的一个列表。</li> 
+  <li><strong>依次匹配每个URL模式，在与请求的URL相匹配的第一个模式停下来</strong>。也就是说，url匹配是从上往下的短路操作，所以url在列表中的位置非常关键。</li> 
+  <li>导入并调用匹配行中给定的视图，该视图是一个简单的Python函数（被称为视图函数）,或基于类的视图。 视图将获得如下参数:
+   <ol> 
+    <li>一个HttpRequest 实例。</li> 
+    <li>如果匹配的表达式返回了未命名的组，那么匹配的内容将作为位置参数提供给视图。</li> 
+    <li>关键字参数由表达式匹配的命名组组成，但是可以被<code>django.urls.path()</code>的可选参数kwargs覆盖。</li> 
+   </ol> </li> 
+  <li>如果没有匹配到任何表达式，或者过程中抛出异常，将调用一个适当的错误处理视图。 </li> 
+ </ol> 
+ <h2>三、简单示例</h2> 
+ <p>先看一个例子：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">path</span>
+
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">views</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'articles/2003/'</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">special_case_2003</span><span class="p">),</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'articles/&lt;int:year&gt;/'</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">year_archive</span><span class="p">),</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'articles/&lt;int:year&gt;/&lt;int:month&gt;/'</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">month_archive</span><span class="p">),</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'articles/&lt;int:year&gt;/&lt;int:month&gt;/&lt;slug:slug&gt;/'</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">article_detail</span><span class="p">),</span>
+<span class="p">]</span>
+</pre>
+ </div> 
+ <p>注意：</p> 
+ <ol> 
+  <li>要捕获一段url中的值，需要使用尖括号，而不是之前的圆括号；</li> 
+  <li>可以转换捕获到的值为指定类型，比如例子中的int。默认情况下，捕获到的结果保存为字符串类型，不包含<code>/</code>这个特殊字符；</li> 
+  <li>匹配模式的最开头不需要添加<code>/</code>，因为默认情况下，每个url都带一个最前面的<code>/</code>，既然大家都有的部分，就不用浪费时间特别写一个了。</li> 
+ </ol> 
+ <p>匹配例子：</p> 
+ <ul> 
+  <li>/articles/2005/03/ 将匹配第三条，并调用views.month_archive(request, year=2005, month=3)；</li> 
+  <li>/articles/2003/匹配第一条，并调用views.special_case_2003(request)；</li> 
+  <li>/articles/2003将一条都匹配不上，因为它最后少了一个斜杠，而列表中的所有模式中都以斜杠结尾；</li> 
+  <li>/articles/2003/03/building-a-django-site/ 将匹配最后一个，并调用views.article_detail(request, year=2003, month=3, slug="building-a-django-site"</li> 
+ </ul> 
+ <p>每当urls.py文件被第一次加载的时候，urlpatterns里的表达式们都将被预先编译，这会大大提高系统处理路由的速度。</p> 
+ <h2>四、path转换器</h2> 
+ <p>默认情况下，Django内置下面的路径转换器：</p> 
+ <ul> 
+  <li><code>str</code>：匹配任何非空字符串，但不含斜杠<code>/</code>，如果你没有专门指定转换器，那么这个是默认使用的；</li> 
+  <li><code>int</code>：匹配0和正整数，返回一个int类型</li> 
+  <li><code>slug</code>：可理解为注释、后缀、附属等概念，是url拖在最后的一部分解释性字符。该转换器匹配任何ASCII字符以及连接符和下划线，比如<code>building-your-1st-django-site</code>；</li> 
+  <li><code>uuid</code>：匹配一个uuid格式的对象。为了防止冲突，规定必须使用破折号，所有字母必须小写，例如<code>075194d3-6885-417e-a8a8-6c931e272f00</code>。返回一个UUID对象；</li> 
+  <li><code>path</code>：匹配任何非空字符串，重点是可以包含路径分隔符’/‘。这个转换器可以帮助你匹配整个url而不是一段一段的url字符串。<strong>要区分path转换器和path()方法</strong>。</li> 
+ </ul> 
+ <h2>五、自定义path转换器</h2> 
+ <p>其实就是写一个类，并包含下面的成员和属性：</p> 
+ <ul> 
+  <li>类属性regex：一个字符串形式的正则表达式属性；</li> 
+  <li>to_python(self, value) 方法：一个用来将匹配到的字符串转换为你想要的那个数据类型，并传递给视图函数。如果转换失败，它必须弹出ValueError异常；</li> 
+  <li>to_url(self, value)方法：将Python数据类型转换为一段url的方法，上面方法的反向操作。</li> 
+ </ul> 
+ <p>例如，新建一个converters.py文件，与urlconf同目录，写个下面的类：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kr">class</span> <span class="nx">FourDigitYearConverter</span>:
+    <span class="kt">regex</span> <span class="o">=</span> <span class="s1">'[0-9]{4}'</span>
+
+    <span class="nx">def</span> <span class="nx">to_python</span><span class="p">(</span><span class="nx">self</span><span class="p">,</span> <span class="nx">value</span><span class="p">)</span><span class="o">:</span>
+        <span class="k">return</span> <span class="kr">int</span><span class="p">(</span><span class="nx">value</span><span class="p">)</span>
+
+    <span class="nx">def</span> <span class="nx">to_url</span><span class="p">(</span><span class="nx">self</span><span class="p">,</span> <span class="nx">value</span><span class="p">)</span><span class="o">:</span>
+        <span class="k">return</span> <span class="s1">'%04d'</span> <span class="o">%</span> <span class="nx">value</span>
+</pre>
+ </div> 
+ <p>写完类后，在URLconf 中注册，并使用它，如下所示，注册了一个yyyy：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">register_converter</span><span class="p">,</span> <span class="n">path</span>
+
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">converters</span><span class="p">,</span> <span class="n">views</span>
+
+<span class="n">register_converter</span><span class="p">(</span><span class="n">converters</span><span class="o">.</span><span class="n">FourDigitYearConverter</span><span class="p">,</span> <span class="s1">'yyyy'</span><span class="p">)</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'articles/2003/'</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">special_case_2003</span><span class="p">),</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'articles/&lt;yyyy:year&gt;/'</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">year_archive</span><span class="p">),</span>
+    <span class="o">...</span>
+<span class="p">]</span>
+</pre>
+ </div> 
+ <h2>六、使用正则表达式</h2> 
+ <p>Django2.0的url虽然改‘配置’了，但它依然向老版本兼容。而这个兼容的办法，就是用<code>re_path()</code>方法代替<code>path()</code>方法。<code>re_path()</code>方法在骨子里，根本就是以前的<code>url()</code>方法，只不过导入的位置变了。下面是一个例子，对比一下Django1.11时代的语法，有什么太大的差别？</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">path</span><span class="p">,</span> <span class="n">re_path</span>
+
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">views</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'articles/2003/'</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">special_case_2003</span><span class="p">),</span>
+    <span class="n">re_path</span><span class="p">(</span><span class="sa">r</span><span class="s1">'^articles/(?P&lt;year&gt;[0-9]{4})/$'</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">year_archive</span><span class="p">),</span>
+    <span class="n">re_path</span><span class="p">(</span><span class="sa">r</span><span class="s1">'^articles/(?P&lt;year&gt;[0-9]{4})/(?P&lt;month&gt;[0-9]{2})/$'</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">month_archive</span><span class="p">),</span>
+    <span class="n">re_path</span><span class="p">(</span><span class="sa">r</span><span class="s1">'^articles/(?P&lt;year&gt;[0-9]{4})/(?P&lt;month&gt;[0-9]{2})/(?P&lt;slug&gt;[\w-]+)/$'</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">article_detail</span><span class="p">),</span>
+<span class="p">]</span>
+</pre>
+ </div> 
+ <p>与<code>path()</code>方法不同的在于两点：</p> 
+ <ul> 
+  <li>year中匹配不到10000等非四位数字，这是正则表达式决定的</li> 
+  <li>传递给视图的所有参数都是字符串类型。而不像<code>path()</code>方法中可以指定转换成某种类型。在视图中接收参数时一定要小心。</li> 
+ </ul> 
+ <h2>七、URLconf匹配URL中的哪些部分</h2> 
+ <p>请求的URL被看做是一个普通的Python字符串，URLconf在其上查找并匹配。<strong>进行匹配时将不包括GET或POST请求方式的参数以及域名。</strong></p> 
+ <p>例如，在<code>https://www.example.com/myapp/</code>的请求中，URLconf将查找<code>myapp/</code>。</p> 
+ <p>在<code>https://www.example.com/myapp/?page=3</code>的请求中，URLconf也将查找<code>myapp/</code>。</p> 
+ <p>URLconf不检查使用何种HTTP请求方法，所有请求方法POST、GET、HEAD等都将路由到同一个URL的同一个视图。在视图中，才根据具体请求方法的不同，进行不同的处理。</p> 
+ <h2>八、指定视图参数的默认值</h2> 
+ <p>有一个小技巧，我们可以指定视图参数的默认值。 下面是一个URLconf和视图的示例：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="c1"># URLconf</span>
+<span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">path</span>
+
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">views</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'blog/'</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">page</span><span class="p">),</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'blog/page&lt;int:num&gt;/'</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">page</span><span class="p">),</span>
+<span class="p">]</span>
+
+<span class="c1"># View (in blog/views.py)</span>
+<span class="k">def</span> <span class="nf">page</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+    <span class="c1"># Output the appropriate page of blog entries, according to num.</span>
+    <span class="o">...</span>
+</pre>
+ </div> 
+ <p>在上面的例子中，两个URL模式指向同一个视图<code>views.page</code>。但是第一个模式不会从URL中捕获任何值。 如果第一个模式匹配，page()函数将使用num参数的默认值"1"。 如果第二个模式匹配，page()将使用捕获的num值。</p> 
+ <h2>九、自定义错误页面</h2> 
+ <p>当Django找不到与请求匹配的URL时，或者当抛出一个异常时，将调用一个错误处理视图。Django默认的自带的错误视图包括400、403、404和500，分别表示请求错误、拒绝服务、页面不存在和服务器错误。它们分别位于：</p> 
+ <ul> 
+  <li>handler400 —— django.conf.urls.handler400。</li> 
+  <li>handler403 —— django.conf.urls.handler403。</li> 
+  <li>handler404 —— django.conf.urls.handler404。</li> 
+  <li>handler500 —— django.conf.urls.handler500。</li> 
+ </ul> 
+ <p>这些值可以在根URLconf中设置。在其它app中的二级URLconf中设置这些变量无效。</p> 
+ <p>Django有内置的HTML模版，用于返回错误页面给用户，但是这些403，404页面实在丑陋，通常我们都自定义错误页面。</p> 
+ <p>首先，在根URLconf中额外增加下面的条目，并导入views模块：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.contrib</span> <span class="kn">import</span> <span class="n">admin</span>
+<span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">path</span>
+<span class="kn">from</span> <span class="nn">app</span> <span class="kn">import</span> <span class="n">views</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">path</span><span class="p">(</span><span class="s1">'admin/'</span><span class="p">,</span> <span class="n">admin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">urls</span><span class="p">),</span>
+<span class="p">]</span>
+
+<span class="c1"># 增加的条目</span>
+<span class="n">handler400</span> <span class="o">=</span> <span class="n">views</span><span class="o">.</span><span class="n">bad_request</span>
+<span class="n">handler403</span> <span class="o">=</span> <span class="n">views</span><span class="o">.</span><span class="n">permission_denied</span>
+<span class="n">handler404</span> <span class="o">=</span> <span class="n">views</span><span class="o">.</span><span class="n">page_not_found</span>
+<span class="n">handler500</span> <span class="o">=</span> <span class="n">views</span><span class="o">.</span><span class="n">error</span>
+</pre>
+ </div> 
+ <p>然后在，app/views.py文件中增加四个处理视图：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="k">def</span> <span class="nf">bad_request</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'400.html'</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">permission_denied</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'403.html'</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">page_not_found</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'404.html'</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">error</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'500.html'</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>再根据自己的需求，创建对应的400、403、404、500.html四个页面文件，就可以了（要注意好模板文件的引用方式，视图的放置位置等等）。</p> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/133"> <i class="fa fa-arrow-left"></i>&nbsp;第二章：视图层</a> 
+  <a class="float-right" href="/course/django/135"> 路由转发&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 12</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/134">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva3.sinaimg.cn/crop.0.280.720.720.50/006gDDqPjw8exidxmdnn5j30k00zkq7e.jpg?KID=imgbed,tva&amp;Expires=1586171836&amp;ssig=uUyoZtS5BU" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>自定义错误页面 得再settings.py文件中，将DEBUG = True 更改为 DEBUG = False</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 范建平0107 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年4月6日 16:18</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2013">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.0.0.996.996.50/006xIWURly8gehjmghiqfj30ro0roq53.jpg?KID=imgbed,tva&amp;Expires=1591289035&amp;ssig=NX%2BU5OBrH%2F" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>对</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 蔷薇-Nina &nbsp;&nbsp;回复&nbsp;&nbsp; 范建平0107 </span> 
+      <em>2020年6月8日 20:14</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2108">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva1.sinaimg.cn/crop.0.0.180.180.50/59bd64d7jw1e8qgp5bmzyj2050050aa8.jpg?KID=imgbed,tva&amp;Expires=1582805685&amp;ssig=raLhwkGACh" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>path('blog/page&lt;int:num&gt;/', views.page),这里应该是 path('blog/&lt;int:num&gt;/', views.page),</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 定期换名字啦啦 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年2月27日 18:17</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1927">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax2.sinaimg.cn/crop.0.0.996.996.50/006nYu7lly8fkiygvorosj30ro0ro76r.jpg?KID=imgbed,tva&amp;Expires=1578648103&amp;ssig=PcfpntXS16" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>自定义错误界面要在setting中把DEBUG改为False，然后再下面的port中加入['*']</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; GardenBaby_ </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年1月15日 21:52</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1848">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax2.sinaimg.cn/crop.0.0.996.996.50/006nYu7lly8fkiygvorosj30ro0ro76r.jpg?KID=imgbed,tva&amp;Expires=1578648103&amp;ssig=PcfpntXS16" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>请问一下 404.html 文件放在那个路径下面，我换了好几个地方都无法正确显示自己设置的错误界面</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; GardenBaby_ </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年1月11日 18:26</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1836">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.0.0.996.996.50/006D6QOXly8gci3lo7xw2j30ro0ro0v2.jpg?KID=imgbed,tva&amp;Expires=1583470415&amp;ssig=zZpFzv%2FXME" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>在app目录下新建一个template目录，里面再新建一个app目录，再在这个app目录里面新建html文件。参考投票应用。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 爱free的熊 &nbsp;&nbsp;回复&nbsp;&nbsp; GardenBaby_ </span> 
+      <em>2020年3月7日 20:10</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1955">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif?Expires=1562750488&amp;ssig=bJHPGU05XU&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>左侧的目录，动就动，不动就不动，你这样看着头都晕啊</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户6296384104 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年7月10日 16:23</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1444">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.180.180.50/67179639jw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>在django2.0中,URL中捕获的参数为字符串类型, 不全部是字符串了. 刘大大,注释一下哈~</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 孤竹孙 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年5月5日 18:58</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/442">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.664.664.50/006XuMcxly8fkbv84zbcij30ig0igt95.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>为何 url(r'^blog/page(?P&lt;num&gt;[0-9]+)/$' 我按这样规则写 在视图函数中，def page(request, num="1"),num接收不到数据 如果不给num赋初值，还会报错说没有给num赋值 请问该如何解决</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; GoodMorningYY </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年3月27日 22:31</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/334">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>信息太少，无法准确回答。但从字面上看，url路由没写全，后面关联的是哪个视图函数呢？是没贴出来还是真没写？是不是views.page？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; GoodMorningYY </span> 
+      <em>2018年3月28日 09:07</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/337">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.996.996.50/006EOKhYly8fhshcco7p6j30ro0romya.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>博主，这个地方应该是400吧？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; WEI丶weiksjsks </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年1月31日 19:18</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/175">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>handler404 = views.page_not_found这种是请求不成功，系统自动返回一个错误页面。 question = get_object_or_404(Question, pk=question_id)这种是手动处理转到错误页面。 如果视图类比较多，推荐用第一种写法？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 王蕾-wl </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年1月24日 16:34</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/155">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

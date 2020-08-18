@@ -1,0 +1,348 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>11.资产详细页面</h1> 
+ <small>阅读:&nbsp;24821&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：3 </small> 
+ <hr> 
+ <p>在资产的详细页面，我们将尽可能地将所有的信息都显示出来，并保持美观、整齐。</p> 
+ <p>教程中实现了主要的服务器资产页面，对于其它类型的资产详细页面，可参照完成，并不复杂。</p> 
+ <p>完整的detail.html页面代码如下：</p> 
+ <div class="codehilite">
+  <pre><span></span>{% extends 'base.html' %}
+{% load static %}
+{% block title %}资产详细{% endblock %}
+
+{% block css %}
+
+{% endblock %}
+
+{% block breadcrumb %}
+<span class="c">&lt;!-- Content Header (Page header) --&gt;</span>
+    <span class="p">&lt;</span><span class="nt">section</span> <span class="na">class</span><span class="o">=</span><span class="s">"content-header"</span><span class="p">&gt;</span>
+      <span class="p">&lt;</span><span class="nt">h1</span><span class="p">&gt;</span>
+        资产详细
+        <span class="p">&lt;</span><span class="nt">small</span><span class="p">&gt;</span>asset info<span class="p">&lt;/</span><span class="nt">small</span><span class="p">&gt;</span>
+      <span class="p">&lt;/</span><span class="nt">h1</span><span class="p">&gt;</span>
+      <span class="p">&lt;</span><span class="nt">ol</span> <span class="na">class</span><span class="o">=</span><span class="s">"breadcrumb"</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">li</span><span class="p">&gt;&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">"#"</span><span class="p">&gt;&lt;</span><span class="nt">i</span> <span class="na">class</span><span class="o">=</span><span class="s">"fa fa-dashboard"</span><span class="p">&gt;&lt;/</span><span class="nt">i</span><span class="p">&gt;</span> 主页<span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">li</span><span class="p">&gt;</span>资产总表<span class="p">&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">li</span> <span class="na">class</span><span class="o">=</span><span class="s">"active"</span><span class="p">&gt;</span>资产详细<span class="p">&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+      <span class="p">&lt;/</span><span class="nt">ol</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="nt">section</span><span class="p">&gt;</span>
+{% endblock %}
+
+{% block content %}
+
+    <span class="c">&lt;!-- Main content --&gt;</span>
+    <span class="p">&lt;</span><span class="nt">section</span> <span class="na">class</span><span class="o">=</span><span class="s">"content"</span><span class="p">&gt;</span>
+
+      <span class="c">&lt;!-- Default box --&gt;</span>
+      <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"box"</span><span class="p">&gt;</span>
+
+          <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"box-header with-border"</span><span class="p">&gt;</span>
+          <span class="p">&lt;</span><span class="nt">h3</span> <span class="na">class</span><span class="o">=</span><span class="s">"box-title"</span><span class="p">&gt;&lt;</span><span class="nt">strong</span> <span class="na">class</span><span class="o">=</span><span class="s">"btn btn-block btn-primary btn-lg"</span><span class="p">&gt;</span>资产：{{ asset.name }}<span class="p">&lt;/</span><span class="nt">strong</span><span class="p">&gt;&lt;/</span><span class="nt">h3</span><span class="p">&gt;</span>
+
+          <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"box-tools pull-right"</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="nt">button</span> <span class="na">type</span><span class="o">=</span><span class="s">"button"</span> <span class="na">class</span><span class="o">=</span><span class="s">"btn btn-box-tool"</span> <span class="na">data-widget</span><span class="o">=</span><span class="s">"collapse"</span> <span class="na">data-toggle</span><span class="o">=</span><span class="s">"tooltip"</span> <span class="na">title</span><span class="o">=</span><span class="s">"Collapse"</span><span class="p">&gt;</span>
+              <span class="p">&lt;</span><span class="nt">i</span> <span class="na">class</span><span class="o">=</span><span class="s">"fa fa-minus"</span><span class="p">&gt;&lt;/</span><span class="nt">i</span><span class="p">&gt;&lt;/</span><span class="nt">button</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="nt">button</span> <span class="na">type</span><span class="o">=</span><span class="s">"button"</span> <span class="na">class</span><span class="o">=</span><span class="s">"btn btn-box-tool"</span> <span class="na">data-widget</span><span class="o">=</span><span class="s">"remove"</span> <span class="na">data-toggle</span><span class="o">=</span><span class="s">"tooltip"</span> <span class="na">title</span><span class="o">=</span><span class="s">"Remove"</span><span class="p">&gt;</span>
+              <span class="p">&lt;</span><span class="nt">i</span> <span class="na">class</span><span class="o">=</span><span class="s">"fa fa-times"</span><span class="p">&gt;&lt;/</span><span class="nt">i</span><span class="p">&gt;&lt;/</span><span class="nt">button</span><span class="p">&gt;</span>
+          <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+
+          <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"box-body"</span><span class="p">&gt;</span>
+          <span class="p">&lt;</span><span class="nt">h4</span><span class="p">&gt;&lt;</span><span class="nt">b</span><span class="p">&gt;</span>概览:<span class="p">&lt;/</span><span class="nt">b</span><span class="p">&gt;&lt;/</span><span class="nt">h4</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="nt">table</span> <span class="na">border</span><span class="o">=</span><span class="s">"1"</span> <span class="na">class</span><span class="o">=</span><span class="s">"table  table-responsive"</span> <span class="na">style</span><span class="o">=</span><span class="s">"border-left:3px solid deepskyblue;border-bottom:1px solid deepskyblue"</span> <span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="nt">thead</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="nt">tr</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>类型<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>SN<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>业务线<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>制造商<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>管理IP<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>机房<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>标签<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>更新日期<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+                    <span class="p">&lt;/</span><span class="nt">tr</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="nt">thead</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="nt">tbody</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="nt">tr</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>{{ asset.get_asset_type_display }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>{{ asset.sn }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>{{ asset.business_unit|default:'N/A' }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>{{ asset.manufacturer|default:'N/A' }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>{{ asset.manage_ip|default:'N/A' }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>{{ asset.idc|default:'N/A' }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>
+                        {% for tag in asset.tags.all %}
+                        <span class="p">&lt;</span><span class="nt">label</span> <span class="na">class</span><span class="o">=</span><span class="s">"label label-primary"</span><span class="p">&gt;</span>{{ tag.name }}<span class="p">&lt;/</span><span class="nt">label</span><span class="p">&gt;</span>
+                        {% empty %}
+                            -
+                        {% endfor %}
+                    <span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>{{ asset.m_time }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="nt">tr</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="nt">tbody</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="nt">table</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="nt">br</span> <span class="p">/&gt;</span>
+            <span class="p">&lt;</span><span class="nt">table</span> <span class="na">border</span><span class="o">=</span><span class="s">"1"</span> <span class="na">class</span><span class="o">=</span><span class="s">"table  table-responsive"</span> <span class="na">style</span><span class="o">=</span><span class="s">"border-left:3px solid deepskyblue;border-bottom:1px solid deepskyblue"</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="nt">thead</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="nt">tr</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>合同<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>价格<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>购买日期<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>过保日期<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>管理员<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>批准人<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>备注<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>批准日期<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+                    <span class="p">&lt;/</span><span class="nt">tr</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="nt">thead</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="nt">tbody</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="nt">tr</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>{{ asset.contract.name|default:'N/A' }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>{{ asset.price|default:'N/A' }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>{{ asset.purchase_day|default:'N/A' }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>{{ asset.expire_day|default:'N/A' }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>{{ asset.admin|default:'N/A' }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>{{ asset.approved_by|default:'N/A' }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>{{ asset.memo|default:'N/A' }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>{{ asset.m_time }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="nt">tr</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="nt">tbody</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="nt">table</span><span class="p">&gt;</span>
+          <span class="p">&lt;</span><span class="nt">h4</span><span class="p">&gt;&lt;</span><span class="nt">b</span><span class="p">&gt;</span>服务器:<span class="p">&lt;/</span><span class="nt">b</span><span class="p">&gt;&lt;/</span><span class="nt">h4</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="nt">table</span> <span class="na">border</span><span class="o">=</span><span class="s">"1"</span> <span class="na">class</span><span class="o">=</span><span class="s">"table  table-responsive"</span> <span class="na">style</span><span class="o">=</span><span class="s">"border-left:3px solid green;border-bottom:1px solid green"</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="nt">thead</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="nt">tr</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>服务器类型<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>型号<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>宿主机<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>Raid类型<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>OS类型<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>OS发行版本<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>OS版本<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>添加方式<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+                    <span class="p">&lt;/</span><span class="nt">tr</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="nt">thead</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="nt">tbody</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="nt">tr</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>{{ asset.server.get_sub_asset_type_display }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>{{ asset.server.model|default:'N/A' }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>{{ asset.server.hosted_on.id|default:'N/A' }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>{{ asset.server.raid_type|default:'N/A' }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>{{ asset.server.os_type|default:'N/A' }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>{{ asset.server.os_distribution|default:'N/A' }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>{{ asset.server.os_release|default:'N/A' }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>{{ asset.server.get_created_by_display }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="nt">tr</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="nt">tbody</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="nt">table</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">h4</span><span class="p">&gt;&lt;</span><span class="nt">b</span><span class="p">&gt;</span>CPU:<span class="p">&lt;/</span><span class="nt">b</span><span class="p">&gt;&lt;/</span><span class="nt">h4</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="nt">table</span> <span class="na">border</span><span class="o">=</span><span class="s">"1"</span> <span class="na">class</span><span class="o">=</span><span class="s">"table  table-responsive"</span> <span class="na">style</span><span class="o">=</span><span class="s">"border-left:3px solid purple;border-bottom:1px solid purple"</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="nt">thead</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="nt">tr</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">th</span>  <span class="na">style</span><span class="o">=</span><span class="s">"width: 45%"</span><span class="p">&gt;</span>CPU型号<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">th</span>  <span class="na">style</span><span class="o">=</span><span class="s">"width: 15%"</span><span class="p">&gt;</span>物理CPU个数<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>CPU核数<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+                    <span class="p">&lt;/</span><span class="nt">tr</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="nt">thead</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="nt">tbody</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="nt">tr</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>{{ asset.cpu.cpu_model|default:'N/A' }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>{{ asset.cpu.cpu_count|default:'1' }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>{{ asset.cpu.cpu_core_count|default:'1' }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="nt">tr</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="nt">tbody</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="nt">table</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">h4</span><span class="p">&gt;&lt;</span><span class="nt">b</span><span class="p">&gt;</span>内存:<span class="p">&lt;/</span><span class="nt">b</span><span class="p">&gt;&lt;/</span><span class="nt">h4</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">table</span> <span class="na">border</span><span class="o">=</span><span class="s">"1"</span> <span class="na">class</span><span class="o">=</span><span class="s">"table  table-responsive"</span> <span class="na">style</span><span class="o">=</span><span class="s">"border-left:3px solid orangered;border-bottom:1px solid orangered"</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="nt">thead</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="nt">tr</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">th</span> <span class="na">style</span><span class="o">=</span><span class="s">"width:5%;"</span><span class="p">&gt;</span>序号<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>型号<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>容量<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>插槽<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>制造商<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>SN<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+                    <span class="p">&lt;/</span><span class="nt">tr</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="nt">thead</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="nt">tbody</span><span class="p">&gt;</span>
+                {% for ram in asset.ram_set.all %}
+                    <span class="p">&lt;</span><span class="nt">tr</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>{{ forloop.counter }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>{{ ram.model|default:'N/A' }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>{{ ram.capacity|default:'N/A' }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>{{ ram.slot }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>{{ ram.manufacturer|default:'N/A' }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>{{ ram.sn|default:'N/A' }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                    <span class="p">&lt;/</span><span class="nt">tr</span><span class="p">&gt;</span>
+                {% empty %}
+                    <span class="p">&lt;</span><span class="nt">tr</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;&lt;/</span><span class="nt">td</span><span class="p">&gt;&lt;</span><span class="nt">td</span><span class="p">&gt;&lt;/</span><span class="nt">td</span><span class="p">&gt;&lt;</span><span class="nt">td</span><span class="p">&gt;&lt;/</span><span class="nt">td</span><span class="p">&gt;&lt;</span><span class="nt">td</span><span class="p">&gt;&lt;/</span><span class="nt">td</span><span class="p">&gt;&lt;</span><span class="nt">td</span><span class="p">&gt;&lt;/</span><span class="nt">td</span><span class="p">&gt;&lt;</span><span class="nt">td</span><span class="p">&gt;&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                    <span class="p">&lt;/</span><span class="nt">tr</span><span class="p">&gt;</span>
+                {% endfor %}
+                <span class="p">&lt;/</span><span class="nt">tbody</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="nt">table</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">h4</span><span class="p">&gt;&lt;</span><span class="nt">b</span><span class="p">&gt;</span>硬盘:<span class="p">&lt;/</span><span class="nt">b</span><span class="p">&gt;&lt;/</span><span class="nt">h4</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">table</span> <span class="na">border</span><span class="o">=</span><span class="s">"1"</span> <span class="na">class</span><span class="o">=</span><span class="s">"table  table-responsive"</span> <span class="na">style</span><span class="o">=</span><span class="s">"border-left:3px solid brown;border-bottom:1px solid brown"</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="nt">thead</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="nt">tr</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">th</span> <span class="na">style</span><span class="o">=</span><span class="s">"width:5%;"</span><span class="p">&gt;</span>序号<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>型号<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>容量<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>插槽<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>接口类型<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>制造商<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>SN<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+                    <span class="p">&lt;/</span><span class="nt">tr</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="nt">thead</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="nt">tbody</span><span class="p">&gt;</span>
+                {% for disk in asset.disk_set.all %}
+                    <span class="p">&lt;</span><span class="nt">tr</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>{{ forloop.counter }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>{{ disk.model|default:'N/A' }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>{{ disk.capacity|default:'N/A' }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>{{ disk.slot|default:'N/A'  }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>{{ disk.get_interface_type_display }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>{{ disk.manufacturer|default:'N/A' }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>{{ disk.sn}}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                    <span class="p">&lt;/</span><span class="nt">tr</span><span class="p">&gt;</span>
+                {% empty %}
+                    <span class="p">&lt;</span><span class="nt">tr</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;&lt;/</span><span class="nt">td</span><span class="p">&gt;&lt;</span><span class="nt">td</span><span class="p">&gt;&lt;/</span><span class="nt">td</span><span class="p">&gt;&lt;</span><span class="nt">td</span><span class="p">&gt;&lt;/</span><span class="nt">td</span><span class="p">&gt;&lt;</span><span class="nt">td</span><span class="p">&gt;&lt;/</span><span class="nt">td</span><span class="p">&gt;&lt;</span><span class="nt">td</span><span class="p">&gt;&lt;/</span><span class="nt">td</span><span class="p">&gt;&lt;</span><span class="nt">td</span><span class="p">&gt;&lt;/</span><span class="nt">td</span><span class="p">&gt;&lt;</span><span class="nt">td</span><span class="p">&gt;&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                    <span class="p">&lt;/</span><span class="nt">tr</span><span class="p">&gt;</span>
+                {% endfor %}
+                <span class="p">&lt;/</span><span class="nt">tbody</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="nt">table</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">h4</span><span class="p">&gt;&lt;</span><span class="nt">b</span><span class="p">&gt;</span>网卡:<span class="p">&lt;/</span><span class="nt">b</span><span class="p">&gt;&lt;/</span><span class="nt">h4</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">table</span> <span class="na">border</span><span class="o">=</span><span class="s">"1"</span> <span class="na">class</span><span class="o">=</span><span class="s">"table  table-responsive"</span> <span class="na">style</span><span class="o">=</span><span class="s">"border-left:3px solid #a59b1a;border-bottom:1px solid #a59b1a"</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="nt">thead</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="nt">tr</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">th</span> <span class="na">style</span><span class="o">=</span><span class="s">"width:5%;"</span><span class="p">&gt;</span>序号<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>名称<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>型号<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>MAC<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>IP<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>掩码<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">th</span><span class="p">&gt;</span>绑定地址<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;</span>
+                    <span class="p">&lt;/</span><span class="nt">tr</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="nt">thead</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="nt">tbody</span><span class="p">&gt;</span>
+                {% for nic in asset.nic_set.all %}
+                    <span class="p">&lt;</span><span class="nt">tr</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>{{ forloop.counter }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>{{ nic.name|default:'N/A' }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>{{ nic.model }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>{{ nic.mac  }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>{{ nic.ip_address|default:'N/A' }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>{{ nic.net_mask|default:'N/A' }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;</span>{{ nic.bonding|default:'N/A' }}<span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                    <span class="p">&lt;/</span><span class="nt">tr</span><span class="p">&gt;</span>
+                {% empty %}
+                    <span class="p">&lt;</span><span class="nt">tr</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="nt">td</span><span class="p">&gt;&lt;/</span><span class="nt">td</span><span class="p">&gt;&lt;</span><span class="nt">td</span><span class="p">&gt;&lt;/</span><span class="nt">td</span><span class="p">&gt;&lt;</span><span class="nt">td</span><span class="p">&gt;&lt;/</span><span class="nt">td</span><span class="p">&gt;&lt;</span><span class="nt">td</span><span class="p">&gt;&lt;/</span><span class="nt">td</span><span class="p">&gt;&lt;</span><span class="nt">td</span><span class="p">&gt;&lt;/</span><span class="nt">td</span><span class="p">&gt;&lt;</span><span class="nt">td</span><span class="p">&gt;&lt;/</span><span class="nt">td</span><span class="p">&gt;&lt;</span><span class="nt">td</span><span class="p">&gt;&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                    <span class="p">&lt;/</span><span class="nt">tr</span><span class="p">&gt;</span>
+                {% endfor %}
+                <span class="p">&lt;/</span><span class="nt">tbody</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="nt">table</span><span class="p">&gt;</span>
+
+        <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+        <span class="c">&lt;!-- /.box-body --&gt;</span>
+        <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"box-footer"</span><span class="p">&gt;</span>
+          <span class="p">&lt;</span><span class="nt">i</span> <span class="na">class</span><span class="o">=</span><span class="s">"fa fa-angle-double-left"</span><span class="p">&gt;&lt;/</span><span class="nt">i</span><span class="p">&gt;</span><span class="ni">&amp;nbsp;&amp;nbsp;</span><span class="p">&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">"{% url 'assets:index' %}"</span><span class="p">&gt;&lt;</span><span class="nt">strong</span><span class="p">&gt;</span>返回资产列表页<span class="p">&lt;/</span><span class="nt">strong</span><span class="p">&gt;&lt;/</span><span class="nt">a</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+        <span class="c">&lt;!-- /.box-footer--&gt;</span>
+      <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+      <span class="c">&lt;!-- /.box --&gt;</span>
+
+    <span class="p">&lt;/</span><span class="nt">section</span><span class="p">&gt;</span>
+    <span class="c">&lt;!-- /.content --&gt;</span>
+
+{% endblock %}
+
+{% block script %}
+
+{% endblock %}
+</pre>
+ </div> 
+ <p>主要代码全部集中在<code>&lt;section class="content"&gt;</code>里，分别用几个表格将概览、服务器、CPU、内存、硬盘和网卡的信息展示出来了。并且，AdminLTE为我们提供了一个折叠的功能，也是非常酷的。</p> 
+ <p>这个HTML文件没有太多需要额外解释的内容，都是一些很基础的模板语言，构造<code>&lt;table&gt;</code>，然后插入数据。如果没有数据，就以‘N/A’代替。最后在底部添加一个返回资产总表的链接。</p> 
+ <p>下面是展示图：</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/127-1.png"></p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/127-2.png"></p> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/126"> <i class="fa fa-arrow-left"></i>&nbsp;10.资产总表</a> 
+  <a class="float-right" href="/course/django/128"> 12.dashboard仪表盘&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 3</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/127">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.996.996.50/005WLe7Gly8fvyxusy3d3j30ro0rodi8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>assets中的二级url路由设置缺少$ url(r'^index/$', views.index, name='index'),</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 光影者联盟 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年2月20日 17:13</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1073">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.960.960.50/006xIWURly8fo9wxo24vzj30qo0qoaaz.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>完成</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 蔷薇-Nina </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年3月30日 22:22</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/354">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.996.996.50/005WLe7Gly8fvyxusy3d3j30ro0rodi8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>可否方便交流下，谢谢</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 光影者联盟 &nbsp;&nbsp;回复&nbsp;&nbsp; 蔷薇-Nina </span> 
+      <em>2019年2月20日 17:13</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1074">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

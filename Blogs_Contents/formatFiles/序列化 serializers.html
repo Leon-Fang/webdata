@@ -1,0 +1,270 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>序列化 serializers</h1> 
+ <small>阅读:&nbsp;29787&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：5 </small> 
+ <hr> 
+ <p>Django的序列化工具让你可以将Django的模型‘翻译’成其它格式的数据。通常情况下，这种其它格式的数据是基于文本的，并且用于数据交换\传输过程。</p> 
+ <h2>一、序列化数据</h2> 
+ <p>Django为我们提供了一个强大的序列化工具serializers。使用它也很简单，如下所示：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.core</span> <span class="kn">import</span> <span class="n">serializers</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">serializers</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span><span class="s2">"xml"</span><span class="p">,</span> <span class="n">SomeModel</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">())</span>
+</pre>
+ </div> 
+ <p>首先，从djang.core导入它，然后调用它的serialize方法，这个方法至少接收两个参数，第一个是你要序列化成为的数据格式，这里是‘xml’，第二个是要序列化的数据对象，数据通常是ORM模型的QuerySet，一个可迭代的对象。</p> 
+ <p>就是这么简单！！</p> 
+ <p>还有一种比较复杂，但钩子更多的使用方法，如下所示：</p> 
+ <div class="codehilite">
+  <pre><span></span>XMLSerializer = serializers.get_serializer("xml")
+xml_serializer = XMLSerializer()
+xml_serializer.serialize(queryset)
+data = xml_serializer.getvalue()
+</pre>
+ </div> 
+ <p>主要是使用了serializers的get_serializer()和getvalue()方法。</p> 
+ <p>当你需要将序列化的数据保存到一个文件对象中的时候，上面的方式就非常有用，例如：</p> 
+ <div class="codehilite">
+  <pre><span></span>with open("file.xml", "w") as out:
+    xml_serializer.serialize(SomeModel.objects.all(), stream=out)
+</pre>
+ </div> 
+ <h3>1. 序列化指定字段</h3> 
+ <p>如果你不想序列化模型对象所有字段的内容，只想序列化某些指定的字段，可以使用fields参数，如下所示：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.core</span> <span class="kn">import</span> <span class="n">serializers</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">serializers</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span><span class="s1">'xml'</span><span class="p">,</span> <span class="n">SomeModel</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">(),</span> <span class="n">fields</span><span class="o">=</span><span class="p">(</span><span class="s1">'name'</span><span class="p">,</span><span class="s1">'size'</span><span class="p">))</span>
+</pre>
+ </div> 
+ <p>这样，只有name和size字段会被序列化。但是，有一个例外，模型的主键pk被隐式输出了，虽然它并不包含在fields参数中。</p> 
+ <h3>2. 序列化继承模型</h3> 
+ <p>考虑下面的模型继承：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kr">class</span> <span class="nx">Place</span><span class="p">(</span><span class="nx">models</span><span class="p">.</span><span class="nx">Model</span><span class="p">)</span><span class="o">:</span>
+    <span class="nx">name</span> <span class="o">=</span> <span class="nx">models</span><span class="p">.</span><span class="nx">CharField</span><span class="p">(</span><span class="nx">max_length</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+
+<span class="kr">class</span> <span class="nx">Restaurant</span><span class="p">(</span><span class="nx">Place</span><span class="p">)</span><span class="o">:</span>
+    <span class="nx">serves_hot_dogs</span> <span class="o">=</span> <span class="nx">models</span><span class="p">.</span><span class="nx">BooleanField</span><span class="p">(</span><span class="k">default</span><span class="o">=</span><span class="nx">False</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>如果你只序列化餐厅模型：</p> 
+ <div class="codehilite">
+  <pre><span></span>data = serializers.serialize('xml', Restaurant.objects.all())
+</pre>
+ </div> 
+ <p>序列化输出上的字段将只包含<code>serves_hot_dogs</code>属性。基类的<code>name</code>属性并不会一起序列化。</p> 
+ <p>为了完全序列化Restaurant实例，还需要将Place模型序列化，如下所示：</p> 
+ <div class="codehilite">
+  <pre><span></span>all_objects = list(Restaurant.objects.all()) + list(Place.objects.all())
+data = serializers.serialize('xml', all_objects)
+</pre>
+ </div> 
+ <h2>二、反序列化数据</h2> 
+ <p>反序列化也相当简单，如下所示：</p> 
+ <div class="codehilite">
+  <pre><span></span>for obj in serializers.deserialize("xml", data):
+    do_something_with(obj)
+</pre>
+ </div> 
+ <p>其中的data是我们以前序列化后生成的数据（一个字符串或者数据流）。deserialize()方法返回的是一个迭代器，通过for循环，拿到它内部的每个元素。</p> 
+ <p>在这里有区别的是，deserialize返回的迭代器对象不是简单的Django模型的对象。而是特殊的DeserializedObject实例。调用DeserializedObject.save()方法可以将对象保存到数据库。</p> 
+ <p>PS：如果序列化数据中的pk属性不存在或为null，则新实例将保存到数据库。</p> 
+ <p>将DeserializedObject保存到数据库，可以如下操作：</p> 
+ <div class="codehilite">
+  <pre><span></span>for deserialized_object in serializers.deserialize("xml", data):
+    if object_should_be_saved(deserialized_object):
+        deserialized_object.save()
+</pre>
+ </div> 
+ <p>在这么做之前，你必须保证你的序列化数据是合乎你本地ORM模型属性的，否则保存的过程中会出现各种让你挠头的错误，这是很显然的。</p> 
+ <h2>三、可序列化的格式</h2> 
+ <p>Djanggo支持三种序列化格式，其中的一些可能需要安装第三方库支持：</p> 
+ <ul> 
+  <li>xml</li> 
+  <li>json</li> 
+  <li>yaml</li> 
+ </ul> 
+ <h2>1. XML</h2> 
+ <p>xml格式相当简单：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">&lt;?xml version="1.0" encoding="utf-8"?&gt;</span>
+<span class="nt">&lt;django-objects</span> <span class="na">version=</span><span class="s">"1.0"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;object</span> <span class="na">pk=</span><span class="s">"123"</span> <span class="na">model=</span><span class="s">"sessions.session"</span><span class="nt">&gt;</span>
+        <span class="nt">&lt;field</span> <span class="na">type=</span><span class="s">"DateTimeField"</span> <span class="na">name=</span><span class="s">"expire_date"</span><span class="nt">&gt;</span>2013-01-16T08:16:59.844560+00:00<span class="nt">&lt;/field&gt;</span>
+        <span class="c">&lt;!-- ... --&gt;</span>
+    <span class="nt">&lt;/object&gt;</span>
+<span class="nt">&lt;/django-objects&gt;</span>
+</pre>
+ </div> 
+ <p>外键字段被序列化成下面的格式：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="nt">&lt;object</span> <span class="na">pk=</span><span class="s">"27"</span> <span class="na">model=</span><span class="s">"auth.permission"</span><span class="nt">&gt;</span>
+    <span class="c">&lt;!-- ... --&gt;</span>
+    <span class="nt">&lt;field</span> <span class="na">to=</span><span class="s">"contenttypes.contenttype"</span> <span class="na">name=</span><span class="s">"content_type"</span> <span class="na">rel=</span><span class="s">"ManyToOneRel"</span><span class="nt">&gt;</span>9<span class="nt">&lt;/field&gt;</span>
+    <span class="c">&lt;!-- ... --&gt;</span>
+<span class="nt">&lt;/object&gt;</span>
+</pre>
+ </div> 
+ <p>多对多字段被序列化成下面的样子：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="nt">&lt;object</span> <span class="na">pk=</span><span class="s">"1"</span> <span class="na">model=</span><span class="s">"auth.user"</span><span class="nt">&gt;</span>
+    <span class="c">&lt;!-- ... --&gt;</span>
+    <span class="nt">&lt;field</span> <span class="na">to=</span><span class="s">"auth.permission"</span> <span class="na">name=</span><span class="s">"user_permissions"</span> <span class="na">rel=</span><span class="s">"ManyToManyRel"</span><span class="nt">&gt;</span>
+        <span class="nt">&lt;object</span> <span class="na">pk=</span><span class="s">"46"</span><span class="nt">&gt;&lt;/object&gt;</span>
+        <span class="nt">&lt;object</span> <span class="na">pk=</span><span class="s">"47"</span><span class="nt">&gt;&lt;/object&gt;</span>
+    <span class="nt">&lt;/field&gt;</span>
+<span class="nt">&lt;/object&gt;</span>
+</pre>
+ </div> 
+ <h3>2. JSON</h3> 
+ <p>序列化成json格式后，看起来是下面的样子：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="p">[</span>
+    <span class="p">{</span>
+        <span class="nt">"pk"</span><span class="p">:</span> <span class="s2">"4b678b301dfd8a4e0dad910de3ae245b"</span><span class="p">,</span>
+        <span class="nt">"model"</span><span class="p">:</span> <span class="s2">"sessions.session"</span><span class="p">,</span>
+        <span class="nt">"fields"</span><span class="p">:</span> <span class="p">{</span>
+            <span class="nt">"expire_date"</span><span class="p">:</span> <span class="s2">"2013-01-16T08:16:59.844Z"</span><span class="p">,</span>
+            <span class="err">...</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">]</span>
+</pre>
+ </div> 
+ <p>需要注意的是，如果你的ORM模型具有自定义的字段，那么Django给我们提供的序列化工具，就无法正常工作，你必须自己编写相应部分的序列化代码，下面是一个参考的例子：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.utils.encoding</span> <span class="kn">import</span> <span class="n">force_text</span>
+<span class="kn">from</span> <span class="nn">django.core.serializers.json</span> <span class="kn">import</span> <span class="n">DjangoJSONEncoder</span>
+
+<span class="k">class</span> <span class="nc">LazyEncoder</span><span class="p">(</span><span class="n">DjangoJSONEncoder</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">default</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">YourCustomType</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">force_text</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">LazyEncoder</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>上面编写了一个LazyEncoder类，用来实现你的序列化方法，使用下面的方法调用它：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.core.serializers</span> <span class="kn">import</span> <span class="n">serialize</span>
+
+<span class="n">serialize</span><span class="p">(</span><span class="s1">'json'</span><span class="p">,</span> <span class="n">SomeModel</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">(),</span> <span class="bp">cls</span><span class="o">=</span><span class="n">LazyEncoder</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>PS：Python本身不支持序列化<code>类</code>到json格式，Django帮我们实现了它自己的模型类序列化为json的方法，但也仅限于此，如果你在Django内写了一个别的自定义类，一样无法序列化为json格式，除非你自己实现，像上面的例子所示。</p> 
+ <h3>3. YAML</h3> 
+ <p>yaml的格式和json很像，如下所示：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="p p-Indicator">-</span>   <span class="l l-Scalar l-Scalar-Plain">fields</span><span class="p p-Indicator">:</span> <span class="p p-Indicator">{</span><span class="nv">expire_date</span><span class="p p-Indicator">:</span> <span class="kt">!!timestamp</span> <span class="s">'2013-01-16</span><span class="nv"> </span><span class="s">08:16:59.844560+00:00'</span><span class="p p-Indicator">}</span>
+    <span class="l l-Scalar l-Scalar-Plain">model</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">sessions.session</span>
+    <span class="l l-Scalar l-Scalar-Plain">pk</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">4b678b301dfd8a4e0dad910de3ae245b</span>
+</pre>
+ </div> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/170"> <i class="fa fa-arrow-left"></i>&nbsp;信号 signal</a> 
+  <a class="float-right" href="/course/django/172"> 消息框架 message&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 5</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/171">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.664.664.50/8ea3178bjw8f0qgc5x05qj20ig0iggmf.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>QuerySet 对象传递个模板，在从模板用ajax传递给视图，数据变成了字符串QuerySet, 怎么让数据在变成可用的QuerySet???</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; jekoie </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年7月13日 16:18</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/579">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva3.sinaimg.cn/crop.24.15.166.166.50/720a5c38jw1ecxcl6ph9dj205k05kaan.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>变成list再传把</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> Xz-龍 &nbsp;&nbsp;回复&nbsp;&nbsp; jekoie </span> 
+      <em>2018年12月7日 10:42</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/921">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.960.960.50/006xIWURly8fo9wxo24vzj30qo0qoaaz.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>模型序列化</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 蔷薇-Nina </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年6月27日 21:11</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/547">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.960.960.50/006xIWURly8fo9wxo24vzj30qo0qoaaz.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>方法1：data = serializers.serialize("xml", SomeModel.objects.all()) 方法二：XMLSerializer = serializers.get_serializer("xml") xml_serializer = XMLSerializer() data = xml_serializer.serialize(queryset) 实际开发中，哪个方法最常用？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 蔷薇-Nina </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年3月1日 15:23</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/230">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>两种方法各有优点，根据场景进行选择。没有常用不常用的区别。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 蔷薇-Nina </span> 
+      <em>2018年3月1日 15:51</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/231">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

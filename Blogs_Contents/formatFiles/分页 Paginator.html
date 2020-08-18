@@ -1,0 +1,196 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>分页 Paginator</h1> 
+ <small>阅读:&nbsp;20965&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：1 </small> 
+ <hr> 
+ <p>分页功能是几乎所有的网站上都需要提供的功能，当你要展示的条目比较多时，必须进行分页，不但能减小数据库读取数据压力，也有利于用户浏览。</p> 
+ <p>Django又很贴心的为我们提供了一个Paginator分页工具，但是不幸的是，这个工具功能差了点，不好添加CSS样式，所以前端的展示效果比较丑。如果你能力够，自己编写一个分页器，然后提交给Django官方吧，争取替代掉这个当前的分页器，我看好你哦！</p> 
+ <p>但不管怎么样，当前的Paginator分页器，还是值得学一下用一下的。</p> 
+ <h2>一、实例展示</h2> 
+ <p>向Paginator提供包含一些对象的列表，以及你想每一页显示几条，比如每页5条、10条、20条、100条等等，它就会为你提供访问的一系列API方法，示例如下：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">django.core.paginator</span> <span class="kn">import</span> <span class="n">Paginator</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">objects</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'john'</span><span class="p">,</span> <span class="s1">'paul'</span><span class="p">,</span> <span class="s1">'george'</span><span class="p">,</span> <span class="s1">'ringo'</span><span class="p">]</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">p</span> <span class="o">=</span> <span class="n">Paginator</span><span class="p">(</span><span class="n">objects</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>  <span class="c1"># 对objects进行分页，虽然objects只是个字符串列表，但没关系，一样用。每页显示2条。</span>
+
+<span class="o">&gt;&gt;&gt;</span> <span class="n">p</span><span class="o">.</span><span class="n">count</span>   <span class="c1"># 对象个数</span>
+<span class="mi">4</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">p</span><span class="o">.</span><span class="n">num_pages</span>  <span class="c1"># 总共几页</span>
+<span class="mi">2</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="nb">type</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">page_range</span><span class="p">)</span>  <span class="c1"># `&lt;type 'rangeiterator'&gt;` in Python 2.</span>
+<span class="o">&lt;</span><span class="k">class</span> <span class="err">'</span><span class="nc">range_iterator</span><span class="s1">'&gt;</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">p</span><span class="o">.</span><span class="n">page_range</span>  <span class="c1"># 分页范围</span>
+<span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+
+<span class="o">&gt;&gt;&gt;</span> <span class="n">page1</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">page</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="c1"># 获取第一页</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">page1</span>
+<span class="o">&lt;</span><span class="n">Page</span> <span class="mi">1</span> <span class="n">of</span> <span class="mi">2</span><span class="o">&gt;</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">page1</span><span class="o">.</span><span class="n">object_list</span> <span class="c1"># 获取第一页的对象</span>
+<span class="p">[</span><span class="s1">'john'</span><span class="p">,</span> <span class="s1">'paul'</span><span class="p">]</span>
+
+<span class="o">&gt;&gt;&gt;</span> <span class="n">page2</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">page</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">page2</span><span class="o">.</span><span class="n">object_list</span>
+<span class="p">[</span><span class="s1">'george'</span><span class="p">,</span> <span class="s1">'ringo'</span><span class="p">]</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">page2</span><span class="o">.</span><span class="n">has_next</span><span class="p">()</span>  <span class="c1"># 判断是否有下一页</span>
+<span class="bp">False</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">page2</span><span class="o">.</span><span class="n">has_previous</span><span class="p">()</span><span class="c1"># 判断是否有上一页</span>
+<span class="bp">True</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">page2</span><span class="o">.</span><span class="n">has_other_pages</span><span class="p">()</span> <span class="c1"># 判断是否有其它页</span>
+<span class="bp">True</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">page2</span><span class="o">.</span><span class="n">next_page_number</span><span class="p">()</span> <span class="c1"># 获取下一页的页码</span>
+<span class="n">Traceback</span> <span class="p">(</span><span class="n">most</span> <span class="n">recent</span> <span class="n">call</span> <span class="n">last</span><span class="p">):</span>
+<span class="o">...</span>
+<span class="n">EmptyPage</span><span class="p">:</span> <span class="n">That</span> <span class="n">page</span> <span class="n">contains</span> <span class="n">no</span> <span class="n">results</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">page2</span><span class="o">.</span><span class="n">previous_page_number</span><span class="p">()</span> <span class="c1"># 获取上一页的页码</span>
+<span class="mi">1</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">page2</span><span class="o">.</span><span class="n">start_index</span><span class="p">()</span> <span class="c1"># 从1开始计数的当前页的第一个对象</span>
+<span class="mi">3</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">page2</span><span class="o">.</span><span class="n">end_index</span><span class="p">()</span> <span class="c1"># 从1开始计数的当前页最后1个对象</span>
+<span class="mi">4</span>
+
+<span class="o">&gt;&gt;&gt;</span> <span class="n">p</span><span class="o">.</span><span class="n">page</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># 访问不存在的页面</span>
+<span class="n">Traceback</span> <span class="p">(</span><span class="n">most</span> <span class="n">recent</span> <span class="n">call</span> <span class="n">last</span><span class="p">):</span>
+<span class="o">...</span>
+<span class="n">EmptyPage</span><span class="p">:</span> <span class="n">That</span> <span class="n">page</span> <span class="n">number</span> <span class="ow">is</span> <span class="n">less</span> <span class="n">than</span> <span class="mi">1</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">p</span><span class="o">.</span><span class="n">page</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="c1"># 访问不存在的页面</span>
+<span class="n">Traceback</span> <span class="p">(</span><span class="n">most</span> <span class="n">recent</span> <span class="n">call</span> <span class="n">last</span><span class="p">):</span>
+<span class="o">...</span>
+<span class="n">EmptyPage</span><span class="p">:</span> <span class="n">That</span> <span class="n">page</span> <span class="n">contains</span> <span class="n">no</span> <span class="n">results</span>
+</pre>
+ </div> 
+ <p>简单地说，使用Paginator分四步走：</p> 
+ <ul> 
+  <li>使用任何方法，获取要展示的对象列表QuerySet；</li> 
+  <li>将列表和每页个数传递给Paginator，返回一个分页对象；</li> 
+  <li>调用该对象的各种方法，获取各种分页信息；</li> 
+  <li>在HTML模板中，使用上面的分页信息构建分页栏。</li> 
+ </ul> 
+ <p>. </p> 
+ <h2>二、在视图中使用Paginator</h2> 
+ <p>下面的例子假设你拥有一个已经导入的Contacts模型。</p> 
+ <p>在视图函数中使用Paginator，参考下面的代码：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.core.paginator</span> <span class="kn">import</span> <span class="n">Paginator</span><span class="p">,</span> <span class="n">EmptyPage</span><span class="p">,</span> <span class="n">PageNotAnInteger</span>
+<span class="kn">from</span> <span class="nn">django.shortcuts</span> <span class="kn">import</span> <span class="n">render</span>
+
+<span class="k">def</span> <span class="nf">listing</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="n">contact_list</span> <span class="o">=</span> <span class="n">Contacts</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+    <span class="n">paginator</span> <span class="o">=</span> <span class="n">Paginator</span><span class="p">(</span><span class="n">contact_list</span><span class="p">,</span> <span class="mi">25</span><span class="p">)</span> <span class="c1"># 每页显示25条</span>
+
+    <span class="n">page</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'page'</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">contacts</span> <span class="o">=</span> <span class="n">paginator</span><span class="o">.</span><span class="n">page</span><span class="p">(</span><span class="n">page</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">PageNotAnInteger</span><span class="p">:</span>
+        <span class="c1"># 如果请求的页数不是整数，返回第一页。</span>
+        <span class="n">contacts</span> <span class="o">=</span> <span class="n">paginator</span><span class="o">.</span><span class="n">page</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">EmptyPage</span><span class="p">:</span>
+        <span class="c1"># 如果请求的页数不在合法的页数范围内，返回结果的最后一页。</span>
+        <span class="n">contacts</span> <span class="o">=</span> <span class="n">paginator</span><span class="o">.</span><span class="n">page</span><span class="p">(</span><span class="n">paginator</span><span class="o">.</span><span class="n">num_pages</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'list.html'</span><span class="p">,</span> <span class="p">{</span><span class="s1">'contacts'</span><span class="p">:</span> <span class="n">contacts</span><span class="p">})</span>
+</pre>
+ </div> 
+ <p>在<code>list.html</code>模板中，使用下面的范例来展示每个要显示的contact，以及最后的一个分页栏：</p> 
+ <div class="codehilite">
+  <pre><span></span>{% for contact in contacts %}
+    {# 每个"contact"都是一个Contact模型对象. #}
+    {{ contact.full_name|upper }}<span class="p">&lt;</span><span class="nt">br</span> <span class="p">/&gt;</span>
+    ...
+{% endfor %}
+
+{# 分页标签的HTML代码 #}
+<span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"pagination"</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">span</span> <span class="na">class</span><span class="o">=</span><span class="s">"step-links"</span><span class="p">&gt;</span>
+        {% if contacts.has_previous %}
+            <span class="p">&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">"?page={{ contacts.previous_page_number }}"</span><span class="p">&gt;</span>previous<span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;</span>
+        {% endif %}
+
+        <span class="p">&lt;</span><span class="nt">span</span> <span class="na">class</span><span class="o">=</span><span class="s">"current"</span><span class="p">&gt;</span>
+            Page {{ contacts.number }} of {{ contacts.paginator.num_pages }}.
+        <span class="p">&lt;/</span><span class="nt">span</span><span class="p">&gt;</span>
+
+        {% if contacts.has_next %}
+            <span class="p">&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">"?page={{ contacts.next_page_number }}"</span><span class="p">&gt;</span>next<span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;</span>
+        {% endif %}
+    <span class="p">&lt;/</span><span class="nt">span</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+</pre>
+ </div> 
+ <h2>三、Paginator对象</h2> 
+ <p>Paginator类拥有以下方法和属性：</p> 
+ <p><strong>方法：</strong></p> 
+ <p>Paginator.page(number)[source]</p> 
+ <p>返回指定页面的对象列表，比如第7页的所有内容，下标以1开始。如果提供的页码不存在，抛出InvalidPage异常。</p> 
+ <p><strong>属性</strong>：</p> 
+ <ul> 
+  <li>Paginator.count：所有页面的对象总数。</li> 
+  <li>Paginator.num_pages：页面总数。</li> 
+  <li>Paginator.page_range：基于1的页数范围迭代器。</li> 
+ </ul> 
+ <h2>四、处理异常</h2> 
+ <p>在实际使用中，可能恶意也可能不小心，用户请求的页面，可能千奇百怪。正常我们希望是个合法的1，2，3之类，但请求的可能是‘apple’，‘1000000’，‘#’，这就有可能导致异常，需要特别处理。Django为我们内置了下面几个，Paginator相关异常。</p> 
+ <ul> 
+  <li>exception InvalidPage[source]：异常的基类，当paginator传入一个无效的页码时抛出。</li> 
+  <li>exception PageNotAnInteger[source]：当向page()提供一个不是整数的值时抛出。</li> 
+  <li>exception EmptyPage[source]：当向page()提供一个有效值，但是那个页面上没有任何对象时抛出。</li> 
+ </ul> 
+ <p>后面两个异常都是InvalidPage的子类，所以你可以通过简单的except InvalidPage来处理它们。</p> 
+ <h2>五、Page对象</h2> 
+ <p>Paginator.page()将返回一个Page对象，我们主要的操作都是基于Page对象的，它具有下面的方法和属性：</p> 
+ <p><strong>方法</strong>：</p> 
+ <ul> 
+  <li>Page.has_next()[source]：如果有下一页，则返回True。</li> 
+  <li>Page.has_previous()[source]：如果有上一页，返回 True。</li> 
+  <li>Page.has_other_pages()[source]：如果有上一页或下一页，返回True。</li> 
+  <li>Page.next_page_number()[source]：返回下一页的页码。如果下一页不存在，抛出InvalidPage异常。</li> 
+  <li>Page.previous_page_number()[source]：返回上一页的页码。如果上一页不存在，抛出InvalidPage异常。</li> 
+  <li><code>Page.start_index()[source]</code>：返回当前页上的第一个对象，相对于分页列表的所有对象的序号，从1开始计数。 比如，将五个对象的列表分为每页两个对象，第二页的<code>start_index()</code>会返回3。</li> 
+  <li><code>Page.end_index()[source]</code>:返回当前页上的最后一个对象，相对于分页列表的所有对象的序号，从1开始。 比如，将五个对象的列表分为每页两个对象，第二页的<code>end_index()</code>会返回4。</li> 
+ </ul> 
+ <p><strong>属性</strong>:</p> 
+ <ul> 
+  <li>Page.object_list:当前页上所有对象的列表。</li> 
+  <li>Page.number:当前页的序号，从1开始计数。</li> 
+  <li>Page.paginator：当前Page对象所属的Paginator对象。</li> 
+ </ul> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/172"> <i class="fa fa-arrow-left"></i>&nbsp;消息框架 message</a> 
+  <a class="float-right" href="/course/django/174"> 聚合内容 RSS/Atom&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 1</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/173">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>如果用类视图的话会非常简单，只要在视图那里设置好，然后 template直接引用就行。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 忧郁发条人 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年3月3日 22:55</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1098">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

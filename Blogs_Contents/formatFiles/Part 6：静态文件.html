@@ -1,0 +1,175 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>Part 6：静态文件</h1> 
+ <small>阅读:&nbsp;49814&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：6 </small> 
+ <hr> 
+ <p>前面我们编写了一个经过测试的投票应用，现在让我们给它添加一张样式表和一张背景图片。</p> 
+ <p>除了由服务器生成的HTML文件外，WEB应用一般需要提供一些其它的必要文件，比如图片文件、JavaScript脚本和CSS样式表等等，用来为用户呈现出一个完整的网页。在Django中，我们将这些文件统称为“静态文件”，因为这些文件的内容基本是固定不变的，不需要动态生成。</p> 
+ <p>对于小项目，这些都不是大问题，你可以将静态文件放在任何你的web服务器能够找到的地方。但是对于大型项目，尤其是那些包含多个app在内的项目，处理那些由app带来的多套不同的静态文件是个麻烦活。</p> 
+ <p>但这正是<code>django.contrib.staticfiles</code>的用途：它收集每个应用（和任何你指定的地方）的静态文件到一个统一指定的地方，并且易于访问。</p> 
+ <h2>一、使用静态文件</h2> 
+ <p>首先在你的polls目录中创建一个<code>static</code>目录。Django将在那里查找静态文件，这与Django在polls/templates/中寻找对应的模板文件的方式是一致的。</p> 
+ <p>Django的<code>STATICFILES_FINDERS</code>设置项中包含一个查找器列表，它们知道如何从各种源中找到静态文件。 其中一个默认的查找器是<code>AppDirectoriesFinder</code>，它在每个<code>INSTALLED_APPS</code>下查找<code>static</code>子目录，例如我们刚创建的那个<code>static</code>目录。admin管理站点也为它的静态文件使用相同的目录结构。</p> 
+ <p>在刚才的<code>static</code>目录中新建一个<code>polls</code>子目录，再在该子目录中创建一个<code>style.css</code>文件。换句话说，这个css样式文件应该是<code>polls/static/polls/style.css</code>。你可以通过书写<code>polls/style.css</code>在Django中访问这个静态文件，与你如何访问模板的路径类似。</p> 
+ <p><strong>静态文件的命名空间：</strong></p> 
+ <p>与模板类似，我们可以将静态文件直接放在<code>polls/static</code>（而不是创建另外一个polls 子目录），但实际上这是一个坏主意。Django将使用它所找到的第一个匹配到的静态文件，如果在你的不同应用中存在两个同名的静态文件，Django将无法区分它们。我们需要告诉Django该使用其中的哪一个，最简单的方法就是为它们添加命名空间。也就是说，将这些静态文件放进以它们所在的应用的名字同名的另外一个子目录下（白话讲：多建一层与应用同名的子目录）。</p> 
+ <p><strong>PS：良好的目录结构是每个应用都应该创建自己的urls、forms、views、models、templates和static，每个templates包含一个与应用同名的子目录，每个static也包含一个与应用同名的子目录。</strong></p> 
+ <p>将下面的代码写入样式文件<code>polls/static/polls/style.css</code>：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="nt">li</span> <span class="nt">a</span> <span class="p">{</span>
+    <span class="k">color</span><span class="p">:</span> <span class="kc">green</span><span class="p">;</span>
+<span class="p">}</span>
+</pre>
+ </div> 
+ <p>接下来在模板文件<code>polls/templates/polls/index.html</code>的头部加入下面的代码：</p> 
+ <div class="codehilite">
+  <pre><span></span>{% load static %}
+
+<span class="p">&lt;</span><span class="nt">link</span> <span class="na">rel</span><span class="o">=</span><span class="s">"stylesheet"</span> <span class="na">type</span><span class="o">=</span><span class="s">"text/css"</span> <span class="na">href</span><span class="o">=</span><span class="s">"{% static 'polls/style.css' %}"</span><span class="p">&gt;</span>
+</pre>
+ </div> 
+ <p><code>{% static %}</code>模板标签会生成静态文件的绝对URL路径。</p> 
+ <p>重启服务器，在浏览器访问<code>http://localhost:8000/polls/</code>，你会看到Question的超级链接变成了绿色（Django风格！），这意味着你的样式表被成功导入了。（如果不行就ctrl + F5强制刷新浏览器页面，防止缓存。）</p> 
+ <h2>二、添加背景图片</h2> 
+ <p>下面，我们在<code>polls/static/polls/</code>目录下创建一个用于存放图片的<code>images</code>子目录，在这个子目录里放入`background.gif文件。换句话说，这个文件的路径是polls/static/polls/images/background.gif。(你可以使用任何你想要的图片)</p> 
+ <p>在css样式文件<code>polls/static/polls/style.css</code>中添加下面的代码：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="nt">body</span> <span class="p">{</span>
+    <span class="k">background</span><span class="p">:</span> <span class="kc">white</span> <span class="nb">url</span><span class="p">(</span><span class="s2">"images/background.gif"</span><span class="p">)</span> <span class="kc">no-repeat</span><span class="p">;</span>
+<span class="p">}</span>
+</pre>
+ </div> 
+ <p>重新加载<code>http://localhost:8000/polls/</code>(CTRL+F5或者直接F5)，你会在屏幕的左上角看到载入的背景图片。</p> 
+ <p><strong>提示：</strong></p> 
+ <p>很显然，<code>{% static %}</code>模板标签不能用在静态文件，比如样式表中，因为他们不是由Django生成的。 你应该使用相对路径来相互链接静态文件，因为这样你可以改变<code>STATIC_URL</code>（ static模板标签用它来生成URLs）而不用同时修改一大堆静态文件中路径相关的部分。</p> 
+ <h2>三、直接访问静态文件</h2> 
+ <p>实际上不管是在Django开发服务器上，还是在<code>nginx+uwsgi+django</code>部署的服务器上，都可以直接通过url访问静态文件，不需要在Django中专门为每个静态文件编写url路由和视图。</p> 
+ <p>比如，通过<a href="http://www.liujiangblog.com/static/images/default_avatar_male_50.gif">http://www.liujiangblog.com/static/images/default_avatar_male_50.gif</a>你就可以直接获得网站用户的默认头像图片了。</p> 
+ <p>本节简要的介绍了如何使用静态文件，更多的内容留待后续。</p> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/91"> <i class="fa fa-arrow-left"></i>&nbsp;Part 5：测试</a> 
+  <a class="float-right" href="/course/django/93"> Part 7：自定义admin&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 6</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/92">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>需要在settings中设置下面代码才可以工作，否则找不到css文件 STATIC_URL = '/static/' STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; Barry1970_87683 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年12月5日 00:17</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/915">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.664.664.50/005GegUYly8fdvdpxhrdbj30ig0igglo.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>模板js引用了 一个json文件，json文件中又引用了一个json文件。结果最后这个文件路径死活搞不对了。只能用服务器路径了。但是我还是想用相对路径。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; Destiny_ffcc </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年11月21日 11:10</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/882">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.664.664.50/005GegUYly8fdvdpxhrdbj30ig0igglo.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>您好，我想问一下例子中 css和images同在 static目录下，现在我的一个是模板html文件 一个是static下面的静态json文件，我的html怎么写相对路径呢。如果不用｛% static %｝</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> Destiny_ffcc &nbsp;&nbsp;回复&nbsp;&nbsp; Destiny_ffcc </span> 
+      <em>2018年11月21日 17:19</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/883">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.664.664.50/005GegUYly8fdvdpxhrdbj30ig0igglo.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>经过我的测试，打开网页的时候其他static文件是以当前页面为出发点的，所以可以 逐层往上去找所需要的文件。（我的模板反正app根目录下 所以我可以../../static/ 这样访问）</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> Destiny_ffcc &nbsp;&nbsp;回复&nbsp;&nbsp; Destiny_ffcc </span> 
+      <em>2018年11月21日 19:07</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/884">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>python manager.py runserver 重启一下服务 图片就加载出了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; Chihiro1992_54528 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年10月25日 15:03</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/798">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>小小补充，如果使用PyCharm在项目启动时候，添加静态文件后加载失败（静态文件404），确认与上文教程无误后，尝试一下重启项目；</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 全栈猴子 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年10月12日 17:18</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/772">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

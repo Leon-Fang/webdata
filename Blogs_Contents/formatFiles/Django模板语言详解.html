@@ -1,0 +1,652 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>Django模板语言详解</h1> 
+ <small>阅读:&nbsp;40888&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：11 </small> 
+ <hr> 
+ <p>本节将介绍Django模版系统的语法。Django模版语言致力于在性能和简单性上取得平衡。</p> 
+ <p>如果你有过其它编程背景，或者使用过一些在HTML中直接混入程序代码的语言，那么你需要记住，Django的模版系统并不是简单的将Python嵌入到HTML中。</p> 
+ <h2>一、模板</h2> 
+ <p>模版是纯文本文件，可以生成任何基于文本的文件格式，比如HTML，XML，CSV等。</p> 
+ <p>下面是一个小模版，它展示了一些基本的元素。 </p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{%</span> <span class="k">extends</span> <span class="s2">"base_generic.html"</span> <span class="cp">%}</span>
+
+<span class="cp">{%</span> <span class="k">block</span> <span class="nv">title</span> <span class="cp">%}{{</span> <span class="nv">section.title</span> <span class="cp">}}{%</span> <span class="k">endblock</span> <span class="cp">%}</span>
+
+<span class="cp">{%</span> <span class="k">block</span> <span class="nv">content</span> <span class="cp">%}</span>
+<span class="nt">&lt;h1&gt;</span><span class="cp">{{</span> <span class="nv">section.title</span> <span class="cp">}}</span><span class="nt">&lt;/h1&gt;</span>
+
+<span class="cp">{%</span> <span class="k">for</span> <span class="nv">story</span> <span class="k">in</span> <span class="nv">story_list</span> <span class="cp">%}</span>
+<span class="nt">&lt;h2&gt;</span>
+  <span class="nt">&lt;a</span> <span class="na">href=</span><span class="s">"</span><span class="cp">{{</span> <span class="nv">story.get_absolute_url</span> <span class="cp">}}</span><span class="s">"</span><span class="nt">&gt;</span>
+    <span class="cp">{{</span> <span class="nv">story.headline</span><span class="o">|</span><span class="nf">upper</span> <span class="cp">}}</span>
+  <span class="nt">&lt;/a&gt;</span>
+<span class="nt">&lt;/h2&gt;</span>
+<span class="nt">&lt;p&gt;</span><span class="cp">{{</span> <span class="nv">story.tease</span><span class="o">|</span><span class="nf">truncatewords</span><span class="s2">:"100"</span> <span class="cp">}}</span><span class="nt">&lt;/p&gt;</span>
+<span class="cp">{%</span> <span class="k">endfor</span> <span class="cp">%}</span>
+<span class="cp">{%</span> <span class="k">endblock</span> <span class="cp">%}</span>
+</pre>
+ </div> 
+ <h2>二、变量</h2> 
+ <p>变量看起来就像是这样： <code>{{ variable }}。</code> </p> 
+ <p>当模版引擎遇到一个变量，它将从上下文context中获取这个变量的值，然后用值替换掉它本身。 </p> 
+ <p>变量的命名包括任何字母数字以及下划线("_")的组合。点(".")也有可能会在变量名中出现，不过它有特殊的含义。最重要的是，<strong>变量名称中不能有空格或标点符号</strong>。</p> 
+ <p>当模版系统遇到点(".")，它将以这样的顺序查询这个圆点具体代表的功能：</p> 
+ <ul> 
+  <li>字典查询（Dictionary lookup）</li> 
+  <li>属性或方法查询（Attribute or method lookup）</li> 
+  <li>数字索引查询（Numeric index lookup）</li> 
+ </ul> 
+ <p>如果你使用的变量不存在，模版系统将插入<code>string_if_invalid</code>选项的值，默认设置为''(空字符串)。</p> 
+ <p>注意，像<code>{{ foo.bar }}</code>这种模版表达式中的“bar”，如果在模版上下文中存在，将解释为一个字面意义的字符串而不是使用变量bar的值 。</p> 
+ <h2>三、过滤器</h2> 
+ <p>过滤器看起来是这样的：<code>{{ name|lower }}</code>。使用管道符号(<code>|</code>)来应用过滤器。该过滤器将文本转换成小写。</p> 
+ <p>过滤器可以“链接”。一个过滤器的输出应用于下一个过滤器。例如：<code>{{ text|escape|linebreaks }}</code>就是一个常用的过滤器链，它首先转移文本内容，然后把文本行转成<code>&lt;p&gt;</code>标签。</p> 
+ <p>一些过滤器带有参数。 过滤器的参数看起来像是这样： <code>{{ bio|truncatewords:30 }}</code>。 这将显示bio变量的前30个词。</p> 
+ <p><strong>过滤器参数包含空格的话，必须用引号包起来。</strong>例如，使用逗号和空格去连接一个列表中的元素，你需要使用<code>{{ list|join:", " }}</code>。</p> 
+ <p>Django提供了大约六十个内置的模版过滤器，很多时候你想要的功能，它都已经提供了，经常查看这些过滤器，发现新大陆吧。下面是一些常用的模版过滤器：</p> 
+ <h3>1. default</h3> 
+ <p>为false或者空变量提供默认值，像这样：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{{</span> <span class="nv">value</span><span class="o">|</span><span class="nf">default</span><span class="s2">:"nothing"</span> <span class="cp">}}</span><span class="x"></span>
+</pre>
+ </div> 
+ <h3>2. length</h3> 
+ <p>返回值的长度。它对字符串和列表都起作用。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{{</span> <span class="nv">value</span><span class="o">|</span><span class="nf">length</span> <span class="cp">}}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>如果value是['a', 'b', 'c', 'd']，那么输出4。</p> 
+ <h3>3. filesizeformat</h3> 
+ <p>格式化为“人类可读”文件大小单位（即'13 KB'，4.1 MB'，'102 bytes'等）。 </p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{{</span> <span class="nv">value</span><span class="o">|</span><span class="nf">filesizeformat</span> <span class="cp">}}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>如果value是123456789，输出将会是117.7MB。</p> 
+ <p>我们可以创建自定义的模板过滤器和标签，这是最终极的武器。</p> 
+ <h2>四、标签</h2> 
+ <p>标签看起来像是这样的： <code>{% tag %}</code>。 </p> 
+ <p>标签比变量复杂得多，有些用于在输出中创建文本，有些用于控制循环或判断逻辑，有些用于加载外部信息到模板中供以后的变量使用。</p> 
+ <p>一些标签需要开始和结束标签（即 <code>{％ 标签 ％} ... 标签 内容 ... {％ ENDTAG ％}</code>）。</p> 
+ <p>Django自带了大约24个内置的模版标签。下面是一些常用的标签：</p> 
+ <h3>1. for循环标签</h3> 
+ <p>循环对象中每个元素。需要结束标签<code>{% endfor %}</code> 。例如，显示<code>athlete_list</code>中提供的运动员列表：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="p">&lt;</span><span class="nt">ul</span><span class="p">&gt;</span>
+{% for athlete in athlete_list %}
+    <span class="p">&lt;</span><span class="nt">li</span><span class="p">&gt;</span>{{ athlete.name }}<span class="p">&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+{% endfor %}
+<span class="p">&lt;/</span><span class="nt">ul</span><span class="p">&gt;</span>
+</pre>
+ </div> 
+ <h3>2. if，elif和else标签</h3> 
+ <p>计算一个表达式，并且当表达式的值是“True”时，显示块中的内容。需要<code>{% endif %}</code>结束标签。整体逻辑非常类似Python的if、elif和else，如下所示。：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{%</span> <span class="k">if</span> <span class="nv">athlete_list</span> <span class="cp">%}</span><span class="x"></span>
+<span class="x">    Number of athletes: </span><span class="cp">{{</span> <span class="nv">athlete_list</span><span class="o">|</span><span class="nf">length</span> <span class="cp">}}</span><span class="x"></span>
+<span class="cp">{%</span> <span class="k">elif</span> <span class="nv">athlete_in_locker_room_list</span> <span class="cp">%}</span><span class="x"></span>
+<span class="x">    Athletes should be out of the locker room soon!</span>
+<span class="cp">{%</span> <span class="k">else</span> <span class="cp">%}</span><span class="x"></span>
+<span class="x">    No athletes.</span>
+<span class="cp">{%</span> <span class="k">endif</span> <span class="cp">%}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>在上面的例子中，如果<code>athlete_list</code>不是空的，运动员的数量将显示为<code>{{ athlete_list|length }}</code>。否则，如果<code>athlete_in_locker_room_list</code>不为空，将显示“Athletes should be out…”。如果两个列表都是空的，将显示“No athletes.” 。</p> 
+ <p>还可以在if标签中使用过滤器和多种运算符：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{%</span> <span class="k">if</span> <span class="nv">athlete_list</span><span class="o">|</span><span class="nf">length</span> <span class="o">&gt;</span> <span class="m">1</span> <span class="cp">%}</span><span class="x"></span>
+<span class="x">   Team: </span><span class="cp">{%</span> <span class="k">for</span> <span class="nv">athlete</span> <span class="k">in</span> <span class="nv">athlete_list</span> <span class="cp">%}</span><span class="x"> ... </span><span class="cp">{%</span> <span class="k">endfor</span> <span class="cp">%}</span><span class="x"></span>
+<span class="cp">{%</span> <span class="k">else</span> <span class="cp">%}</span><span class="x"></span>
+<span class="x">   Athlete: </span><span class="cp">{{</span> <span class="nv">athlete_list.0.name</span> <span class="cp">}}</span><span class="x"></span>
+<span class="cp">{%</span> <span class="k">endif</span> <span class="cp">%}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>需要注意，大多数模版过滤器都返回字符串类型，所以使用过滤器做整数类型的比较通常是错误的，但length是一个例外。</p> 
+ <h3>3. block和extends标签</h3> 
+ <p>继承和复写模版。类似Python的类继承和重写机制。</p> 
+ <h2>五、注释</h2> 
+ <p>要注释模版中一行的部分内容，使用注释语法:<code>{# #}</code>。</p> 
+ <p>例如，下面的模版将被渲染为'hello'：</p> 
+ <div class="codehilite">
+  <pre><span></span>{# greeting #}hello
+</pre>
+ </div> 
+ <p>注释可以包含任何模版内的代码，有效的或者无效的都可以。 像这样：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="c">{# {% if foo %}bar{% else %} #}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>以上是单行注释（在<code>{# .... #}</code>中，不允许有新行）。 </p> 
+ <p>如果需要注释掉模版中的多行内容，请使用comment标签。</p> 
+ <h2>六、模板继承</h2> 
+ <p>Django模版引擎中最强大也是最复杂的部分就是模版继承了。模版继承允许你创建一个包含基本“骨架”的父亲模版，它包含站点中的共有元素，并且可以定义能够被子模版覆盖的blocks。</p> 
+ <p>通过下面这个例子，理解模版继承的概念：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">&lt;!DOCTYPE html&gt;</span>
+<span class="p">&lt;</span><span class="nt">html</span> <span class="na">lang</span><span class="o">=</span><span class="s">"en"</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">head</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">link</span> <span class="na">rel</span><span class="o">=</span><span class="s">"stylesheet"</span> <span class="na">href</span><span class="o">=</span><span class="s">"style.css"</span> <span class="p">/&gt;</span>
+    <span class="p">&lt;</span><span class="nt">title</span><span class="p">&gt;</span>{% block title %}My amazing site{% endblock %}<span class="p">&lt;/</span><span class="nt">title</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">head</span><span class="p">&gt;</span>
+
+<span class="p">&lt;</span><span class="nt">body</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">div</span> <span class="na">id</span><span class="o">=</span><span class="s">"sidebar"</span><span class="p">&gt;</span>
+        {% block sidebar %}
+        <span class="p">&lt;</span><span class="nt">ul</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="nt">li</span><span class="p">&gt;&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">"/"</span><span class="p">&gt;</span>Home<span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="nt">li</span><span class="p">&gt;&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">"/blog/"</span><span class="p">&gt;</span>Blog<span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="nt">ul</span><span class="p">&gt;</span>
+        {% endblock %}
+    <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+
+    <span class="p">&lt;</span><span class="nt">div</span> <span class="na">id</span><span class="o">=</span><span class="s">"content"</span><span class="p">&gt;</span>
+        {% block content %}{% endblock %}
+    <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">body</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">html</span><span class="p">&gt;</span>
+</pre>
+ </div> 
+ <p>这个模版，通常被命名为<code>base.html</code>，它定义了一个可以用于两列排版页面的简单HTML骨架。 </p> 
+ <p>“子模版”需要做的是先继承父模板<code>base.html</code>，然后复写、填充，或者说实现其中的blocks。</p> 
+ <p>block是在子模版中可能会被覆盖掉的位置。在上面的例子中，block标签定义了三个可以被子模版内容填充的block，分别是title、content和siderbar。</p> 
+ <p>再看下面的例子，子模版可能看起来是这样的：</p> 
+ <div class="codehilite">
+  <pre><span></span>{% extends "base.html" %}
+
+{% block title %}My amazing blog{% endblock %}
+
+{% block content %}
+{% for entry in blog_entries %}
+    <span class="p">&lt;</span><span class="nt">h2</span><span class="p">&gt;</span>{{ entry.title }}<span class="p">&lt;/</span><span class="nt">h2</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">p</span><span class="p">&gt;</span>{{ entry.body }}<span class="p">&lt;/</span><span class="nt">p</span><span class="p">&gt;</span>
+{% endfor %}
+{% endblock %}
+</pre>
+ </div> 
+ <p>extends标签是这里的关键。它告诉模版引擎，这个模版“继承”了另一个模版。当模版系统处理这个模版时，首先会去加载父模版，也就是“base.html”。</p> 
+ <p>加载过程中，模版引擎将注意到<code>base.html</code>中的三个block标签，并用子模版中的内容来替换这些block。 根据<code>blog_entries</code>的值，最终输出可能看起来是这样的：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">&lt;!DOCTYPE html&gt;</span>
+<span class="p">&lt;</span><span class="nt">html</span> <span class="na">lang</span><span class="o">=</span><span class="s">"en"</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">head</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">link</span> <span class="na">rel</span><span class="o">=</span><span class="s">"stylesheet"</span> <span class="na">href</span><span class="o">=</span><span class="s">"style.css"</span> <span class="p">/&gt;</span>
+    <span class="p">&lt;</span><span class="nt">title</span><span class="p">&gt;</span>My amazing blog<span class="p">&lt;/</span><span class="nt">title</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">head</span><span class="p">&gt;</span>
+
+<span class="p">&lt;</span><span class="nt">body</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">div</span> <span class="na">id</span><span class="o">=</span><span class="s">"sidebar"</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">ul</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="nt">li</span><span class="p">&gt;&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">"/"</span><span class="p">&gt;</span>Home<span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="nt">li</span><span class="p">&gt;&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">"/blog/"</span><span class="p">&gt;</span>Blog<span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="nt">ul</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+
+    <span class="p">&lt;</span><span class="nt">div</span> <span class="na">id</span><span class="o">=</span><span class="s">"content"</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">h2</span><span class="p">&gt;</span>Entry one<span class="p">&lt;/</span><span class="nt">h2</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">p</span><span class="p">&gt;</span>This is my first entry.<span class="p">&lt;/</span><span class="nt">p</span><span class="p">&gt;</span>
+
+        <span class="p">&lt;</span><span class="nt">h2</span><span class="p">&gt;</span>Entry two<span class="p">&lt;/</span><span class="nt">h2</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">p</span><span class="p">&gt;</span>This is my second entry.<span class="p">&lt;/</span><span class="nt">p</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">body</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">html</span><span class="p">&gt;</span>
+</pre>
+ </div> 
+ <p>请注意，上面例子中的子模版并没有定义<code>sidebar block</code>，这种情况下，将使用父模版中的内容。父模版的<code>{% block %}</code>标签中的内容总是被用作默认内容。</p> 
+ <p>Django还支持多级继承！常用方式是类似下面的三级结构：</p> 
+ <ul> 
+  <li>创建一个<code>base.html</code>模版，用来控制整个站点的主要视觉和体验。</li> 
+  <li>为站点的每一个app，创建一个<code>base_SECTIONNAME.html</code>模版。 例如<code>base_news.html</code>,<code>base_sports.html</code>。这些模版都继承<code>base.html</code>，并且包含了各自特有的样式和设计。</li> 
+  <li>为每一个页面类型，创建独立的模版，例如新闻内容或者博客文章。 这些模版继承对应app的模版。</li> 
+ </ul> 
+ <p>上面的方式可以使代码得到最大程度的复用，并且使得添加内容到共享的内容区域更加简单，例如app范围内的导航条。</p> 
+ <p>下面是使用继承的一些相关说明：</p> 
+ <ul> 
+  <li> <p>如果在模版中使用<code>{% extends %}</code>标签，它必须是模版中的第一个标签，必须放在文件首行！ </p> </li> 
+  <li> <p>在base模版中设置越多的<code>{% block %}</code>标签越好。子模版不必定义全部父模版中的blocks，所以可以在大多数blocks中填充合理的默认内容，然后，只定义你需要的那一个。多一点钩子总比少一点好。</p> </li> 
+  <li> <p>如果发现你自己在复制大量重复的模版内容，那意味着你应该把重复的内容移动到父模版中的一个<code>{% block %}</code>中。</p> </li> 
+  <li> <p>如果需要获取父模板中的block的内容，可以使用<code>{{ block.super }}</code>变量。如果想要在父block中新增内容而不是完全覆盖它，这将非常有用。使用<code>{{ block.super }}</code> 插入的数据不会被自动转义，因为父模板中的内容已经被转义。</p> </li> 
+  <li> <p>在<code>{% block %}</code>之外创建的变量使用模板标签的<code>as</code>语法，不能在块内使用。 </p> </li> 
+ </ul> 
+ <p>例如，下面的模板不会显示任何内容：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{%</span> <span class="k">trans</span> <span class="s2">"Title"</span> <span class="k">as</span> <span class="nv">title</span> <span class="cp">%}</span><span class="x"></span>
+<span class="cp">{%</span> <span class="k">block</span> <span class="nv">content</span> <span class="cp">%}{{</span> <span class="nv">title</span> <span class="cp">}}{%</span> <span class="k">endblock</span> <span class="cp">%}</span><span class="x"></span>
+</pre>
+ </div> 
+ <ul> 
+  <li> <p>为了更好的可读性，可以给<code>{% endblock %}</code>标签一个取名字，像这样：</p> <p _="%" content="content" endblock="endblock">{% block content %} ...</p> </li> 
+ </ul> 
+ <p>在大型模版中，这有助于你清楚的看到哪一个<code>{% block %}</code>标签被关闭了。</p> 
+ <ul> 
+  <li>最后，请注意不能在一个模版中定义多个相同名字的block标签。 </li> 
+ </ul> 
+ <h2>七、自动转义HTML</h2> 
+ <p>当从模版中生成HTML文件时，总会存在各种风险，比如xss代码注入等恶意攻击。比如下面的模版片段：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="x">Hello, </span><span class="cp">{{</span> <span class="nv">name</span> <span class="cp">}}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>首先，它看起来像是无害的，用来显示用户的名字，但是设想一下，如果用户像下面这样输入他的名字，会发生什么：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="nt">&lt;script&gt;</span>alert('hello')<span class="nt">&lt;/script&gt;</span>
+</pre>
+ </div> 
+ <p>使用这个名字的值，模版将会被渲染成这样：</p> 
+ <div class="codehilite">
+  <pre><span></span>Hello, <span class="nt">&lt;script&gt;</span>alert('hello')<span class="nt">&lt;/script&gt;</span>
+</pre>
+ </div> 
+ <p>这意味着浏览器会弹出一个JavaScript警报框！</p> 
+ <p>类似的，如果名字包含一个 '&lt;' 符号（比如下面这样），会发生什么呢？</p> 
+ <div class="codehilite">
+  <pre><span></span>&lt;b&gt;username
+</pre>
+ </div> 
+ <p>这将会导致模版被渲染成这样：</p> 
+ <div class="codehilite">
+  <pre><span></span>Hello, &lt;b&gt;username
+</pre>
+ </div> 
+ <p>这会导致网页的其余部分被粗体化！</p> 
+ <p>显然，用户提交的数据都被不应该被盲目的信任，并且被直接插入到网页中，因为一个怀有恶意的用户可能会使用这样的漏洞来做一些坏事。 这种类型的安全问题被叫做跨站脚本攻击(Cross Site Scripting）(XSS)。</p> 
+ <p>为避免这个问题，有两个选择：</p> 
+ <ul> 
+  <li>第一，对每个不被信任的值运行escape过滤器，这将把潜在的有害的HTML字符转换成无害的字符串。在Django最初的几年里，这是默认的解决方案，但问题是它将责任放在开发人员/模板作者身上，以确保转义了所有内容，而且很容易忘记转义数据。</li> 
+  <li> <p>第二，利用Django的自动HTML转义功能。默认情况下，Django中的每个模板会自动转义每个变量。也就是说，下面五个字符将被转义：</p> 
+   <ul> 
+    <li><code>&lt;</code>会转换为<code>&amp;lt;</code></li> 
+    <li><code>&gt;</code>会转换为<code>&amp;gt;</code></li> 
+    <li><code>'</code>（单引号）转换为<code>&amp;#39;</code></li> 
+    <li><code>"</code>(双引号)会转换为<code>&amp;quot;</code></li> 
+    <li><code>&amp;</code>会转换为<code>&amp;amp;</code></li> 
+   </ul> </li> 
+ </ul> 
+ <p><strong>强烈建议：将第二种功能做为默认打开的设置，不要关闭它！</strong></p> 
+ <p>但是，凡事都有正反两面。有时，模板变量含有一些你打算渲染成原始HTML的数据，你并不想转义这些内容。 例如，你可能会在数据库中储存一些HTML代码，并且直接在模板中嵌入它们。或者，你可能使用Django的模板系统来生成不是HTML的文本 -- 比如邮件信息。要怎么办呢？</p> 
+ <p><strong>对于单个变量</strong>：</p> 
+ <p>使用safe过滤器来关闭变量上的自动转义：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="x">This will be escaped: </span><span class="cp">{{</span> <span class="nv">data</span> <span class="cp">}}</span><span class="x"></span>
+<span class="x">This will not be escaped: </span><span class="cp">{{</span> <span class="nv">data</span><span class="o">|</span><span class="nf">safe</span> <span class="cp">}}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>safe是<code>safe from further escaping</code>或者<code>can be safely interpreted as HTML</code>的缩写。请确保你知道自己在用safe过滤器干什么！在上面的例子中，如果data含有<code>&lt;b&gt;</code>，输出会是：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="nt">This</span> <span class="nt">will</span> <span class="nt">be</span> <span class="nt">escaped</span><span class="o">:</span> <span class="o">&amp;</span><span class="nt">lt</span><span class="o">;</span><span class="nt">b</span><span class="o">&amp;</span><span class="nt">gt</span><span class="o">;</span>
+<span class="nt">This</span> <span class="nt">will</span> <span class="nt">not</span> <span class="nt">be</span> <span class="nt">escaped</span><span class="o">:</span> <span class="o">&lt;</span><span class="nt">b</span><span class="o">&gt;</span>
+</pre>
+ </div> 
+ <p><strong>对于模板块:</strong></p> 
+ <p>要控制模板上的自动转义，将模板（或者模板中的特定区域）包裹在<code>autoescape</code>标签中，像这样：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{%</span> <span class="k">autoescape</span> <span class="nv">off</span> <span class="cp">%}</span><span class="x"></span>
+<span class="x">    Hello </span><span class="cp">{{</span> <span class="nv">name</span> <span class="cp">}}</span><span class="x"></span>
+<span class="cp">{%</span> <span class="k">endautoescape</span> <span class="cp">%}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>autoescape标签接受on或者off作为它的参数。下面是一个模板的示例：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="x">Auto-escaping is on by default. Hello </span><span class="cp">{{</span> <span class="nv">name</span> <span class="cp">}}</span><span class="x"></span>
+
+<span class="cp">{%</span> <span class="k">autoescape</span> <span class="nv">off</span> <span class="cp">%}</span><span class="x"></span>
+<span class="x">    This will not be auto-escaped: </span><span class="cp">{{</span> <span class="nv">data</span> <span class="cp">}}</span><span class="x">.</span>
+
+<span class="x">    Nor this: </span><span class="cp">{{</span> <span class="nv">other_data</span> <span class="cp">}}</span><span class="x"></span>
+<span class="x">    </span><span class="cp">{%</span> <span class="k">autoescape</span> <span class="nv">on</span> <span class="cp">%}</span><span class="x"></span>
+<span class="x">        Auto-escaping applies again: </span><span class="cp">{{</span> <span class="nv">name</span> <span class="cp">}}</span><span class="x"></span>
+<span class="x">    </span><span class="cp">{%</span> <span class="k">endautoescape</span> <span class="cp">%}</span><span class="x"></span>
+<span class="cp">{%</span> <span class="k">endautoescape</span> <span class="cp">%}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>自动转义标签autoescape还会作用于扩展（extend）了当前模板的模板，以及通过include标签包含的模板，就像所有block标签那样。 看下面的例子：</p> 
+ <div class="codehilite">
+  <pre><span></span># base.html文件
+
+<span class="cp">{%</span> <span class="k">autoescape</span> <span class="nv">off</span> <span class="cp">%}</span>
+<span class="nt">&lt;h1&gt;</span><span class="cp">{%</span> <span class="k">block</span> <span class="nv">title</span> <span class="cp">%}{%</span> <span class="k">endblock</span> <span class="cp">%}</span><span class="nt">&lt;/h1&gt;</span>
+<span class="cp">{%</span> <span class="k">block</span> <span class="nv">content</span> <span class="cp">%}</span>
+<span class="cp">{%</span> <span class="k">endblock</span> <span class="cp">%}</span>
+<span class="cp">{%</span> <span class="k">endautoescape</span> <span class="cp">%}</span>
+
+# child.html文件
+
+<span class="cp">{%</span> <span class="k">extends</span> <span class="s2">"base.html"</span> <span class="cp">%}</span>
+<span class="cp">{%</span> <span class="k">block</span> <span class="nv">title</span> <span class="cp">%}</span>This <span class="ni">&amp;amp;</span> that<span class="cp">{%</span> <span class="k">endblock</span> <span class="cp">%}</span>
+<span class="cp">{%</span> <span class="k">block</span> <span class="nv">content</span> <span class="cp">%}{{</span> <span class="nv">greeting</span> <span class="cp">}}{%</span> <span class="k">endblock</span> <span class="cp">%}</span>
+</pre>
+ </div> 
+ <p>由于自动转义标签在base模板中关闭，它也会在child模板中关闭，导致当greeting变量含有<code>&lt;b&gt;Hello!&lt;/b&gt;</code>字符串时，会渲染HTML。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="nt">&lt;h1&gt;</span>This <span class="ni">&amp;amp;</span> that<span class="nt">&lt;/h1&gt;</span>
+<span class="nt">&lt;b&gt;</span>Hello!<span class="nt">&lt;/b&gt;</span>
+</pre>
+ </div> 
+ <p><strong>过滤器的字符串参数：</strong></p> 
+ <p>之前我们展示过，过滤器的参数可以是字符串：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{{</span> <span class="nv">data</span><span class="o">|</span><span class="nf">default</span><span class="s2">:"This is a string literal."</span> <span class="cp">}}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>要注意，所有这种字符串参数在插入模板时都不会进行任何自动转义。原因是，模板的作者可以控制字符串字面值的内容，所以可以确保在模板编写时文本经过正确转义。白话讲，就是，你个程序员对自己传递的参数心里要有数！</p> 
+ <p>也即是说你应该这样编写：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{{</span> <span class="nv">data</span><span class="o">|</span><span class="nf">default</span><span class="s2">:"3 &amp;lt; 2"</span> <span class="cp">}}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>而不是：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{{</span> <span class="nv">data</span><span class="o">|</span><span class="nf">default</span><span class="s2">:"3 &lt; 2"</span> <span class="cp">}}</span><span class="x">  </span><span class="c">{# 错误的做法#}</span><span class="x"></span>
+</pre>
+ </div> 
+ <h2>八、方法调用</h2> 
+ <p>这部分内容，如果你掌握的极大提高你的模版语言能力。</p> 
+ <p>大多数对象上的方法调用同样可用于模板中。这意味着模板能够访问到的不仅仅是对象的属性（比如字段名称）和视图中传入的变量，还可以执行对象的方法。 例如，Django ORM提供了“entry_set”语法用于查找关联到外键的对象集合。 所以，如果模型“comment”有一个外键关联到模型“task”，可以根据task遍历其所有的comments，像这样：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{%</span> <span class="k">for</span> <span class="nv">comment</span> <span class="k">in</span> <span class="nv">task.comment_set.all</span> <span class="cp">%}</span><span class="x"></span>
+<span class="x">    </span><span class="cp">{{</span> <span class="nv">comment</span> <span class="cp">}}</span><span class="x"></span>
+<span class="cp">{%</span> <span class="k">endfor</span> <span class="cp">%}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>与之类似，QuerySets提供了count()方法来计算含有对象的总数。因此，你可以像这样获取所有关于当前任务的评论总数：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{{</span> <span class="nv">task.comment_set.all.count</span> <span class="cp">}}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>当然，还可以访问已经显式定义在模型上的方法：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="c1"># models.py</span>
+<span class="k">class</span> <span class="nc">Task</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">foo</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">"bar"</span>
+</pre>
+ </div> 
+ <p><code>template.html</code></p> 
+ <div class="codehilite">
+  <pre><span></span>{{ task.foo }}
+</pre>
+ </div> 
+ <p>由于Django有意限制了模板语言中的处理逻辑，不能够在模板中传递参数来调用方法。数据应该在视图中处理，然后传递给模板用于展示。这点不同于Django的ORM操作。</p> 
+ <h2>九、多对多调用</h2> 
+ <p>对于如下的模型：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
+
+<span class="c1"># Create your models here.</span>
+
+<span class="k">class</span> <span class="nc">Student</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">128</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">Course</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">128</span><span class="p">)</span>
+    <span class="n">students</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span><span class="s1">'Student'</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>模型Course有一个多对多字段指向Student模型。</p> 
+ <h3>正向查询</h3> 
+ <p>假设编写了一个如下的视图：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="k">def</span> <span class="nf">test</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="n">course</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">Course</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'course.html'</span><span class="p">,</span> <span class="nb">locals</span><span class="p">())</span>
+</pre>
+ </div> 
+ <p>获取了id为1的course对象，并将它传递给course.html模版，模版代码如下：</p> 
+ <div class="codehilite">
+  <pre><span></span>{% for student in course.students.all %}
+
+<span class="p">&lt;</span><span class="nt">p</span><span class="p">&gt;</span>{{ student.name }}<span class="p">&lt;/</span><span class="nt">p</span><span class="p">&gt;</span>
+
+{% endfor %}
+</pre>
+ </div> 
+ <p>首先通过<code>course.students.all</code>，查寻到course对象关联的students对象集，然后用for标签循环它，获取每个student对象，再用student模型的定义，访问其各个字段的属性。</p> 
+ <h3>反向查询</h3> 
+ <p>对于反向查询，从student往course查，假设有如下的视图：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="k">def</span> <span class="nf">test2</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="n">student</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">Student</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'student.html'</span><span class="p">,</span> <span class="nb">locals</span><span class="p">())</span>
+</pre>
+ </div> 
+ <p>获取了id为1的student对象，并将它传递给student.html模版，模版代码如下：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{%</span> <span class="k">for</span> <span class="nv">course</span> <span class="k">in</span>  <span class="nv">student.course_set.all</span> <span class="cp">%}</span><span class="x"></span>
+<span class="cp">{{</span> <span class="nv">course.name</span> <span class="cp">}}</span><span class="x"></span>
+<span class="cp">{%</span> <span class="k">endfor</span> <span class="cp">%}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>通过<code>student.course_set.all</code>，反向获取到student实例对应的所有course对象，然后再for标签循环每个course，调用course的各种字段属性。</p> 
+ <p>对于外键ForeignKey，其用法基本类似。只不过正向是<code>obj.fk</code>，且只有1个对像，不是集合。反向则是<code>obj.fk_set</code>，类似多对多。</p> 
+ <h2>十、使用自定义标签和过滤器</h2> 
+ <p>某些应用提供了自定义的标签和过滤器。想要在模板中使用它们，首先要确保该应用已经在<code>INSTALLED_APPS</code> 中（比如在下面的例子中，我们添加了'django.contrib.humanize'），之后在模板中使用load标签：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{%</span> <span class="k">load</span> <span class="nv">humanize</span> <span class="cp">%}</span><span class="x"></span>
+<span class="cp">{{</span> <span class="m">45000</span><span class="o">|</span><span class="nf">intcomma</span> <span class="cp">}}</span><span class="x"></span>
+</pre>
+ </div> 
+ <p>上面的例子中， load标签加载了<code>humanize</code>app的标签库，之后我们可以使用它的intcomma过滤器。 </p> 
+ <p>如果你开启了<code>django.contrib.admindocs</code>，可以查询admin站点中的文档，查看你安装的自定义库列表。</p> 
+ <p>load标签可以同时接受多个库名称，由空格分隔。 例如：</p> 
+ <div class="codehilite">
+  <pre><span></span>{% load humanize i18n %}
+</pre>
+ </div> 
+ <p><strong>自定义库和模板继承：</strong></p> 
+ <p>当你加载一个自定义标签或过滤器库时，标签或过滤器只在当前模板中有效--并不是带有模板继承关系的任何父模板或者子模版中都有效。白话说就是，你在父模板中可能加载了自定义标签，然并卵，你在子模版中还要再加载一次！</p> 
+ <p>例如，如果一个模板<code>foo.html</code>带有<code>{% load humanize %}</code>，子模版（例如，带有<code>{% extends "foo.html" %}</code>）中不能访问humanize模板标签和过滤器。 子模版需要再添加自己的<code>{% load humanize %}</code>。</p> 
+ <p>这个特性是出于保持可维护性和逻辑性的目的。</p> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/144"> <i class="fa fa-arrow-left"></i>&nbsp;第三章：模版层</a> 
+  <a class="float-right" href="/course/django/146"> Django内置模板标签&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 11</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/145">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax2.sinaimg.cn/crop.0.0.996.996.50/006nYu7lly8fkiygvorosj30ro0ro76r.jpg?KID=imgbed,tva&amp;Expires=1578648103&amp;ssig=PcfpntXS16" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>def test(request): course = models.Course.objects.get(pk=1) return render(request, 'course.html', locals()) 刘老师，这里面的local()是什么意思啊？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; GardenBaby_ </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年1月12日 18:19</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1841">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax4.sinaimg.cn/crop.0.0.996.996.50/0064OPcTly8fihxzog41xj30ro0rojtg.jpg?KID=imgbed,tva&amp;Expires=1591286801&amp;ssig=jMzap3o1f2" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>locals() 函数会以字典类型返回当前位置的全部局部变量。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 蹦巴拉蹦巴拉蹦 &nbsp;&nbsp;回复&nbsp;&nbsp; GardenBaby_ </span> 
+      <em>2020年6月5日 22:45</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2099">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.0.180.180.50/59bd64d7jw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>觉得学习应该是循序渐进，从易到难，这样一下子全部展开真的有点接受不了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 定期换名字啦啦 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年3月21日 05:15</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1170">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.996.996.50/006SrEWNly8fzbt02svrsj30ro0ro0zu.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>这里相当于是速查手册了，你需要先按照“第一个Django应用”这一节的内容熟悉Django的流程和基本原理，然后再来看这里拓展，这样就好理解了，或者你可以百度找一篇django搭建博客实例，然后对照代码来这里学习。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 学到老单到老 &nbsp;&nbsp;回复&nbsp;&nbsp; 定期换名字啦啦 </span> 
+      <em>2019年4月9日 11:29</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1233">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva1.sinaimg.cn/crop.0.0.180.180.50/59bd64d7jw1e8qgp5bmzyj2050050aa8.jpg?KID=imgbed,tva&amp;Expires=1589717849&amp;ssig=o8RZ%2BviPXi" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>后来自己做了一些项目之后，现在回过头来看，这章居然全部看懂了，好开心，谢谢刘老师。 建议刚开始学习的时候要不求甚解，不要纠结，了解怎么一回事，然后放在心里继续往下面看。 提几个小建议，翻译有点生硬。 在“七、自动转义HTML”里，可以告诉读者name的值为“”“”&lt;script&gt;alert('hello')&lt;/script&gt;“”“”“”，而不是“如果用户像下面这样输入他的名字”，那样的话有些读者不知道这个script里的含义是什么。 “”八、方法调用 这部分内容，如果你掌握的极大提高你的模版语言能力。“”应该是如果你掌握，将极大提高你的模板语言能力。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 定期换名字啦啦 &nbsp;&nbsp;回复&nbsp;&nbsp; 学到老单到老 </span> 
+      <em>2020年5月17日 17:23</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2067">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.0.0.994.994.50/0078GpPSly8fqzntm8ppcj30rm0rmtat.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>模板中如果需要导入python包，能行吗？怎么做可以？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 残烛0一0照月 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年1月8日 17:08</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1007">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>如果有能力二次开发Django，还是能做到的^_^</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 残烛0一0照月 </span> 
+      <em>2019年1月9日 08:33</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1008">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.0.996.996.50/0068ZTOjjw8f3j499jgpxj30ro0roq4v.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>内容很丰富啊</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 月亮下相遇 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年10月22日 14:23</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/783">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>内容写的真好，谢谢博主！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; Wangzhi鹏3519 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年9月26日 15:34</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/752">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.41.0.446.446.50/e2f9f9cdjw8f2xmhpvecpj20go0go0sw.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>999</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 海上有个树荫_hhh </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年3月16日 09:51</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/310">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.190.190.50/006xIWURly8fo6t5wwzrdj309i05c0vp.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>加油</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 蔷薇-Nina </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年2月6日 16:32</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/201">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

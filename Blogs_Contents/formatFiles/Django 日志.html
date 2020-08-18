@@ -1,0 +1,439 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>Django 日志</h1> 
+ <small>阅读:&nbsp;19512&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：14 </small> 
+ <hr> 
+ <p>Django使用Python内置的logging模块实现它自己的日志系统。</p> 
+ <p>如果你没有使用过logging模块，请参考Python教程中的相关章节。</p> 
+ <p>直达链接<a href="http://www.liujiangblog.com/course/python/71">《logging模块详解》</a>。</p> 
+ <p>在Python的logging模块中，主要包含下面四大金刚：</p> 
+ <ul> 
+  <li>Loggers： 记录器</li> 
+  <li>Handlers：处理器</li> 
+  <li>Filters： 过滤器</li> 
+  <li>Formatters： 格式化器</li> 
+ </ul> 
+ <p>下文假定你已经对logging模块有一定的了解。否则，可能真的像看天书......</p> 
+ <h2>一、在Django视图中使用logging</h2> 
+ <p>使用方法非常简单，如下例所示：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="c1"># 导入logging库</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+
+<span class="c1"># 获取一个logger对象</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">my_view</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">arg1</span><span class="p">,</span> <span class="n">arg</span><span class="p">):</span>
+    <span class="o">...</span>
+    <span class="k">if</span> <span class="n">bad_mojo</span><span class="p">:</span>
+        <span class="c1"># 记录一个错误日志</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">'Something went wrong!'</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>每满足<code>bad_mojo</code>条件一次，就写入一条错误日志。</p> 
+ <p>实际上，logger对象有下面几个常用内置方法：</p> 
+ <ul> 
+  <li>logger.debug()</li> 
+  <li>logger.info()</li> 
+  <li>logger.warning()</li> 
+  <li>logger.error()</li> 
+  <li>logger.critical()</li> 
+ </ul> 
+ <h2>二、在Django中配置logging</h2> 
+ <p>通常，只是像上面的例子那样简单的使用logging模块是远远不够的，我们一般都要对logging的四大金刚进行一定的配置。</p> 
+ <p>Python的logging模块提供了好几种配置方式。默认情况下，Django使用dictConfig format。也就是字典方式。</p> 
+ <p><strong>例一：</strong></p> 
+ <div class="codehilite">
+  <pre><span></span>LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': '/path/to/django/debug.log',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}
+</pre>
+ </div> 
+ <p>如果你使用上面的样例，请确保Django用户对'filename'对应目录和文件的写入权限。</p> 
+ <p><strong>例二：</strong></p> 
+ <p>下面这个示例配置，让Django将日志打印到控制台，通常用做开发期间的信息展示。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+
+<span class="n">LOGGING</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">'version'</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="s1">'disable_existing_loggers'</span><span class="p">:</span> <span class="bp">False</span><span class="p">,</span>
+    <span class="s1">'handlers'</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">'console'</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">'class'</span><span class="p">:</span> <span class="s1">'logging.StreamHandler'</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">},</span>
+    <span class="s1">'loggers'</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">'django'</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">'handlers'</span><span class="p">:</span> <span class="p">[</span><span class="s1">'console'</span><span class="p">],</span>
+            <span class="s1">'level'</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">'DJANGO_LOG_LEVEL'</span><span class="p">,</span> <span class="s1">'INFO'</span><span class="p">),</span>
+        <span class="p">},</span>
+    <span class="p">},</span>
+<span class="p">}</span>
+</pre>
+ </div> 
+ <p><strong>例三：</strong></p> 
+ <p>下面是一个相当复杂的logging配置：</p> 
+ <div class="codehilite">
+  <pre><span></span>LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
+        },
+        'simple': {
+            'format': '%(levelname)s %(message)s'
+        },
+    },
+    'filters': {
+        'special': {
+            '()': 'project.logging.SpecialFilter',
+            'foo': 'bar',
+        },
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': 'INFO',
+            'filters': ['require_debug_true'],
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple'
+        },
+        'mail_admins': {
+            'level': 'ERROR',
+            'class': 'django.utils.log.AdminEmailHandler',
+            'filters': ['special']
+        }
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'propagate': True,
+        },
+        'django.request': {
+            'handlers': ['mail_admins'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        'myproject.custom': {
+            'handlers': ['console', 'mail_admins'],
+            'level': 'INFO',
+            'filters': ['special']
+        }
+    }
+}
+</pre>
+ </div> 
+ <p>上面的logging配置主要定义了这么几件事情：</p> 
+ <ul> 
+  <li> <p>定义了配置文件的版本，当前版本号为1.0</p> </li> 
+  <li> <p>定义了两个formatter：simple和format，分别表示两种文本格式。</p> </li> 
+  <li> <p>定义了两个过滤器：SpecialFilter和RequireDebugTrue</p> </li> 
+  <li>定义了两个处理器：console和mail_admins</li> 
+  <li>配置了三个logger：'django'、'django.request'和'myproject.custom'</li> 
+ </ul> 
+ <h2>三、Django对logging模块的扩展</h2> 
+ <p>Django对logging模块进行了一定的扩展，用来满足Web服务器专门的日志记录需求。</p> 
+ <h3>1. 记录器 Loggers</h3> 
+ <p>Django额外提供了几个其内建的logger。</p> 
+ <ul> 
+  <li>django： 不要使用这个记录器，用下面的。这是一个被供起来的记录器，^-^</li> 
+  <li>django.request： 记录与处理请求相关的消息。5XX错误被记录为ERROR消息；4XX错误记录为WARNING消息。接收额外参数：status_code和request</li> 
+  <li>django.server： 记录开发服务器下处理请求相关的消息。只用于开发阶段。</li> 
+  <li>django.template: 记录与渲染模板相关的日志。</li> 
+  <li>django.db.backends: 与数据库交互的代码相关的消息。</li> 
+  <li>django.security： 记录任何与安全相关的错误。 </li> 
+  <li>django.security.csrf： 记录CSRF验证失败日志。</li> 
+  <li>django.db.backends.schema： 记录查询导致数据库修改的日志。 </li> 
+ </ul> 
+ <h3>2. 处理器 Handlers</h3> 
+ <p>Django额外提供了一个handler，AdminEmailHandler。这个处理器将它收到的每个日志信息用邮件发送给站点管理员。</p> 
+ <h3>3. 过滤器Filters</h3> 
+ <p>Django还额外提供两个过滤器。</p> 
+ <ul> 
+  <li> <p>CallbackFilter(callback)[source]：这个过滤器接受一个回调函数，并对每个传递给过滤器的记录调用它。如果回调函数返回False，将不会进行记录的处理。</p> </li> 
+  <li> <p>RequireDebugFalse[source]： 这个过滤器只会在settings.DEBUG==False时传递。</p> </li> 
+ </ul> 
+ <h2>四、总结</h2> 
+ <p>总体而言，在Django中使用logging和在普通Python程序中，区别不大。</p> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/175"> <i class="fa fa-arrow-left"></i>&nbsp;发送邮件</a> 
+  <a class="float-right" href="/course/django/177"> Django与缓存&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 14</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/176">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax2.sinaimg.cn/crop.0.0.600.600.50/006vfk9ply8fgtsozdtbvj30go0go75i.jpg?KID=imgbed,tva&amp;Expires=1589882951&amp;ssig=WSnc7O%2Bzon" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>您好,在已上线的项目中碰到一个问题，在settings.py里配置好日志之后，发现有很多日志没有写入日志文件，用的是django这个logger，请问是需要自己定义一个logger才不会遗漏日志吗</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; Tinydepression </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年5月22日 09:15</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2071">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax4.sinaimg.cn/crop.89.16.166.166.50/c729b4dcly8fwz78h25lrj208c068q2w.jpg?KID=imgbed,tva&amp;Expires=1584596791&amp;ssig=2odCODWcAw" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>django日志可以多种方式混用吗？比如我既在setting.py里写了LOGGING，又自定义了一个logger.py用logging模块来记录日志</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 红旗香主 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年3月19日 10:49</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1969">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1586851613&amp;ssig=EAgcKENHyi" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>可以混用</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 红旗香主 </span> 
+      <em>2020年4月14日 13:07</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2018">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax2.sinaimg.cn/crop.0.0.600.600.50/006vfk9ply8fgtsozdtbvj30go0go75i.jpg?KID=imgbed,tva&amp;Expires=1589882951&amp;ssig=WSnc7O%2Bzon" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>您好,在已上线的项目中碰到一个问题，在settings.py里配置好日志之后，发现有很多日志没有写入日志文件，用的是django这个logger，请问是需要自己定义一个logger才不会遗漏日志吗</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> Tinydepression &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2020年5月19日 15:11</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2068">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax4.sinaimg.cn/crop.0.0.996.996.50/006bkF7vly8fvc7ynegczj30ro0ro77y.jpg?KID=imgbed,tva&amp;Expires=1576234288&amp;ssig=dSEjTZ4i%2Bz" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>django日志，可以把访问人的ip地址写到日志中吗？ 通过配置的方式</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 靖大树 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年12月13日 15:52</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1762">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1577334347&amp;ssig=QyjwpbGyW9" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>当然可以</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 靖大树 </span> 
+      <em>2019年12月26日 10:24</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1796">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax3.sinaimg.cn/crop.0.0.1006.1006.50/61b65812ly8fdxnv9cp3cj20ry0ryjsc.jpg?KID=imgbed,tva&amp;Expires=1574867084&amp;ssig=GSOTrfGx96" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>写的太好了，赞一个。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 风逝花随 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年11月27日 20:05</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1733">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.1002.1002.50/c3ae8b03ly8fungu0y315j20ru0ruwhq.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>logging配置中添加了formatters就会报异常LookupError: No installed app with label 'admin'.是什么情况，版本2.2.0</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 易条苦茶子 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年4月16日 21:16</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1260">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.1002.1002.50/c3ae8b03ly8fungu0y315j20ru0ruwhq.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>嗷我的问题，配置写错了的话会出现这个问题</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 易条苦茶子 &nbsp;&nbsp;回复&nbsp;&nbsp; 易条苦茶子 </span> 
+      <em>2019年4月17日 00:09</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1261">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.960.960.50/006xIWURly8fo9wxo24vzj30qo0qoaaz.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>logging应该是在settings中配置，可文中并未指明。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 蔷薇-Nina </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年3月6日 11:01</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/249">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva3.sinaimg.cn/crop.0.0.749.749.50/006mzzvijw8f9s0e0wv30j30ku0ktt98.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>人家博主已经标明了‘直达链接’，仔细看吧...</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> Kylin92 &nbsp;&nbsp;回复&nbsp;&nbsp; 蔷薇-Nina </span> 
+      <em>2018年4月28日 09:58</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/418">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.180.180.50/67179639jw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>哈哈,如题</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 孤竹孙 &nbsp;&nbsp;回复&nbsp;&nbsp; Kylin92 </span> 
+      <em>2018年5月6日 20:54</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/458">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.960.960.50/006xIWURly8fo9wxo24vzj30qo0qoaaz.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 蔷薇-Nina &nbsp;&nbsp;回复&nbsp;&nbsp; Kylin92 </span> 
+      <em>2018年5月27日 17:23</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/501">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.1328.1328.50/006KZ60ily8fe8dud0coyj310w10wgrc.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>，一般大写的都是在settings里</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> UpheRainown &nbsp;&nbsp;回复&nbsp;&nbsp; 蔷薇-Nina </span> 
+      <em>2018年7月14日 15:16</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/582">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

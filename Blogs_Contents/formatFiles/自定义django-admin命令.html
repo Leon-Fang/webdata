@@ -1,0 +1,109 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>自定义django-admin命令</h1> 
+ <small>阅读:&nbsp;11968&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：0 </small> 
+ <hr> 
+ <p>我们可以通过manage.py编写和注册自定义的命令。</p> 
+ <p>自定义的管理命令对于独立脚本非常有用，特别是那些使用Linux的crontab服务，或者Windows的调度任务执行的脚本。比如，你有个需求，需要定时清空某篇文章下面的评论，一种解决方案就是写一个django-admin命令，再写一个运行该命令的独立脚本，最后通过crontab服务，定时执行该脚本。</p> 
+ <p>下面，我们将为教程最开始的第一个Django应用中的polls应用编写一个自定义的<code>closepoll</code>命令。</p> 
+ <h2>一、创建management/commands目录</h2> 
+ <p>首先，需向该应用添加一个<code>management/commands</code>目录。</p> 
+ <p>Django将为该目录中名字没有以下划线开始的每个Python模块注册一个manage.py命令。也就是说，你每自定义一个命令，就要在目录下创建一个新的模块。</p> 
+ <p>像这样：</p> 
+ <div class="codehilite">
+  <pre><span></span>polls/
+    __init__.py
+    models.py
+    management/
+        __init__.py
+        commands/
+            __init__.py
+            _private.py
+            closepoll.py
+    tests.py
+    views.py
+</pre>
+ </div> 
+ <p>在Python 2上，请确保<code>management</code>和<code>management/commands</code>两个目录都包含<code>__init__.py</code>文件，否则将检测不到你的命令。</p> 
+ <p>在这个例子中，<code>closepoll</code>命令对任何项目都可用，只要它们的<code>INSTALLED_APPS</code>里包含polls应用。</p> 
+ <p><code>_private.py</code>因为以下划线开头，将不可以作为一个管理命令使用。</p> 
+ <p>在<code>closepoll.py</code>模块中只有一个要求:必须定义一个<code>Command</code>类并继承<code>BaseCommand</code>类或其子类。</p> 
+ <h2>二、编写命令的具体代码</h2> 
+ <p>要实现这个命令，在<code>polls/management/commands/closepoll.py</code>中添加代码如下：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.core.management.base</span> <span class="kn">import</span> <span class="n">BaseCommand</span><span class="p">,</span> <span class="n">CommandError</span>
+<span class="kn">from</span> <span class="nn">polls.models</span> <span class="kn">import</span> <span class="n">Question</span> <span class="k">as</span> <span class="n">Poll</span>
+
+<span class="k">class</span> <span class="nc">Command</span><span class="p">(</span><span class="n">BaseCommand</span><span class="p">):</span>
+    <span class="n">help</span> <span class="o">=</span> <span class="s1">'关闭指定问卷的投票功能'</span>
+
+    <span class="k">def</span> <span class="nf">add_arguments</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parser</span><span class="p">):</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">'poll_id'</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">'+'</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">poll_id</span> <span class="ow">in</span> <span class="n">options</span><span class="p">[</span><span class="s1">'poll_id'</span><span class="p">]:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">poll</span> <span class="o">=</span> <span class="n">Poll</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="n">poll_id</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">Poll</span><span class="o">.</span><span class="n">DoesNotExist</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">CommandError</span><span class="p">(</span><span class="s1">'Poll "</span><span class="si">%s</span><span class="s1">" does not exist'</span> <span class="o">%</span> <span class="n">poll_id</span><span class="p">)</span>
+
+            <span class="n">poll</span><span class="o">.</span><span class="n">opened</span> <span class="o">=</span> <span class="bp">False</span>
+            <span class="n">poll</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">SUCCESS</span><span class="p">(</span><span class="s1">'Successfully closed poll "</span><span class="si">%s</span><span class="s1">"'</span> <span class="o">%</span> <span class="n">poll_id</span><span class="p">))</span>
+</pre>
+ </div> 
+ <p>每一个自定义的命令，都要自己实现handle()方法，这个方法是命令的核心业务处理代码，你的命令功能要通过它来实现。而add_arguments()则用于帮助处理命令行的参数，如果没有参数，可以不写这个方法。</p> 
+ <p><strong>注意</strong>：当你使用管理命令并希望提供控制台输出时，你应该写到<code>self.stdout</code>和<code>self.stderr</code>，而不能直接打印到stdout和stderr。另外，你不需要在消息的末尾加上换行符，它将被自动添加，除非你指定ending参数：<code>self.stdout.write("Unterminated line", ending='')</code></p> 
+ <h2>三、执行命令的方式</h2> 
+ <p>调用格式：<code>python manage.py 自定义命令名 &lt;参数列表&gt;</code></p> 
+ <p>可以使用<code>python manage.py closepoll &lt;poll_id&gt;</code>调用上面的自定义命令。</p> 
+ <h3>四、可选参数</h3> 
+ <p>通过接收额外的命令行选项，可以简单地修改closepoll来删除一个给定的poll而不是关闭它。这些自定义的选项可以像下面这样添加到<code>add_arguments()</code>方法中：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="k">class</span> <span class="nc">Command</span><span class="p">(</span><span class="n">BaseCommand</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">add_arguments</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parser</span><span class="p">):</span>
+        <span class="c1"># Positional arguments</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">'poll_id'</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">'+'</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+
+        <span class="c1"># Named (optional) arguments</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+            <span class="s1">'--delete'</span><span class="p">,</span>
+            <span class="n">action</span><span class="o">=</span><span class="s1">'store_true'</span><span class="p">,</span>
+            <span class="n">dest</span><span class="o">=</span><span class="s1">'delete'</span><span class="p">,</span>
+            <span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+            <span class="n">help</span><span class="o">=</span><span class="s1">'Delete poll instead of closing it'</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">):</span>
+        <span class="c1"># ...</span>
+        <span class="k">if</span> <span class="n">options</span><span class="p">[</span><span class="s1">'delete'</span><span class="p">]:</span>
+            <span class="n">poll</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span>
+        <span class="c1"># ...</span>
+</pre>
+ </div> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/166"> <i class="fa fa-arrow-left"></i>&nbsp;django-admin和manage.py</a> 
+  <a class="float-right" href="/course/django/168"> 会话session&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 0</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/167">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

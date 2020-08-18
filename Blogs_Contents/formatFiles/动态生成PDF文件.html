@@ -1,0 +1,159 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>动态生成PDF文件</h1> 
+ <small>阅读:&nbsp;15862&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：3 </small> 
+ <hr> 
+ <p>可以通过开源的Python PDF库<code>ReportLab</code>来实现PDF文件的动态生成。</p> 
+ <h2>一、安装ReportLab</h2> 
+ <p>ReportLab库在PyPI上提供，可以使用pip来安装：</p> 
+ <div class="codehilite">
+  <pre><span></span>$ pip install reportlab
+</pre>
+ </div> 
+ <p>在Python交互解释器中导入它来测试安装：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span> <span class="nn">reportlab</span>
+</pre>
+ </div> 
+ <p>如果没有抛出任何错误，证明已安装成功。</p> 
+ <h2>二、编写视图</h2> 
+ <p>ReportLab的API可以处理于类似于文件（file-like）的对象。下面是一个 “Hello World”的例子：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">reportlab.pdfgen</span> <span class="kn">import</span> <span class="n">canvas</span>
+<span class="kn">from</span> <span class="nn">django.http</span> <span class="kn">import</span> <span class="n">HttpResponse</span>
+
+<span class="k">def</span> <span class="nf">some_view</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="c1"># 创建带有PDF头部定义的HttpResponse对象</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="n">content_type</span><span class="o">=</span><span class="s1">'application/pdf'</span><span class="p">)</span>
+    <span class="n">response</span><span class="p">[</span><span class="s1">'Content-Disposition'</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'attachment; filename="somefilename.pdf"'</span>
+
+    <span class="c1"># 创建一个PDF对象，并使用响应对象作为它要处理的‘文件’</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">canvas</span><span class="o">.</span><span class="n">Canvas</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+
+    <span class="c1"># 通过PDF对象的drawString方法，写入一条信息。具体参考模块的官方文档说明。</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">drawString</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="s2">"Hello world."</span><span class="p">)</span>
+
+    <span class="c1"># 关闭PDF对象</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">showPage</span><span class="p">()</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">response</span>
+</pre>
+ </div> 
+ <p>相关说明：</p> 
+ <ul> 
+  <li>响应对象的MIME类型为<code>application/pdf</code>。 这会告诉浏览器，文档是个PDF文件而不是HTML文件。</li> 
+  <li>响应对象设置了附加的<code>Content-Disposition</code>协议头，含有PDF文件的名称。 </li> 
+  <li>文件名可以是任意的，浏览器会在“另存为...”对话框等中使用。</li> 
+  <li><code>Content-Disposition</code>以'attachment'开头，强制让浏览器弹出对话框来提示或者确认。</li> 
+  <li>Canvas函数接受一个类似于文件的对象，而HttpResponse对象正好合适。</li> 
+  <li>最后，在PDF文件上调用showPage()和save()方法非常重要。</li> 
+  <li>注意：ReportLab并不是线程安全的。 </li> 
+ </ul> 
+ <h2>三、复杂的PDF</h2> 
+ <p>使用ReportLab创建复杂的PDF文档时，可以考虑使用io库作为PDF文件的临时保存地点。这个库提供了一个类似于文件的对象接口，非常实用。 下面的例子是上面的“Hello World”示例采用io重写后的样子：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">io</span> <span class="kn">import</span> <span class="n">BytesIO</span>
+<span class="kn">from</span> <span class="nn">reportlab.pdfgen</span> <span class="kn">import</span> <span class="n">canvas</span>
+<span class="kn">from</span> <span class="nn">django.http</span> <span class="kn">import</span> <span class="n">HttpResponse</span>
+
+<span class="k">def</span> <span class="nf">some_view</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="c1"># Create the HttpResponse object with the appropriate PDF headers.</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="n">content_type</span><span class="o">=</span><span class="s1">'application/pdf'</span><span class="p">)</span>
+    <span class="n">response</span><span class="p">[</span><span class="s1">'Content-Disposition'</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'attachment; filename="somefilename.pdf"'</span>
+
+    <span class="nb">buffer</span> <span class="o">=</span> <span class="n">BytesIO</span><span class="p">()</span>
+
+    <span class="c1"># Create the PDF object, using the BytesIO object as its "file."</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">canvas</span><span class="o">.</span><span class="n">Canvas</span><span class="p">(</span><span class="nb">buffer</span><span class="p">)</span>
+
+    <span class="c1"># Draw things on the PDF. Here's where the PDF generation happens.</span>
+    <span class="c1"># See the ReportLab documentation for the full list of functionality.</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">drawString</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="s2">"Hello world."</span><span class="p">)</span>
+
+    <span class="c1"># Close the PDF object cleanly.</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">showPage</span><span class="p">()</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+
+    <span class="c1"># Get the value of the BytesIO buffer and write it to the response.</span>
+    <span class="n">pdf</span> <span class="o">=</span> <span class="nb">buffer</span><span class="o">.</span><span class="n">getvalue</span><span class="p">()</span>
+    <span class="nb">buffer</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="n">response</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">pdf</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">response</span>
+</pre>
+ </div> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/142"> <i class="fa fa-arrow-left"></i>&nbsp;动态生成CSV文件</a> 
+  <a class="float-right" href="/course/django/144"> 第三章：模版层&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 3</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/143">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.1080.1080.50/006xIWURly8g3w3jk5kmcj30u00u03zs.jpg?Expires=1562507709&amp;ssig=ZhQEgD7Ax2&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>默认不支持中文。需要注册中文字体。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 蔷薇-Nina </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年7月10日 22:17</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1448">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.996.996.50/cf7febfaly8fq7cr3y8pbj20ro0romz2.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>刘老师，您好！我都是把生成好的pdf放在服务器的文件夹里面，io库作为pdf临时保存地点是否可以提高生成pdf和下载pdf的速度？如果不可以，那这个库的作用是什么？盼回复，感谢~~~~</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 蔡可夫斯基的冒险之旅 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年10月24日 16:50</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/794">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>网上搜索一下，查查资料吧，看看有没有人讨论过这个问题。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 蔡可夫斯基的冒险之旅 </span> 
+      <em>2018年10月25日 08:59</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/797">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

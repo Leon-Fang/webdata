@@ -1,0 +1,945 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>查询集API</h1> 
+ <small>阅读:&nbsp;45938&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：13 </small> 
+ <hr> 
+ <p>本节将详细介绍查询集的API，它建立在下面的模型基础上，与上一节的模型相同：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
+
+<span class="k">class</span> <span class="nc">Blog</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+    <span class="n">tagline</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">TextField</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>              <span class="c1"># __unicode__ on Python 2</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
+
+<span class="k">class</span> <span class="nc">Author</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">200</span><span class="p">)</span>
+    <span class="n">email</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">EmailField</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>              <span class="c1"># __unicode__ on Python 2</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
+
+<span class="k">class</span> <span class="nc">Entry</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">blog</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Blog</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
+    <span class="n">headline</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">255</span><span class="p">)</span>
+    <span class="n">body_text</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">TextField</span><span class="p">()</span>
+    <span class="n">pub_date</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateField</span><span class="p">()</span>
+    <span class="n">mod_date</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateField</span><span class="p">()</span>
+    <span class="n">authors</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span><span class="n">Author</span><span class="p">)</span>
+    <span class="n">n_comments</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">IntegerField</span><span class="p">()</span>
+    <span class="n">n_pingbacks</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">IntegerField</span><span class="p">()</span>
+    <span class="n">rating</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">IntegerField</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>              <span class="c1"># __unicode__ on Python 2</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">headline</span>
+</pre>
+ </div> 
+ <h1>一、QuerySet何时被提交</h1> 
+ <p>在内部，创建、过滤、切片和传递一个QuerySet不会真实操作数据库，在你对查询集提交之前，不会发生任何实际的数据库操作。</p> 
+ <p>可以使用下列方法对QuerySet提交查询操作：</p> 
+ <ul> 
+  <li><strong>迭代</strong></li> 
+ </ul> 
+ <p>QuerySet是可迭代的，在首次迭代查询集时执行实际的数据库查询。 例如， 下面的语句会将数据库中所有Entry的headline打印出来：</p> 
+ <div class="codehilite">
+  <pre><span></span>for e in Entry.objects.all():
+    print(e.headline)
+</pre>
+ </div> 
+ <ul> 
+  <li> <p><strong>切片</strong>：如果使用切片的”step“参数，Django 将执行数据库查询并返回一个列表。 </p> </li> 
+  <li> <p><strong>Pickling/缓存</strong></p> </li> 
+  <li> <p><strong>repr()</strong></p> </li> 
+  <li> <p><strong>len()</strong>：当你对QuerySet调用len()时， 将提交数据库操作。 </p> </li> 
+  <li> <p><strong>list()</strong>：对QuerySet调用list()将强制提交操作<code>entry_list = list(Entry.objects.all())</code></p> </li> 
+  <li> <p><strong>bool()</strong></p> </li> 
+ </ul> 
+ <p>测试布尔值，像这样：</p> 
+ <div class="codehilite">
+  <pre><span></span>if Entry.objects.filter(headline="Test"):
+   print("There is at least one Entry with the headline Test")
+</pre>
+ </div> 
+ <p>注：如果你需要知道是否存在至少一条记录（而不需要真实的对象），使用exists() 将更加高效。</p> 
+ <h1>二、QuerySet</h1> 
+ <p>下面是对于QuerySet的正式定义：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kr">class</span> <span class="nx">QuerySet</span><span class="p">(</span><span class="nx">model</span><span class="o">=</span><span class="nx">None</span><span class="p">,</span> <span class="nx">query</span><span class="o">=</span><span class="nx">None</span><span class="p">,</span> <span class="nx">using</span><span class="o">=</span><span class="nx">None</span><span class="p">)[</span><span class="nx">source</span><span class="p">]</span>
+</pre>
+ </div> 
+ <p>QuerySet类具有两个公有属性用于内省：</p> 
+ <p>ordered：如果QuerySet是排好序的则为True，否则为False。</p> 
+ <p>db：如果现在执行，则返回使用的数据库。</p> 
+ <h1>三、返回新QuerySets的API</h1> 
+ <p><strong>以下的方法都将返回一个新的QuerySets。</strong>重点是加粗的几个API，其它的使用场景很少。</p> 
+ <table> 
+  <thead> 
+   <tr> 
+    <th>方法名</th> 
+    <th>解释</th> 
+   </tr> 
+  </thead> 
+  <tbody> 
+   <tr> 
+    <td><strong>filter()</strong></td> 
+    <td>过滤查询对象。</td> 
+   </tr> 
+   <tr> 
+    <td><strong>exclude()</strong></td> 
+    <td>排除满足条件的对象</td> 
+   </tr> 
+   <tr> 
+    <td><strong>annotate()</strong></td> 
+    <td>使用聚合函数</td> 
+   </tr> 
+   <tr> 
+    <td><strong>order_by()</strong></td> 
+    <td>对查询集进行排序</td> 
+   </tr> 
+   <tr> 
+    <td><strong>reverse()</strong></td> 
+    <td>反向排序</td> 
+   </tr> 
+   <tr> 
+    <td><strong>distinct()</strong></td> 
+    <td>对查询集去重</td> 
+   </tr> 
+   <tr> 
+    <td><strong>values()</strong></td> 
+    <td>返回包含对象具体值的字典的QuerySet</td> 
+   </tr> 
+   <tr> 
+    <td><strong>values_list()</strong></td> 
+    <td>与values()类似，只是返回的是元组而不是字典。</td> 
+   </tr> 
+   <tr> 
+    <td>dates()</td> 
+    <td>根据日期获取查询集</td> 
+   </tr> 
+   <tr> 
+    <td>datetimes()</td> 
+    <td>根据时间获取查询集</td> 
+   </tr> 
+   <tr> 
+    <td><strong>none()</strong></td> 
+    <td>创建空的查询集</td> 
+   </tr> 
+   <tr> 
+    <td><strong>all()</strong></td> 
+    <td>获取所有的对象</td> 
+   </tr> 
+   <tr> 
+    <td>union()</td> 
+    <td>并集</td> 
+   </tr> 
+   <tr> 
+    <td>intersection()</td> 
+    <td>交集</td> 
+   </tr> 
+   <tr> 
+    <td>difference()</td> 
+    <td>差集</td> 
+   </tr> 
+   <tr> 
+    <td><strong>select_related()</strong></td> 
+    <td>附带查询关联对象</td> 
+   </tr> 
+   <tr> 
+    <td><code>prefetch_related()</code></td> 
+    <td>预先查询</td> 
+   </tr> 
+   <tr> 
+    <td>extra()</td> 
+    <td>附加SQL查询</td> 
+   </tr> 
+   <tr> 
+    <td>defer()</td> 
+    <td>不加载指定字段</td> 
+   </tr> 
+   <tr> 
+    <td>only()</td> 
+    <td>只加载指定的字段</td> 
+   </tr> 
+   <tr> 
+    <td>using()</td> 
+    <td>选择数据库</td> 
+   </tr> 
+   <tr> 
+    <td><code>select_for_update()</code></td> 
+    <td>锁住选择的对象，直到事务结束。</td> 
+   </tr> 
+   <tr> 
+    <td>raw()</td> 
+    <td>接收一个原始的SQL查询</td> 
+   </tr> 
+  </tbody> 
+ </table> 
+ <h2>1. filter()</h2> 
+ <p>filter(**kwargs)</p> 
+ <p>返回满足查询参数的对象集合。</p> 
+ <p>查找的参数（**kwargs）应该满足下文字段查找中的格式。多个参数之间是和AND的关系。</p> 
+ <h2>2. exclude()</h2> 
+ <p>exclude(**kwargs)</p> 
+ <p>返回一个新的QuerySet，它包含<strong>不</strong>满足给定的查找参数的对象。</p> 
+ <p>查找的参数（**kwargs）应该满足下文字段查找中的格式。多个参数通过AND连接，然后所有的内容放入NOT() 中。</p> 
+ <p>下面的示例<strong>排除</strong>所有<code>pub_date</code>晚于2005-1-3<strong>且</strong>headline为“Hello” 的记录：</p> 
+ <div class="codehilite">
+  <pre><span></span>Entry.objects.exclude(pub_date__gt=datetime.date(2005, 1, 3), headline='Hello')
+</pre>
+ </div> 
+ <p>下面的示例<strong>排除</strong>所有<code>pub_date</code>晚于2005-1-3<strong>或者</strong>headline 为“Hello” 的记录：</p> 
+ <div class="codehilite">
+  <pre><span></span>Entry.objects.exclude(pub_date__gt=datetime.date(2005, 1, 3)).exclude(headline='Hello')
+</pre>
+ </div> 
+ <h2>3. annotate()</h2> 
+ <p>annotate(<em>args, </em>*kwargs)</p> 
+ <p>使用提供的聚合表达式查询对象。</p> 
+ <p>表达式可以是简单的值、对模型（或任何关联模型）上的字段的引用或者聚合表达式（平均值、总和等）。</p> 
+ <p>annotate()的每个参数都是一个annotation，它将添加到返回的QuerySet每个对象中。</p> 
+ <p>关键字参数指定的Annotation将使用关键字作为Annotation 的别名。 匿名参数的别名将基于聚合函数的名称和模型的字段生成。 只有引用单个字段的聚合表达式才可以使用匿名参数。 其它所有形式都必须用关键字参数。</p> 
+ <p>例如，如果正在操作一个Blog列表，你可能想知道每个Blog有多少Entry：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">Count</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">q</span> <span class="o">=</span> <span class="n">Blog</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="n">Count</span><span class="p">(</span><span class="s1">'entry'</span><span class="p">))</span>
+<span class="c1"># The name of the first blog</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">q</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name</span>
+<span class="s1">'Blogasaurus'</span>
+<span class="c1"># The number of entries on the first blog</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">q</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">entry__count</span>
+<span class="mi">42</span>
+</pre>
+ </div> 
+ <p>Blog模型本身没有定义<code>entry__count</code>属性，但是通过使用一个关键字参数来指定聚合函数，可以控制Annotation的名称：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; q = Blog.objects.annotate(number_of_entries=Count('entry'))
+# The number of entries on the first blog, using the name provided
+&gt;&gt;&gt; q[0].number_of_entries
+42
+</pre>
+ </div> 
+ <h2>4. order_by()</h2> 
+ <p>order_by(*fields)</p> 
+ <p>默认情况下，根据模型的Meta类中的ordering属性对QuerySet中的对象进行排序</p> 
+ <div class="codehilite">
+  <pre><span></span>Entry.objects.filter(pub_date__year=2005).order_by('-pub_date', 'headline')
+</pre>
+ </div> 
+ <p>上面的结果将按照<code>pub_date</code>降序排序，然后再按照headline升序排序。"-pub_date"前面的负号表示降序顺序。 升序是默认的。 要随机排序，使用"?"，如下所示：</p> 
+ <div class="codehilite">
+  <pre><span></span>Entry.objects.order_by('?')
+</pre>
+ </div> 
+ <p>注：<code>order_by('?')</code>可能耗费资源且很慢，这取决于使用的数据库。</p> 
+ <p>若要按照另外一个模型中的字段排序，可以使用查询关联模型的语法。即通过字段的名称后面跟两个下划线（<code>__</code>），再加上新模型中的字段的名称，直到希望连接的模型。 像这样：</p> 
+ <div class="codehilite">
+  <pre><span></span>Entry.objects.order_by('blog__name', 'headline')
+</pre>
+ </div> 
+ <p>如果排序的字段与另外一个模型关联，Django将使用关联的模型的默认排序，或者如果没有指定Meta.ordering将通过关联的模型的主键排序。 例如，因为Blog模型没有指定默认的排序：</p> 
+ <div class="codehilite">
+  <pre><span></span>Entry.objects.order_by('blog')
+</pre>
+ </div> 
+ <p>与以下相同：</p> 
+ <div class="codehilite">
+  <pre><span></span>Entry.objects.order_by('blog__id')
+</pre>
+ </div> 
+ <p>如果Blog设置了<code>ordering = ['name']</code>，那么第一个QuerySet将等同于：</p> 
+ <div class="codehilite">
+  <pre><span></span>Entry.objects.order_by('blog__name')
+</pre>
+ </div> 
+ <p>还可以通过调用表达式的desc()或者asc()方法：</p> 
+ <div class="codehilite">
+  <pre><span></span>Entry.objects.order_by(Coalesce('summary', 'headline').desc())
+</pre>
+ </div> 
+ <p>考虑下面的情况，指定一个多值字段来排序（例如，一个ManyToManyField 字段或者ForeignKey 字段的反向关联）：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="k">class</span> <span class="nc">Event</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+   <span class="n">parent</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+       <span class="s1">'self'</span><span class="p">,</span>
+       <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">,</span>
+       <span class="n">related_name</span><span class="o">=</span><span class="s1">'children'</span><span class="p">,</span>
+   <span class="p">)</span>
+   <span class="n">date</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateField</span><span class="p">()</span>
+
+<span class="n">Event</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s1">'children__date'</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>在这里，每个Event可能有多个排序数据；具有多个children的每个Event将被多次返回到<code>order_by()</code>创建的新的QuerySet中。 换句话说，用<code>order_by()</code>方法对QuerySet对象进行操作会返回一个扩大版的新QuerySet对象。因此，使用多值字段对结果进行排序时要格外小心。</p> 
+ <p>没有方法指定排序是否考虑大小写。 对于大小写的敏感性，Django将根据数据库中的排序方式排序结果。</p> 
+ <p>可以通过Lower将一个字段转换为小写来排序，它将达到大小写一致的排序：</p> 
+ <div class="codehilite">
+  <pre><span></span>Entry.objects.order_by(Lower('headline').desc())
+</pre>
+ </div> 
+ <p>可以通过检查<code>QuerySet.ordered</code>属性来知道查询是否是排序的。</p> 
+ <p>每个<code>order_by()</code>都将清除前面的任何排序。 例如下面的查询将按照<code>pub_date</code>排序，而不是headline：</p> 
+ <div class="codehilite">
+  <pre><span></span>Entry.objects.order_by('headline').order_by('pub_date')
+</pre>
+ </div> 
+ <h2>5. reverse()</h2> 
+ <p>reverse()</p> 
+ <p>反向排序QuerySet中返回的元素。 第二次调用reverse()将恢复到原有的排序。</p> 
+ <p>如要获取QuerySet中最后五个元素，可以这样做：</p> 
+ <div class="codehilite">
+  <pre><span></span>my_queryset.reverse()[:5]
+</pre>
+ </div> 
+ <p>这与Python直接使用负索引有点不一样。 Django不支持负索引，只能曲线救国。</p> 
+ <h2>6. distinct()</h2> 
+ <p>distinct(*fields)</p> 
+ <p>去除查询结果中重复的行。</p> 
+ <p>默认情况下，QuerySet不会去除重复的行。当查询跨越多张表的数据时，QuerySet可能得到重复的结果，这时候可以使用distinct()进行去重。</p> 
+ <h2>7. values()</h2> 
+ <p>values(<em>fields, </em>*expressions)</p> 
+ <p>返回一个包含数据的字典的queryset，而不是模型实例。</p> 
+ <p>每个字典表示一个对象，键对应于模型对象的属性名称。</p> 
+ <p>下面的例子将values() 与普通的模型对象进行比较：</p> 
+ <div class="codehilite">
+  <pre><span></span># 列表中包含的是Blog对象
+&gt;&gt;&gt; Blog.objects.filter(name__startswith='Beatles')
+&lt;QuerySet [&lt;Blog: Beatles Blog&gt;]&gt;
+# 列表中包含的是数据字典
+&gt;&gt;&gt; Blog.objects.filter(name__startswith='Beatles').values()
+&lt;QuerySet [{'id': 1, 'name': 'Beatles Blog', 'tagline': 'All the latest Beatles news.'}]&gt;
+</pre>
+ </div> 
+ <p>该方法接收可选的位置参数<code>*fields</code>，它指定values()应该限制哪些字段。如果指定字段，每个字典将只包含指定的字段的键/值。如果没有指定字段，每个字典将包含数据库表中所有字段的键和值。</p> 
+ <p>例如：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; Blog.objects.values()
+&lt;QuerySet [{'id': 1, 'name': 'Beatles Blog', 'tagline': 'All the latest Beatles news.'}]&gt;
+&gt;&gt;&gt; Blog.objects.values('id', 'name')
+&lt;QuerySet [{'id': 1, 'name': 'Beatles Blog'}]&gt;
+</pre>
+ </div> 
+ <p>values()方法还有关键字参数<code>**expressions</code>，这些参数将传递给<code>annotate()</code>：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">django.db.models.functions</span> <span class="kn">import</span> <span class="n">Lower</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Blog</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="n">lower_name</span><span class="o">=</span><span class="n">Lower</span><span class="p">(</span><span class="s1">'name'</span><span class="p">))</span>
+<span class="o">&lt;</span><span class="n">QuerySet</span> <span class="p">[{</span><span class="s1">'lower_name'</span><span class="p">:</span> <span class="s1">'beatles blog'</span><span class="p">}]</span><span class="o">&gt;</span>
+</pre>
+ </div> 
+ <p>在values()子句中的聚合应用于相同values()子句中的其他参数之前。 如果需要按另一个值分组，请将其添加到较早的values()子句中。 像这样：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">Count</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Blog</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="s1">'author'</span><span class="p">,</span> <span class="n">entries</span><span class="o">=</span><span class="n">Count</span><span class="p">(</span><span class="s1">'entry'</span><span class="p">))</span>
+<span class="o">&lt;</span><span class="n">QuerySet</span> <span class="p">[{</span><span class="s1">'author'</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">'entries'</span><span class="p">:</span> <span class="mi">20</span><span class="p">},</span> <span class="p">{</span><span class="s1">'author'</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">'entries'</span><span class="p">:</span> <span class="mi">13</span><span class="p">}]</span><span class="o">&gt;</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Blog</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="s1">'author'</span><span class="p">)</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="n">entries</span><span class="o">=</span><span class="n">Count</span><span class="p">(</span><span class="s1">'entry'</span><span class="p">))</span>
+<span class="o">&lt;</span><span class="n">QuerySet</span> <span class="p">[{</span><span class="s1">'author'</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">'entries'</span><span class="p">:</span> <span class="mi">33</span><span class="p">}]</span><span class="o">&gt;</span>
+</pre>
+ </div> 
+ <p>注意：</p> 
+ <p>如果你有一个字段foo是一个ForeignKey，默认的<code>foo_id</code>参数返回的字典中将有一个叫做foo 的键，因为这是保存实际值的那个隐藏的模型属性的名称。 当调用<code>foo_id</code>并传递字段的名称，传递foo 或values()都可以，得到的结果是相同的。像这样：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; Entry.objects.values()
+&lt;QuerySet [{'blog_id': 1, 'headline': 'First Entry', ...}, ...]&gt;
+&gt;&gt;&gt; Entry.objects.values('blog')
+&lt;QuerySet [{'blog': 1}, ...]&gt;
+&gt;&gt;&gt; Entry.objects.values('blog_id')
+&lt;QuerySet [{'blog_id': 1}, ...]&gt;
+</pre>
+ </div> 
+ <p>当values()与distinct()一起使用时，注意排序可能影响最终的结果。</p> 
+ <p>如果values()子句位于extra()调用之后，extra()中的select参数定义的字段必须显式包含在values()调用中。 values( 调用后面的extra( 调用将忽略选择的额外的字段。</p> 
+ <p>在values()之后调用only()和defer()不太合理，所以将引发一个NotImplementedError。</p> 
+ <p>可以通过ManyToManyField、ForeignKey 和 OneToOneFiel 属性反向引用关联的模型的字段：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; Blog.objects.values('name', 'entry__headline')
+&lt;QuerySet [{'name': 'My blog', 'entry__headline': 'An entry'},
+     {'name': 'My blog', 'entry__headline': 'Another entry'}, ...]&gt;
+</pre>
+ </div> 
+ <h2>8. values_list()</h2> 
+ <p>values_list(*fields, flat=False)</p> 
+ <p>与values()类似，只是在迭代时返回的是元组而不是字典。每个元组包含传递给<code>values_list()</code>调用的相应字段或表达式的值，因此第一个项目是第一个字段等。 像这样：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="o">&gt;&gt;&gt;</span> <span class="n">Entry</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">values_list</span><span class="p">(</span><span class="s1">'id'</span><span class="p">,</span> <span class="s1">'headline'</span><span class="p">)</span>
+<span class="o">&lt;</span><span class="n">QuerySet</span> <span class="p">[(</span><span class="mi">1</span><span class="p">,</span> <span class="s1">'First entry'</span><span class="p">),</span> <span class="o">...</span><span class="p">]</span><span class="o">&gt;</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">django.db.models.functions</span> <span class="kn">import</span> <span class="n">Lower</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Entry</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">values_list</span><span class="p">(</span><span class="s1">'id'</span><span class="p">,</span> <span class="n">Lower</span><span class="p">(</span><span class="s1">'headline'</span><span class="p">))</span>
+<span class="o">&lt;</span><span class="n">QuerySet</span> <span class="p">[(</span><span class="mi">1</span><span class="p">,</span> <span class="s1">'first entry'</span><span class="p">),</span> <span class="o">...</span><span class="p">]</span><span class="o">&gt;</span>
+</pre>
+ </div> 
+ <p>如果只传递一个字段，还可以传递flat参数。 如果为True，它表示返回的结果为单个值而不是元组。 如下所示：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; Entry.objects.values_list('id').order_by('id')
+&lt;QuerySet[(1,), (2,), (3,), ...]&gt;
+&gt;&gt;&gt; Entry.objects.values_list('id', flat=True).order_by('id')
+&lt;QuerySet [1, 2, 3, ...]&gt;
+</pre>
+ </div> 
+ <p>如果有多个字段，传递flat将发生错误。</p> 
+ <p>如果不传递任何值给<code>values_list()</code>，它将返回模型中的所有字段，以在模型中定义的顺序。</p> 
+ <p>常见的情况是获取某个模型实例的特定字段值。可以使用<code>values_list()</code>，然后调用get()：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; Entry.objects.values_list('headline', flat=True).get(pk=1)
+'First entry'
+</pre>
+ </div> 
+ <p><code>values()</code>和<code>values_list()</code>都用于特定情况下的优化：检索数据子集，而无需创建模型实例。 </p> 
+ <p>注意通过ManyToManyField进行查询时的行为：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; Author.objects.values_list('name', 'entry__headline')
+&lt;QuerySet [('Noam Chomsky', 'Impressions of Gaza'),
+ ('George Orwell', 'Why Socialists Do Not Believe in Fun'),
+ ('George Orwell', 'In Defence of English Cooking'),
+ ('Don Quixote', None)]&gt;
+</pre>
+ </div> 
+ <p>类似地，当查询反向外键时，对于没有任何作者的条目，返回None。</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; Entry.objects.values_list('authors')
+&lt;QuerySet [('Noam Chomsky',), ('George Orwell',), (None,)]&gt;
+</pre>
+ </div> 
+ <h2>9. dates()</h2> 
+ <p>dates(field, kind, order='ASC')</p> 
+ <p>返回一个QuerySet，表示QuerySet内容中特定类型的所有可用日期的<code>datetime.date</code>对象列表。</p> 
+ <p>field参数是模型的DateField的名称。 kind参数应为"year"，"month"或"day"。 结果列表中的每个datetime.date对象被截取为给定的类型。</p> 
+ <p>"year" 返回对应该field的所有不同年份值的列表。</p> 
+ <p>"month"返回字段的所有不同年/月值的列表。</p> 
+ <p>"day"返回字段的所有不同年/月/日值的列表。</p> 
+ <p>order参数默认为'ASC'，或者'DESC'。 它指定如何排序结果。</p> 
+ <p>例子：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; Entry.objects.dates('pub_date', 'year')
+[datetime.date(2005, 1, 1)]
+&gt;&gt;&gt; Entry.objects.dates('pub_date', 'month')
+[datetime.date(2005, 2, 1), datetime.date(2005, 3, 1)]
+&gt;&gt;&gt; Entry.objects.dates('pub_date', 'day')
+[datetime.date(2005, 2, 20), datetime.date(2005, 3, 20)]
+&gt;&gt;&gt; Entry.objects.dates('pub_date', 'day', order='DESC')
+[datetime.date(2005, 3, 20), datetime.date(2005, 2, 20)]
+&gt;&gt;&gt; Entry.objects.filter(headline__contains='Lennon').dates('pub_date', 'day')
+[datetime.date(2005, 3, 20)]
+</pre>
+ </div> 
+ <h2>10. datetimes()</h2> 
+ <p>datetimes(field_name, kind, order='ASC', tzinfo=None)</p> 
+ <p>返回QuerySet，为datetime.datetime对象的列表，表示QuerySet内容中特定种类的所有可用日期。</p> 
+ <p><code>field_name</code>应为模型的DateTimeField的名称。</p> 
+ <p>kind参数应为"hour"，"minute"，"month"，"year"，"second"或"day"。</p> 
+ <p>结果列表中的每个datetime.datetime对象被截取到给定的类型。</p> 
+ <p>order参数默认为'ASC'，或者'DESC'。 它指定如何排序结果。</p> 
+ <p>tzinfo参数定义在截取之前将数据时间转换到的时区。</p> 
+ <h2>11. none()</h2> 
+ <p>none()</p> 
+ <p>调用none()将创建一个不返回任何对象的查询集，并且在访问结果时不会执行任何查询。</p> 
+ <p>例子：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="o">&gt;&gt;&gt;</span> <span class="n">Entry</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">none</span><span class="p">()</span>
+<span class="o">&lt;</span><span class="n">QuerySet</span> <span class="p">[]</span><span class="o">&gt;</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">django.db.models.query</span> <span class="kn">import</span> <span class="n">EmptyQuerySet</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">Entry</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">none</span><span class="p">(),</span> <span class="n">EmptyQuerySet</span><span class="p">)</span>
+<span class="bp">True</span>
+</pre>
+ </div> 
+ <h2>12. all()</h2> 
+ <p>all()</p> 
+ <p>返回当前QuerySet（或QuerySet子类）的副本。通常用于获取全部QuerySet对象。</p> 
+ <h2>13. union()</h2> 
+ <p>union(*other_qs, all=False)</p> 
+ <p>Django中的新功能1.11。也就是集合中并集的概念！</p> 
+ <p>使用SQL的UNION运算符组合两个或更多个QuerySet的结果。例如：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; qs1.union(qs2, qs3)
+</pre>
+ </div> 
+ <p>默认情况下，UNION操作符仅选择不同的值。 要允许重复值，请使用all=True参数。</p> 
+ <h2>14. intersection()</h2> 
+ <p>intersection(*other_qs)</p> 
+ <p>Django中的新功能1.11。也就是集合中交集的概念！</p> 
+ <p>使用SQL的INTERSECT运算符返回两个或更多个QuerySet的共有元素。例如：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; qs1.intersection(qs2, qs3)
+</pre>
+ </div> 
+ <h2>15. difference()</h2> 
+ <p>difference(*other_qs)</p> 
+ <p>Django中的新功能1.11。也就是集合中差集的概念！</p> 
+ <p>使用SQL的EXCEPT运算符只保留QuerySet中的元素，但不保留其他QuerySet中的元素。例如：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; qs1.difference(qs2, qs3)
+</pre>
+ </div> 
+ <h2>16. select_related()</h2> 
+ <p>select_related(*fields)</p> 
+ <p>沿着外键关系查询关联的对象的数据。这会生成一个复杂的查询并引起性能的损耗，但是在以后使用外键关系时将不需要再次数据库查询。</p> 
+ <p>下面的例子解释了普通查询和<code>select_related()</code>查询的区别。 下面是一个标准的查询：</p> 
+ <div class="codehilite">
+  <pre><span></span># 访问数据库。
+e = Entry.objects.get(id=5)
+# 再次访问数据库以得到关联的Blog对象。
+b = e.blog
+</pre>
+ </div> 
+ <p>下面是一个<code>select_related</code>查询：</p> 
+ <div class="codehilite">
+  <pre><span></span># 访问数据库。
+e = Entry.objects.select_related('blog').get(id=5)
+# 不会访问数据库，因为e.blog已经在前面的查询中获得了。
+b = e.blog
+</pre>
+ </div> 
+ <p><code>select_related()</code>可用于objects任何的查询集：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.utils</span> <span class="kn">import</span> <span class="n">timezone</span>
+
+<span class="c1"># Find all the blogs with entries scheduled to be published in the future.</span>
+<span class="n">blogs</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+<span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">Entry</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">pub_date__gt</span><span class="o">=</span><span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">())</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span><span class="s1">'blog'</span><span class="p">):</span>
+    <span class="c1"># 没有select_related()，下面的语句将为每次循环迭代生成一个数据库查询,以获得每个entry关联的blog。</span>
+    <span class="n">blogs</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">blog</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p><code>filter()</code>和<code>select_related()</code>的顺序不重要。 下面的查询集是等同的：</p> 
+ <div class="codehilite">
+  <pre><span></span>Entry.objects.filter(pub_date__gt=timezone.now()).select_related('blog')
+Entry.objects.select_related('blog').filter(pub_date__gt=timezone.now())
+</pre>
+ </div> 
+ <p>可以沿着外键查询。 如果有以下模型：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
+
+<span class="k">class</span> <span class="nc">City</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="c1"># ...</span>
+    <span class="k">pass</span>
+
+<span class="k">class</span> <span class="nc">Person</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="c1"># ...</span>
+    <span class="n">hometown</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="n">City</span><span class="p">,</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">SET_NULL</span><span class="p">,</span>
+        <span class="n">blank</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+        <span class="n">null</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+    <span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">Book</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="c1"># ...</span>
+    <span class="n">author</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Person</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>调用<code>Book.objects.select_related('author__hometown').get(id=4)</code>将缓存相关的Person 和相关的City：</p> 
+ <div class="codehilite">
+  <pre><span></span>b = Book.objects.select_related('author__hometown').get(id=4)
+p = b.author         # Doesn't hit the database.
+c = p.hometown       # Doesn't hit the database.
+b = Book.objects.get(id=4) # No select_related() in this example.
+p = b.author         # Hits the database.
+c = p.hometown       # Hits the database.
+</pre>
+ </div> 
+ <p>在传递给<code>select_related()</code>的字段中，可以使用任何ForeignKey和OneToOneField。</p> 
+ <p>在传递给<code>select_related</code>的字段中，还可以反向引用OneToOneField。也就是说，可以回溯到定义OneToOneField 的字段。 此时，可以使用关联对象字段的<code>related_name</code>，而不要指定字段的名称。</p> 
+ <h2>17. prefetch_related()</h2> 
+ <p>prefetch_related(*lookups)</p> 
+ <p>在单个批处理中自动检索每个指定查找的相关对象。</p> 
+ <p>与<code>select_related</code>类似，但是策略是完全不同的。</p> 
+ <p>假设有这些模型：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
+
+<span class="k">class</span> <span class="nc">Topping</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">Pizza</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+    <span class="n">toppings</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span><span class="n">Topping</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>              <span class="c1"># __unicode__ on Python 2</span>
+        <span class="k">return</span> <span class="s2">"</span><span class="si">%s</span><span class="s2"> (</span><span class="si">%s</span><span class="s2">)"</span> <span class="o">%</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">topping</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">topping</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">toppings</span><span class="o">.</span><span class="n">all</span><span class="p">()),</span>
+        <span class="p">)</span>
+</pre>
+ </div> 
+ <p>并运行：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; Pizza.objects.all()
+["Hawaiian (ham, pineapple)", "Seafood (prawns, smoked salmon)"...
+</pre>
+ </div> 
+ <p>问题是每次QuerySet要求<code>Pizza.objects.all()</code>查询数据库，因此<code>self.toppings.all()</code>将在<code>Pizza Pizza.__str__()</code>中的每个项目的Toppings表上运行查询。</p> 
+ <p>可以使用<code>prefetch_related</code>减少为只有两个查询：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; Pizza.objects.all().prefetch_related('toppings')
+</pre>
+ </div> 
+ <p>这意味着现在每次<code>self.toppings.all()</code>被调用，不会再去数据库查找，而是在一个预取的QuerySet缓存中查找。</p> 
+ <p>还可以使用正常连接语法来执行相关字段的相关字段。 假设在上面的例子中增加一个额外的模型：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kr">class</span> <span class="nx">Restaurant</span><span class="p">(</span><span class="nx">models</span><span class="p">.</span><span class="nx">Model</span><span class="p">)</span><span class="o">:</span>
+    <span class="nx">pizzas</span> <span class="o">=</span> <span class="nx">models</span><span class="p">.</span><span class="nx">ManyToManyField</span><span class="p">(</span><span class="nx">Pizza</span><span class="p">,</span> <span class="nx">related_name</span><span class="o">=</span><span class="s1">'restaurants'</span><span class="p">)</span>
+    <span class="nx">best_pizza</span> <span class="o">=</span> <span class="nx">models</span><span class="p">.</span><span class="nx">ForeignKey</span><span class="p">(</span><span class="nx">Pizza</span><span class="p">,</span> <span class="nx">related_name</span><span class="o">=</span><span class="s1">'championed_by'</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>以下是合法的：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; Restaurant.objects.prefetch_related('pizzas__toppings')
+</pre>
+ </div> 
+ <p>这将预取所有属于餐厅的比萨饼，和所有属于那些比萨饼的配料。 这将导致总共3个查询 - 一个用于餐馆，一个用于比萨饼，一个用于配料。</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; Restaurant.objects.prefetch_related('best_pizza__toppings')
+</pre>
+ </div> 
+ <p>这将获取最好的比萨饼和每个餐厅最好的披萨的所有配料。 这将在3个表中查询 - 一个为餐厅，一个为“最佳比萨饼”，一个为一个为配料。</p> 
+ <p>当然，也可以使用<code>best_pizza</code>来获取<code>select_related</code>关系，以将查询数减少为2：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; Restaurant.objects.select_related('best_pizza').prefetch_related('best_pizza__toppings')
+</pre>
+ </div> 
+ <h2>18. extra()</h2> 
+ <p>extra(select=None, where=None, params=None, tables=None, order_by=None, select_params=None)</p> 
+ <p>有些情况下，Django的查询语法难以简单的表达复杂的WHERE子句，对于这种情况,可以在extra()生成的SQL从句中注入新子句。使用这种方法作为最后的手段，这是一个旧的API，在将来的某个时候可能被弃用。仅当无法使用其他查询方法表达查询时才使用它。</p> 
+ <p>例如：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; qs.extra(
+...     select={'val': "select col from sometable where othercol = %s"},
+...     select_params=(someparam,),
+... )
+</pre>
+ </div> 
+ <p>相当于：</p> 
+ <div class="codehilite">
+  <pre><span></span>&gt;&gt;&gt; qs.annotate(val=RawSQL("select col from sometable where othercol = %s", (someparam,)))
+</pre>
+ </div> 
+ <h2>19. defer()</h2> 
+ <p>defer(*fields)</p> 
+ <p>在一些复杂的数据建模情况下，模型可能包含大量字段，其中一些可能包含大尺寸数据（例如文本字段），将它们转换为Python对象需要花费很大的代价。</p> 
+ <p>当最初获取数据时不知道是否需要这些特定字段的情况下，如果正在使用查询集的结果，可以告诉Django不要从数据库中检索它们。</p> 
+ <p>通过传递字段名称到defer()实现不加载：</p> 
+ <div class="codehilite">
+  <pre><span></span>Entry.objects.defer("headline", "body")
+</pre>
+ </div> 
+ <p>具有延迟加载字段的查询集仍将返回模型实例。</p> 
+ <p>每个延迟字段将在你访问该字段时从数据库中检索（每次只检索一个，而不是一次检索所有的延迟字段）。</p> 
+ <p>可以多次调用defer()。 每个调用都向延迟集添加新字段：</p> 
+ <div class="codehilite">
+  <pre><span></span># 延迟body和headline两个字段。
+Entry.objects.defer("body").filter(rating=5).defer("headline")
+</pre>
+ </div> 
+ <p>字段添加到延迟集的顺序无关紧要。对已经延迟的字段名称再次defer()没有问题（该字段仍将被延迟）。</p> 
+ <p>可以使用标准的双下划线符号来分隔关联的字段，从而加载关联模型中的字段：</p> 
+ <div class="codehilite">
+  <pre><span></span>Blog.objects.select_related().defer("entry__headline", "entry__body")
+</pre>
+ </div> 
+ <p>如果要清除延迟字段集，将None作为参数传递到defer()：</p> 
+ <div class="codehilite">
+  <pre><span></span># 立即加载所有的字段。
+my_queryset.defer(None)
+</pre>
+ </div> 
+ <p>defer()方法（及其兄弟，only()）仅适用于高级用例，它们提供了数据加载的优化方法。</p> 
+ <h2>20. only()</h2> 
+ <p>only(*fields)</p> 
+ <p>only()方法与defer()相反。</p> 
+ <p>如果有一个模型几乎所有的字段需要延迟，使用only()指定补充的字段集可以使代码更简单。</p> 
+ <p>假设有一个包含字段biography、age和name的模型。 以下两个查询集是相同的，就延迟字段而言：</p> 
+ <div class="codehilite">
+  <pre><span></span>Person.objects.defer("age", "biography")
+Person.objects.only("name")
+</pre>
+ </div> 
+ <p>每当你调用only()时，它将替换立即加载的字段集。因此，对only()的连续调用的结果是只有最后一次调用的字段被考虑：</p> 
+ <div class="codehilite">
+  <pre><span></span># This will defer all fields except the headline.
+Entry.objects.only("body", "rating").only("headline")
+</pre>
+ </div> 
+ <p>由于defer()以递增方式动作（向延迟列表中添加字段），因此你可以结合only()和defer()调用：</p> 
+ <div class="codehilite">
+  <pre><span></span># Final result is that everything except "headline" is deferred.
+Entry.objects.only("headline", "body").defer("body")
+# Final result loads headline and body immediately (only() replaces any
+# existing set of fields).
+Entry.objects.defer("body").only("headline", "body")
+</pre>
+ </div> 
+ <p>当对具有延迟字段的实例调用save()时，仅保存加载的字段。</p> 
+ <h2>21. using()</h2> 
+ <p>using(alias)</p> 
+ <p>如果正在使用多个数据库，这个方法用于指定在哪个数据库上查询QuerySet。方法的唯一参数是数据库的别名，定义在DATABASES。</p> 
+ <p>例如：</p> 
+ <div class="codehilite">
+  <pre><span></span># queries the database with the 'default' alias.
+&gt;&gt;&gt; Entry.objects.all()
+# queries the database with the 'backup' alias
+&gt;&gt;&gt; Entry.objects.using('backup')
+</pre>
+ </div> 
+ <h2>22. select_for_update()</h2> 
+ <p>select_for_update(nowait=False, skip_locked=False)</p> 
+ <p>返回一个锁住行直到事务结束的查询集，如果数据库支持，它将生成一个<code>SELECT ... FOR UPDATE</code>语句。</p> 
+ <p>例如：</p> 
+ <div class="codehilite">
+  <pre><span></span>entries = Entry.objects.select_for_update().filter(author=request.user)
+</pre>
+ </div> 
+ <p>所有匹配的行将被锁定，直到事务结束。这意味着可以通过锁防止数据被其它事务修改。</p> 
+ <p>一般情况下如果其他事务锁定了相关行，那么本查询将被阻塞，直到锁被释放。使用<code>select_for_update(nowait=True)</code>将使查询不阻塞。如果其它事务持有冲突的锁,那么查询将引发<code>DatabaseError</code>异常。也可以使用<code>select_for_update(skip_locked=True)</code>忽略锁定的行。nowait和<code>skip_locked</code>是互斥的。</p> 
+ <p>目前，postgresql，oracle和mysql数据库后端支持<code>select_for_update()</code>。但是，MySQL不支持nowait和<code>skip_locked</code>参数。</p> 
+ <h2>23. raw()</h2> 
+ <p>raw(raw_query, params=None, translations=None)</p> 
+ <p>接收一个原始的SQL查询，执行它并返回一个<code>django.db.models.query.RawQuerySet</code>实例。 </p> 
+ <p>这个RawQuerySet实例可以迭代，就像普通的QuerySet一样。</p> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/129"> <i class="fa fa-arrow-left"></i>&nbsp;查询操作</a> 
+  <a class="float-right" href="/course/django/131"> 不返回QuerySets的API&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 13</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/130">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_female_50.gif?KID=imgbed,tva&amp;Expires=1581932817&amp;ssig=YounANkeQn" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>博主你好，我想问下为什么我用reverse会不生效？，还是原来的序列</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户6976047326 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年2月19日 18:10</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1916">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_female_50.gif?KID=imgbed,tva&amp;Expires=1581932817&amp;ssig=YounANkeQn" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>&gt;&gt;&gt; Entry.objects.order_by(Coalesce('summary', 'headline').desc()) Traceback (most recent call last): File "&lt;console&gt;", line 1, in &lt;module&gt; NameError: name 'Coalesce' is not defined 博主您好，为什么我这里的Console没定义？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户6976047326 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年2月19日 17:47</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1915">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax4.sinaimg.cn/crop.0.0.996.996.50/006ucA1rly8fw70os583lj30ro0ro40q.jpg?KID=imgbed,tva&amp;Expires=1578768907&amp;ssig=AFvHYK%2FHg7" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>博主，请问我如果想返回两张表的部分数据该怎么写呢？ 比如说：评论功能，用户可以进行评论，那么我就应该设计一张用户表和一张评论表，用户评论后前端界面上应该显示的数据有用户的头像、信息、评论的内容等。但是貌似django的查询集api返回的都是单表的数据？ 比如我在查询所有评论的时候all_comments = CourseComments.objects.filter(course=course_id) 但是这么写只能返回CourseComments这张表的数据吧？ 如果我想加上user表的部分信息应该怎么做呢，user表和CourseComments表是已经做了外键关联的。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; KevinMcblack </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年1月12日 00:00</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1839">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.1080.1080.50/006xIWURly8g3w3jk5kmcj30u00u03zs.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>select_for_update()容易忽略，其实很重要</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 蔷薇-Nina </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年6月17日 23:42</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1408">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.132.132.50/0075YlD9ly8fp3ckqxbp0j303o03ojr9.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>请问 Blog.objects.values('author', entries=Count('entry')) 是不是错了 Blog 表 和 author表没有关联啊？ 做何理解？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; vzerzhang </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年4月25日 17:19</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1286">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>它们通过Entry表建立了联系。有的API调用形式确实很绕。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; vzerzhang </span> 
+      <em>2019年4月25日 22:19</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1287">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax4.sinaimg.cn/crop.0.0.996.996.50/d05cd3a7ly8fidijv09e1j20ro0romyo.jpg?KID=imgbed,tva&amp;Expires=1574934032&amp;ssig=%2BgOPikuzPU" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>你好，我在运行【Blog.objects.values('author', entries=Count('entry'))】查询语句的时候shell发生错误，错误如下： 【FieldError: Cannot resolve keyword 'author' into field. Choices are: entries, entry, id, name, tagline】 说选择中没有author的参数啊</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 月儿弯弯眉毛尖 &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2019年11月28日 14:41</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1735">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.0.1080.1080.50/b0c8d365jw8exye2wtxyhj20u00u0jsx.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>请问QuerySet提交查询的迭代方法是先一次性拿到所有结果再逐个打印还是逐次访问数据库？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 古影tx </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年1月16日 10:37</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1015">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.0.1080.1080.50/b0c8d365jw8exye2wtxyhj20u00u0jsx.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我理解是访问一次，不确定对不对</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 古影tx &nbsp;&nbsp;回复&nbsp;&nbsp; 古影tx </span> 
+      <em>2019年1月16日 10:39</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1016">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>在首次迭代查询集时执行实际的数据库查询</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 古影tx </span> 
+      <em>2019年1月16日 17:38</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1017">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.996.996.50/006EOKhYly8fhshcco7p6j30ro0romya.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>博主写的真的好，比我在网上看的好多了0.0 谢谢博主</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; WEI丶weiksjsks </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年1月30日 21:48</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/174">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>distinct()传入字段参数会报错，文中并没有给出详细的讲解。 annotate()的讲解并不直白明了，非常模糊。提示：annotate是注释的意思，Django为什么要用这么个词？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 用户5995128989 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年1月27日 22:37</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/164">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.41.0.446.446.50/e2f9f9cdjw8f2xmhpvecpj20go0go0sw.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>不直白明了的去百度一下再查查，我觉的已经无可挑剔了，只是需要认真细致的读上几遍。其实就明白了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 海上有个树荫_hhh &nbsp;&nbsp;回复&nbsp;&nbsp; 用户5995128989 </span> 
+      <em>2018年3月13日 01:41</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/301">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

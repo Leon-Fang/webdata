@@ -1,0 +1,782 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>Part 7：自定义admin</h1> 
+ <small>阅读:&nbsp;51697&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：31 </small> 
+ <hr> 
+ <p>本节我们主要介绍在第二部分提到过的admin后台管理站点。</p> 
+ <p>Django的admin站点是自动生成的、高度可定制的，它是Django相较其它Web框架独有的内容，广受欢迎。如果你觉得它不够美观，还有第三方美化版xadmin。请一定不要忽略它，相信我，<strong>它值得拥有</strong>！</p> 
+ <h2>一、自定义后台表单</h2> 
+ <p>在前面的学习过程中，通过<code>admin.site.register(Question)</code>语句，我们在admin站点中注册了Question模型。Django会自动生成一个该模型的默认表单页面。如果你想自定义该页面的外观和工作方式，可以在注册对象的时候告诉Django你的自定义选项。</p> 
+ <p>下面是一个修改admin表单默认排序方式的例子。修改<code>polls/admin.py</code>的代码：：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.contrib</span> <span class="kn">import</span> <span class="n">admin</span>
+<span class="kn">from</span> <span class="nn">.models</span> <span class="kn">import</span> <span class="n">Question</span>
+
+
+<span class="k">class</span> <span class="nc">QuestionAdmin</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">ModelAdmin</span><span class="p">):</span>
+    <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'pub_date'</span><span class="p">,</span> <span class="s1">'question_text'</span><span class="p">]</span>
+
+<span class="n">admin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">Question</span><span class="p">,</span> <span class="n">QuestionAdmin</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>你只需要创建一个继承<code>admin.ModelAdmin</code>的模型管理类，然后将它作为第二个参数传递给<code>admin.site.register()</code>，第一个参数则是Question模型本身。</p> 
+ <p>上面的修改让<code>Publication date</code>字段显示在<code>Question</code>字段前面了（默认是在后面）。如下图所示：</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/93-1.png"></p> 
+ <p>对于只有2个字段的情况，效果看起来还不是很明显，但是如果你有一打的字段，选择一种直观的符合我们人类习惯的排序方式则非常有用。</p> 
+ <p>还有，当表单含有大量字段的时候，你也许想将表单划分为一些字段的集合。再次修改<code>polls/admin.py</code>:</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.contrib</span> <span class="kn">import</span> <span class="n">admin</span>
+
+<span class="kn">from</span> <span class="nn">.models</span> <span class="kn">import</span> <span class="n">Question</span>
+
+
+<span class="k">class</span> <span class="nc">QuestionAdmin</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">ModelAdmin</span><span class="p">):</span>
+    <span class="n">fieldsets</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="bp">None</span><span class="p">,</span>               <span class="p">{</span><span class="s1">'fields'</span><span class="p">:</span> <span class="p">[</span><span class="s1">'question_text'</span><span class="p">]}),</span>
+        <span class="p">(</span><span class="s1">'Date information'</span><span class="p">,</span> <span class="p">{</span><span class="s1">'fields'</span><span class="p">:</span> <span class="p">[</span><span class="s1">'pub_date'</span><span class="p">]}),</span>
+    <span class="p">]</span>
+
+<span class="n">admin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">Question</span><span class="p">,</span> <span class="n">QuestionAdmin</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>字段集合<code>fieldsets</code>中每一个元组的第一个元素是该字段集合的标题。它让我们的页面看起来像下面的样子：</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/93-2.png"></p> 
+ <h2>二、添加关联对象</h2> 
+ <p>虽然我们已经有了Question的管理页面，但是一个Question有多个Choices，如果想显示Choices的内容怎么办？有两个办法可以解决这个问题。第一个是像Question一样将Choice注册到admin站点，这很容易，修改<code>polls/admin.py</code>，增加下面的内容：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.contrib</span> <span class="kn">import</span> <span class="n">admin</span>
+<span class="kn">from</span> <span class="nn">.models</span> <span class="kn">import</span> <span class="n">Choice</span><span class="p">,</span> <span class="n">Question</span>
+
+<span class="c1"># ...</span>
+<span class="n">admin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">Choice</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>重启服务器，再次访问admin页面，就可以看到Choice条目了：</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/93-3.png"></p> 
+ <p>点击它右边的add按钮，进入“Add Choice”表单页面，看起来如下图：</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/93-4.png"></p> 
+ <p>在这个表单中，Question字段是一个select选择框，包含了当前数据库中所有的Question实例。<strong>Django在admin站点中，自动地将所有的外键关系展示为一个select框。</strong>在我们的例子中，目前只有一个question对象存在。</p> 
+ <p>请注意图中的绿色加号，它连接到Question模型。每一个包含外键关系的对象都会有这个绿色加号。点击它，会弹出一个新增Question的表单，类似Question自己的添加表单。填入相关信息点击保存后，Django自动将该Question保存在数据库，并作为当前Choice的关联外键对象。白话讲就是，新建一个Question并作为当前Choice的外键。</p> 
+ <p>但是实话说，这种创建方式的效率不怎么样。如果在创建Question对象的时候就可以直接添加一些Choice，那会更好，这就是我们要说的第二种方法。下面，让我们来动手试试。</p> 
+ <p>首先，删除<code>polls/admin.py</code>中Choice模型对<code>register()</code>方法的调用。然后，编辑Question的内容，最后整个文件的代码应该如下：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.contrib</span> <span class="kn">import</span> <span class="n">admin</span>
+
+<span class="kn">from</span> <span class="nn">.models</span> <span class="kn">import</span> <span class="n">Choice</span><span class="p">,</span> <span class="n">Question</span>
+
+
+<span class="k">class</span> <span class="nc">ChoiceInline</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">StackedInline</span><span class="p">):</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">Choice</span>
+    <span class="n">extra</span> <span class="o">=</span> <span class="mi">3</span>
+
+
+<span class="k">class</span> <span class="nc">QuestionAdmin</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">ModelAdmin</span><span class="p">):</span>
+    <span class="n">fieldsets</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="bp">None</span><span class="p">,</span>               <span class="p">{</span><span class="s1">'fields'</span><span class="p">:</span> <span class="p">[</span><span class="s1">'question_text'</span><span class="p">]}),</span>
+        <span class="p">(</span><span class="s1">'Date information'</span><span class="p">,</span> <span class="p">{</span><span class="s1">'fields'</span><span class="p">:</span> <span class="p">[</span><span class="s1">'pub_date'</span><span class="p">],</span> <span class="s1">'classes'</span><span class="p">:</span> <span class="p">[</span><span class="s1">'collapse'</span><span class="p">]}),</span>
+    <span class="p">]</span>
+    <span class="n">inlines</span> <span class="o">=</span> <span class="p">[</span><span class="n">ChoiceInline</span><span class="p">]</span>
+
+<span class="n">admin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">Question</span><span class="p">,</span> <span class="n">QuestionAdmin</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>上面的代码相当于告诉Django，Choice对象将在Question管理页面进行编辑，默认情况，请提供3个Choice对象的编辑区域。</p> 
+ <p>重启服务器，进入“Add question”页面，应该看到如下图所示：</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/93-5.png"></p> 
+ <p>在3个插槽的最后，还有一个<code>Add another Choice</code>链接。点击它，又可以获得一个新的插槽。如果你想删除新增的插槽，点击它最右边的灰色X图标即可。但是，默认的三个插槽不可删除。</p> 
+ <p>这里还有点小问题。上面页面中插槽纵队排列的方式需要占据大块的页面空间，查看起来很不方便。为此，Django提供了一种扁平化的显示方式，你仅仅只需要修改一下<code>ChoiceInline</code>继承的类为<code>admin.TabularInline</code>替代先前的<code>StackedInline</code>类（其实，从类名上你就能看出两种父类的区别）。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="c1"># polls/admin.py</span>
+<span class="k">class</span> <span class="nc">ChoiceInline</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">TabularInline</span><span class="p">):</span>
+    <span class="c1">#...</span>
+</pre>
+ </div> 
+ <p>重启服务器，刷新一下页面，你会看到类似表格的显示方式：</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/93-6.png"></p> 
+ <p>注意“DELETE”列，它可以删除那些已有的Choice和新建的Choice。</p> 
+ <h2>三、定制实例的列表页面</h2> 
+ <p>Question的添加和修改页面我们已经修改得差不多了，下面让我们来装饰一下“实例列表”(change list)页面，该页面显示了当前系统中所有的questions实例。</p> 
+ <p>默认情况下，该页面看起来是这样的：</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/93-7.png"></p> 
+ <p>通常，Django只显示<code>__str()__</code>方法指定的内容。但是很多时候，我们可能要同时显示一些别的内容。要实现这一目的，可以使用<code>list_display</code>属性，它是一个由字段组成的元组，其中的每一个字段都会按顺序显示在“change list”页面上，代码如下：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="c1"># polls/admin.py</span>
+<span class="k">class</span> <span class="nc">QuestionAdmin</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">ModelAdmin</span><span class="p">):</span>
+    <span class="c1"># ...</span>
+    <span class="n">list_display</span> <span class="o">=</span> <span class="p">(</span><span class="s1">'question_text'</span><span class="p">,</span> <span class="s1">'pub_date'</span><span class="p">,</span> <span class="s1">'was_published_recently'</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>额外的，我们把<code>was_published_recently()</code>方法的结果也显示出来。现在，页面看起来会是下面的样子：</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/93-8.png"></p> 
+ <p>你可以点击每一列的标题，来根据这列的内容进行排序。但是<code>was_published_recently</code>这一列除外，不支持这种根据函数输出结果进行排序的方式。同时请注意，<code>was_published_recently</code>这一列的列标题默认是方法的名字，内容则是输出的字符串表示形式。</p> 
+ <p>可以通过给方法提供一些属性来改进输出的样式，如下面所示。注意<strong>这次修改的是<code>polls/models.py</code>文件</strong>，不要搞错了！主要是增加了最后面三行内容：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="c1"># polls/models.py</span>
+
+<span class="k">class</span> <span class="nc">Question</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="c1"># ...</span>
+    <span class="k">def</span> <span class="nf">was_published_recently</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">now</span> <span class="o">=</span> <span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">now</span> <span class="o">-</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pub_date</span> <span class="o">&lt;=</span> <span class="n">now</span>
+    <span class="n">was_published_recently</span><span class="o">.</span><span class="n">admin_order_field</span> <span class="o">=</span> <span class="s1">'pub_date'</span>
+    <span class="n">was_published_recently</span><span class="o">.</span><span class="n">boolean</span> <span class="o">=</span> <span class="bp">True</span>
+    <span class="n">was_published_recently</span><span class="o">.</span><span class="n">short_description</span> <span class="o">=</span> <span class="s1">'Published recently?'</span>
+</pre>
+ </div> 
+ <p>重启服务器(这个我就不再啰嗦了，大家心里都有数)。刷新页面，效果如下：</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/93-9.png"></p> 
+ <p>以上的定制功能还不是admin的全部，我们接着往下看！</p> 
+ <hr> 
+ <p>我们还可以<strong>对显示结果进行过滤</strong>!使用<code>list_filter</code>属性，在<code>polls/admin.py</code>的QuestionAdmin中添加下面的代码：</p> 
+ <div class="codehilite">
+  <pre><span></span>list_filter = ['pub_date']
+</pre>
+ </div> 
+ <p>再次刷新change list页面，你会看到在页面右边多出了一个基于<code>pub_date</code>的过滤面板，如下图所示：</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/93-10.png"></p> 
+ <p>根据你选择的过滤条件的不同，Django会在面板中添加不同的过滤选项。由于<code>pub_date</code>是一个<code>DateTimeField</code>，因此Django自动添加了这些选项：“Any date”, “Today”, “Past 7 days”, “This month”, “This year”。</p> 
+ <p>顺理成章的，让我们添加一些搜索的能力：</p> 
+ <div class="codehilite">
+  <pre><span></span>search_fields = ['question_text']
+</pre>
+ </div> 
+ <p>这会在页面的顶部增加一个搜索框。当输入搜索关键字后，Django会在<code>question_text</code>字段内进行搜索。只要你愿意，你可以使用任意多个搜索字段，Django在后台使用的都是SQL查询语句的LIKE语法，但是有限制的搜索字段有助于后台的数据库查询效率。</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/93-11.png"></p> 
+ <p>其实，这个页面还提供分页功能，默认每页显示100条，只是我们的实例只有一个，囧，所以看到分页链接。</p> 
+ <h2>四、定制admin整体界面</h2> 
+ <p>很明显，在每一个项目的admin页面顶端都显示<code>Django administration</code>是很可笑的，它仅仅是个占位文本。利用Django的模板系统，我们可以快速修改它。</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/93-12.png"></p> 
+ <h3>1.<strong>定制项目模板</strong></h3> 
+ <p>在<code>manage.py</code>文件同级下创建一个<code>templates</code>目录。然后，打开设置文件<code>mysite/settings.py</code>，在TEMPLATES条目中添加一个DIRS选项：</p> 
+ <div class="codehilite">
+  <pre><span></span># mysite/settings.py
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],  # 要有这一行，如果已经存在请保持原样
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+            ],
+        },
+    },
+]
+</pre>
+ </div> 
+ <p>DIRS是一个文件系统目录的列表，是模板的搜索路径。当加载Django模板时，会在DIRS中进行查找。</p> 
+ <p><strong>PS：模板的组织方式</strong></p> 
+ <p>就像静态文件一样，我们可以把所有的模板都放在一起，形成一个大大的模板文件夹，并且工作正常。但是请一定不要这么做！强烈建议每一个模板都应该存放在它所属应用的模板目录内（例如polls/templates）而不是整个项目的模板目录（templates），因为这样每个应用才可以被方便和正确的重用。只有对整个项目有作用的模板文件才放在根目录的templates中，比如admin界面。</p> 
+ <p>回到刚才创建的templates目录中，再创建一个admin目录，将<code>admin/base_site.html</code>模板文件拷贝到该目录内。这个HTML文件来自Django源码，它位于<code>django/contrib/admin/templates</code>目录内。 （在我的windows系统中，它位于<code>C:\Python36\Lib\site-packages\django\contrib\admin\templates\admin</code>，请大家参考。）</p> 
+ <p><strong>Django的源代码在哪里？</strong></p> 
+ <p>如果你无法找到Django源代码文件的存放位置，可以使用下面的命令：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="err">$</span> <span class="n">python</span> <span class="o">-</span><span class="n">c</span> <span class="s2">"import django; print(django.__path__)"</span>
+</pre>
+ </div> 
+ <p>编辑<code>base_site.html</code>文件，用你喜欢的站点名字替换掉<code>{{ site_header|default:_(’Django administration’) }}</code>（包括两个大括号一起替换掉），看起来像下面这样：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="cp">{%</span> <span class="k">extends</span> <span class="s2">"admin/base.html"</span> <span class="cp">%}</span>
+
+<span class="cp">{%</span> <span class="k">block</span> <span class="nv">title</span> <span class="cp">%}{{</span> <span class="nv">title</span> <span class="cp">}}</span> | <span class="cp">{{</span> <span class="nv">site_title</span><span class="o">|</span><span class="nf">default</span><span class="o">:</span><span class="kp">_</span><span class="o">(</span><span class="s1">'Django site admin'</span><span class="o">)</span> <span class="cp">}}{%</span> <span class="k">endblock</span> <span class="cp">%}</span>
+
+<span class="cp">{%</span> <span class="k">block</span> <span class="nv">branding</span> <span class="cp">%}</span>
+<span class="nt">&lt;h1</span> <span class="na">id=</span><span class="s">"site-name"</span><span class="nt">&gt;&lt;a</span> <span class="na">href=</span><span class="s">"</span><span class="cp">{%</span> <span class="k">url</span> <span class="s1">'admin:index'</span> <span class="cp">%}</span><span class="s">"</span><span class="nt">&gt;</span>投票站点管理界面<span class="nt">&lt;/a&gt;&lt;/h1&gt;</span>
+<span class="cp">{%</span> <span class="k">endblock</span> <span class="cp">%}</span>
+
+<span class="cp">{%</span> <span class="k">block</span> <span class="nv">nav-global</span> <span class="cp">%}{%</span> <span class="k">endblock</span> <span class="cp">%}</span>
+</pre>
+ </div> 
+ <p>在这里，我们使用的是硬编码，强行改名为"投票站点管理界面"。但是在实际的项目中，你可以使用<code>django.contrib.admin.AdminSite.site_header</code>属性，方便的对这个页面title进行自定义。</p> 
+ <p>修改完后，刷新页面，效果如下：</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/93-13.png"></p> 
+ <p><strong>提示</strong>：所有Django默认的admin模板都可以被重写，类似刚才重写<code>base_site.html</code>模板的方法一样，从源代码目录将HTML文件拷贝至你自定义的目录内，然后修改文件。</p> 
+ <h2>五、定制admin首页</h2> 
+ <p>默认情况下，admin首页显示所有<code>INSTALLED_APPS</code>内并在admin应用中注册过的app，以字母顺序进行排序。</p> 
+ <p>要定制admin首页，你需要重写<code>admin/index.html</code>模板，就像前面修改<code>base_site.html</code>模板的方法一样，从源码目录拷贝到你指定的目录内。编辑该文件，你会看到文件内使用了一个<code>app_list</code>模板变量。该变量包含了所有已经安装的Django应用。你可以硬编码链接到指定对象的admin页面，使用任何你认为好的方法，用于替代这个<code>app_list</code>。</p> 
+ <h2>六、源码对照</h2> 
+ <p>至此，Django教程的入门部分已经结束了。下面将<code>polls/admin.py</code>的全部代码贴出来：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.contrib</span> <span class="kn">import</span> <span class="n">admin</span>
+
+<span class="kn">from</span> <span class="nn">.models</span> <span class="kn">import</span> <span class="n">Choice</span><span class="p">,</span> <span class="n">Question</span>
+
+
+<span class="k">class</span> <span class="nc">ChoiceInline</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">TabularInline</span><span class="p">):</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">Choice</span>
+    <span class="n">extra</span> <span class="o">=</span> <span class="mi">3</span>
+
+
+<span class="k">class</span> <span class="nc">QuestionAdmin</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">ModelAdmin</span><span class="p">):</span>
+    <span class="n">list_display</span> <span class="o">=</span> <span class="p">(</span><span class="s1">'question_text'</span><span class="p">,</span> <span class="s1">'pub_date'</span><span class="p">,</span> <span class="s1">'was_published_recently'</span><span class="p">)</span>
+    <span class="n">fieldsets</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="bp">None</span><span class="p">,</span>               <span class="p">{</span><span class="s1">'fields'</span><span class="p">:</span> <span class="p">[</span><span class="s1">'question_text'</span><span class="p">]}),</span>
+        <span class="p">(</span><span class="s1">'Date information'</span><span class="p">,</span> <span class="p">{</span><span class="s1">'fields'</span><span class="p">:</span> <span class="p">[</span><span class="s1">'pub_date'</span><span class="p">],</span> <span class="s1">'classes'</span><span class="p">:</span> <span class="p">[</span><span class="s1">'collapse'</span><span class="p">]}),</span>
+    <span class="p">]</span>
+    <span class="n">inlines</span> <span class="o">=</span> <span class="p">[</span><span class="n">ChoiceInline</span><span class="p">]</span>
+    <span class="n">list_filter</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'pub_date'</span><span class="p">]</span>
+    <span class="n">search_fields</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'question_text'</span><span class="p">]</span>
+
+<span class="n">admin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">Question</span><span class="p">,</span> <span class="n">QuestionAdmin</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>整个投票项目mysite，在Pycharm中的文件组织结构如下图所示，对比一下你自己的，看看是否一样。</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/93-14.png"></p> 
+ <p>注意<code>2017.png</code>是展示用的背景图，这个可以不一样....</p> 
+ <p>admin后台管理站点可以定制得很强大，比如下面是博主站点的评论后台，完全手工定制，非常实用！</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/93-15.png"></p> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/92"> <i class="fa fa-arrow-left"></i>&nbsp;Part 6：静态文件</a> 
+  <a class="float-right" href="/course/django/94"> 第一章：模型层&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 31</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/93">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax2.sinaimg.cn/crop.111.17.277.277.50/007LS0cTly8ggxdawnpafj30dw08pwee.jpg?KID=imgbed,tva&amp;Expires=1595233489&amp;ssig=O6ozN0pINc" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>呀~完成人生第一个网站了，太感谢博主啦~</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; WBo0o0o </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年7月22日 01:06</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2149">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1595566769&amp;ssig=qVeSsp06gY" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>恭喜</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; WBo0o0o </span> 
+      <em>2020年7月24日 10:00</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2151">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif?KID=imgbed,tva&amp;Expires=1589304947&amp;ssig=PtG7ZbQdc6" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>博主，我想问一下照着你代码写的，可是登录这个管理平台的时候服务器就自动关闭了，不知道为什么，进其他页面都可以，就是登录页面不行</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 猫的房东G </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年5月12日 22:37</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2063">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1595566769&amp;ssig=qVeSsp06gY" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>信息太少，无法解答，sorry</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 猫的房东G </span> 
+      <em>2020年7月24日 10:01</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2152">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva4.sinaimg.cn/crop.0.0.439.439.50/71f55eacjw1ek8buhsdt1j20c80c8t9l.jpg?KID=imgbed,tva&amp;Expires=1581093217&amp;ssig=0MyuyA0K2H" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>listplay加was_published_recently时提示错误：can't compare datetime.datetime to datetime.date 我跑到Question模型里该函数里转下格式才行，return self.pub_date &gt;= (timezone.now() - datetime.timedelta(days=1)).date() 我在用django3，是不是这个原因？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; MngGE </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年2月7日 21:40</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1871">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1580535067&amp;ssig=MT2I5MRwQN" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>请确认你在question模型中定义的pub_date字段是DateTimeField类型，而不是DateField类型。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; MngGE </span> 
+      <em>2020年2月11日 15:42</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1886">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax2.sinaimg.cn/crop.0.0.1002.1002.50/006i7eSjly8g9gydjtoqrj30ru0rutae.jpg?KID=imgbed,tva&amp;Expires=1579171472&amp;ssig=xaHc9Sw0T6" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>博主，前面的章节我跟着一步一步实现了，在最后一步修改名字的时候没有成功，'DIRS'设置了，templates所在的目录结构也是和您一样的，base_site.html也是直接拷贝的，然后硬编码修改去掉两个大括号，但是我重启好多次，仍然实现不了。我的django版本是3.0.1</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 黑猫警长小吴 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年1月16日 15:51</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1850">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax3.sinaimg.cn/crop.243.0.676.676.50/74dffc06ly8fdzzrhcs0gj20xc0is3zg.jpg?KID=imgbed,tva&amp;Expires=1580749838&amp;ssig=E4YxCLq5PS" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>能留下QQ我们讨论下吗？我的是753743312</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 小白鸽abc &nbsp;&nbsp;回复&nbsp;&nbsp; 黑猫警长小吴 </span> 
+      <em>2020年2月4日 14:33</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1866">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva2.sinaimg.cn/crop.0.0.1080.1080.50/bc367d85jw8ezhkres4cwj20u00u0dgr.jpg?KID=imgbed,tva&amp;Expires=1592463557&amp;ssig=YBT7gs%2Fwqq" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>在用记事本打开base_site.html文件，另存为，然后将ASSI格式改为UTF-8格式，然后覆盖保存。重启服务器，刷新页面就可以了。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 沉眠于你的思念 &nbsp;&nbsp;回复&nbsp;&nbsp; 黑猫警长小吴 </span> 
+      <em>2020年6月18日 12:00</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2117">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.150.150.50/3d1e2b26jw1f4cwdff845j2046046jrc.jpg?Expires=1565636526&amp;ssig=GT0uuDpjfF&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>"重启服务器(这个我就不再啰嗦了，大家心里都有数)。刷新页面，效果如下：" 这个后面的配图错了，图还是没更新的那张，没有显示出更改后的效果</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 张恒_恒星 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年8月13日 02:03</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1546">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.150.150.50/3d1e2b26jw1f4cwdff845j2046046jrc.jpg?Expires=1565636526&amp;ssig=GT0uuDpjfF&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>“囧，所以看到分页链接。” 应该是“囧，所以看不到分页链接。”</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 张恒_恒星 &nbsp;&nbsp;回复&nbsp;&nbsp; 张恒_恒星 </span> 
+      <em>2019年8月13日 02:06</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1547">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?Expires=1566005137&amp;ssig=WT35MhxJ6H&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>已经修改，感谢指出！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 张恒_恒星 </span> 
+      <em>2019年8月17日 08:38</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1559">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.0.0.1002.1002.50/005TwQLKly8fs98lasnyyj30ru0ruq4k.jpg?Expires=1564070268&amp;ssig=mVsVpUNmy4&amp;KID=imgbed,tva" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>admin这个后台能不能接入cas进而实现不同的人看到的信息不同呢？谢谢</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 黄涛69939 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年7月26日 10:07</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1520">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.261.0.1080.1080.50/85e7066bly8ftor9hnuqoj21hc0u077f.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>最后修改Django administration没有成功，重启服务器也无效。望指导</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 新泽雪冬 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年6月14日 16:24</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1404">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>这些都是小技巧，不会也没关系。重要的是知道admin后台的html、css、js文件都是在哪里。 如果想要一个好看的后台，可以试试django-simpleui。比改这些标题什么的，有趣多了。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 新泽雪冬 </span> 
+      <em>2019年6月14日 17:57</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1405">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.180.180.50/66a6981fjw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>写到 list_display 不知道怎么回事，报错，models 的 return now - datetime.timedelta(days=1) &lt;= self.pub_date &lt;= now， 错误信息 TypeError: can't compare datetime.datetime to datetime.date</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 月光篱落 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年6月11日 10:37</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1397">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva4.sinaimg.cn/crop.0.0.439.439.50/71f55eacjw1ek8buhsdt1j20c80c8t9l.jpg?KID=imgbed,tva&amp;Expires=1581093217&amp;ssig=0MyuyA0K2H" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我也是遇到这个问题</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> MngGE &nbsp;&nbsp;回复&nbsp;&nbsp; 月光篱落 </span> 
+      <em>2020年2月7日 21:33</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1870">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.1080.1080.50/005Nrl91ly8fka03a220bj30u00u0wfy.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>做完了，还是迷迷糊糊的，好像懂了点又似乎。。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 墨雨苦竹 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年3月9日 16:27</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1127">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>是目前Django学习最好的文章了！！！ 通俗易懂！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; Barry1970_87683 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年12月5日 00:41</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/916">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax3.sinaimg.cn/crop.0.0.1125.1125.50/9e98afddly8foq8oasfq1j20v90v9myz.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>支持支持</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; LbwtNeverMore </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年10月29日 11:21</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/808">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.0.480.480.50/6d9475f6jw8ea5g35jgcyj20dc0dcglq.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>虽然功能都实现了，但是有种迷迷糊糊的感觉，如果脱离教程，让你自己去实现，可能会懵</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; Michael_翔_ </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年9月20日 22:42</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/743">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>按照django官方文档，你下一部分应该是“进阶指南：如何编写可重用程序” 你把这部分丢了吗？ https://docs.djangoproject.com/zh-hans/2.1/intro/</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 泡泡卖泡泡6509898521 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年8月16日 16:10</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/688">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>http://www.liujiangblog.com/blog/11/</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 泡泡卖泡泡6509898521 </span> 
+      <em>2018年8月16日 17:16</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/689">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva4.sinaimg.cn/crop.0.0.201.201.50/006jUWLyjw8f9o2quzo24j305l05ljrb.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>按照教程一步一步做完了，不过还有些不太懂，准备参考教程自己写一个站试试，不知道有没有QQ群可以互相交流学习呢</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; Cheney呀呀 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年8月6日 17:28</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/661">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.0.1.750.750.50/80a4fd7bly8fdx4t6pw0fj20ku0kxq4e.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>感觉入了点门，有些能看到懂了；定制admin没有搞定，感觉都是按照上面的，就是页面主题改了还是没有变化，不知道为何，也没有报错</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 吧嗒吧嗒的拖鞋 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年6月10日 16:57</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/531">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.0.180.180.50/871fe6a5jw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>感觉好难的。。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; hello_南极 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年1月17日 14:34</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/132">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.29.72.151.151.50/c345a2c6jw1egex1o75ogj205c071mx9.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>这一部分到这里就完了？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 世外就是TaoYuan </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年1月15日 18:19</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/123">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>感觉意犹未尽？那就继续挑战下一关吧！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 世外就是TaoYuan </span> 
+      <em>2018年1月15日 21:03</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/124">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.750.750.50/698a6e9cjw8epm1h0q3ztj20ku0kujst.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>非常感谢博主的分享，挺详细的，不过还有一些细节的地方还不是很明白，怎样才能请教到你呢？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 欧欧欧欧欧欧欧欧巴 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2017年11月1日 18:08</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/28">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>抱歉，有空我会回复留言的。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 欧欧欧欧欧欧欧欧巴 </span> 
+      <em>2017年11月1日 21:29</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/31">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva3.sinaimg.cn/crop.0.0.199.199.50/b4c49327gw1eef76iyxk2j205k05kjrd.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>求问博主，交流群现在不能加了嘛</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 礁石hjw &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2018年3月12日 14:42</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/294">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

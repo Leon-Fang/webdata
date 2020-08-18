@@ -1,0 +1,594 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>模型和字段</h1> 
+ <small>阅读:&nbsp;98887&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：17 </small> 
+ <hr> 
+ <p>一个模型（model）就是一个单独的、确定的数据的信息源，包含了数据的字段和操作方法。通常，每个模型映射为一张数据库中的表。</p> 
+ <p>基本的原则如下：</p> 
+ <ul> 
+  <li>每个模型在Django中的存在形式为一个Python类</li> 
+  <li>每个模型都是django.db.models.Model的子类</li> 
+  <li>模型的每个字段（属性）代表数据表的某一列</li> 
+  <li>Django将自动为你生成数据库访问API</li> 
+ </ul> 
+ <h2><strong>简单示例：</strong></h2> 
+ <p>下面的模型定义了一个“人”，它具有<code>first_name</code>和<code>last_name</code>字段：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
+
+<span class="k">class</span> <span class="nc">Person</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">first_name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
+    <span class="n">last_name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>每一个字段都是一个类属性，每个类属性表示数据表中的一个列。</p> 
+ <p>上面的代码，相当于下面的原生SQL语句：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">myapp_person</span> <span class="p">(</span>
+    <span class="ss">"id"</span> <span class="nb">serial</span> <span class="k">NOT</span> <span class="k">NULL</span> <span class="k">PRIMARY</span> <span class="k">KEY</span><span class="p">,</span>
+    <span class="ss">"first_name"</span> <span class="nb">varchar</span><span class="p">(</span><span class="mi">30</span><span class="p">)</span> <span class="k">NOT</span> <span class="k">NULL</span><span class="p">,</span>
+    <span class="ss">"last_name"</span> <span class="nb">varchar</span><span class="p">(</span><span class="mi">30</span><span class="p">)</span> <span class="k">NOT</span> <span class="k">NULL</span>
+<span class="p">);</span>
+</pre>
+ </div> 
+ <p>注意：</p> 
+ <ul> 
+  <li>表名<code>myapp_person</code>由Django自动生成，默认格式为“项目名称+下划线+小写类名”，你可以重写这个规则。</li> 
+  <li>Django默认自动创建自增主键<code>id</code>，当然，你也可以自己指定主键。</li> 
+  <li>上面的SQL语句基于<code>PostgreSQL</code>语法。</li> 
+ </ul> 
+ <p>通常，我们会将模型编写在其所属app下的models.py文件中，没有特别需求时，请坚持这个原则，不要自己给自己添加麻烦。</p> 
+ <p>创建了模型之后，在使用它之前，你需要先在settings文件中的<code>INSTALLED_APPS</code> 处，注册<code>models.py</code>文件所在的<code>myapp</code>。看清楚了，是注册app，不是模型，也不是<code>models.py</code>。如果你以前写过模型，可能已经做过这一步工作，可跳过。</p> 
+ <div class="codehilite">
+  <pre><span></span>INSTALLED_APPS = [
+#...
+'myapp',
+#...
+]
+</pre>
+ </div> 
+ <p><strong>当你每次对模型进行增、删、修改时，请务必执行命令<code>python manage.py migrate</code>，让操作实际应用到数据库上。这里可以选择在执行migrate之前，先执行<code>python manage.py makemigrations</code>让修改动作保存到记录文件中，方便github等工具的使用。</strong></p> 
+ <h2>模型字段fields</h2> 
+ <p>字段是模型中最重要的内容之一，也是唯一必须的部分。字段在Python中表现为一个类属性，体现了数据表中的一个列。请不要使用<code>clean</code>、<code>save</code>、<code>delete</code>等Django内置的模型API名字，防止命名冲突。下面是一个展示，注意字段的写法：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
+
+<span class="k">class</span> <span class="nc">Musician</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">first_name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+    <span class="n">last_name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+    <span class="n">instrument</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">Album</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">artist</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Musician</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+    <span class="n">release_date</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateField</span><span class="p">()</span>
+    <span class="n">num_stars</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">IntegerField</span><span class="p">()</span>
+</pre>
+ </div> 
+ <p><strong>字段命名约束：</strong></p> 
+ <p>Django不允许下面两种字段名：</p> 
+ <ul> 
+  <li> <p>与Python关键字冲突。这会导致语法错误。例如：</p> <p>class Example(models.Model): pass = models.IntegerField() # 'pass'是Python保留字！</p> </li> 
+  <li> <p>字段名中不能有两个以上下划线在一起，因为两个下划线是Django的查询语法。例如：</p> <p>class Example(models.Model): foo__bar = models.IntegerField() # 'foo__bar' 有两个下划线在一起!</p> </li> 
+ </ul> 
+ <p>由于你可以自定义表名、列名，上面的规则可能被绕开，但是请养成良好的习惯，一定不要那么起名。</p> 
+ <p>SQL语言的join、where和select等保留字可以作为字段名，因为Django对它们都进行了转义。</p> 
+ <h2>常用字段类型</h2> 
+ <p>字段类型的作用：</p> 
+ <ul> 
+  <li>决定数据库中对应列的数据类型(例如：INTEGER, VARCHAR, TEXT)</li> 
+  <li>HTML中对应的表单标签的类型，例如<code>&lt;input type=“text” /&gt;</code></li> 
+  <li>在admin后台和自动生成的表单中最小的数据验证需求</li> 
+ </ul> 
+ <p>Django内置了许多字段类型，它们都位于<code>django.db.models</code>中，例如<code>models.CharField</code>。这些类型基本满足需求，如果还不够，你也可以自定义字段。</p> 
+ <p>下表列出了所有Django内置的字段类型，但不包括关系字段类型（字段名采用驼峰命名法，初学者请一定要注意）：</p> 
+ <table> 
+  <thead> 
+   <tr> 
+    <th>类型</th> 
+    <th>说明</th> 
+   </tr> 
+  </thead> 
+  <tbody> 
+   <tr> 
+    <td>AutoField</td> 
+    <td>一个自动增加的整数类型字段。通常你不需要自己编写它，Django会自动帮你添加字段：<code>id = models.AutoField(primary_key=True)</code>，这是一个自增字段，从1开始计数。如果你非要自己设置主键，那么请务必将字段设置为<code>primary_key=True</code>。Django在一个模型中只允许有一个自增字段，并且该字段必须为主键！</td> 
+   </tr> 
+   <tr> 
+    <td>BigAutoField</td> 
+    <td>(1.10新增)64位整数类型自增字段，数字范围更大，从1到9223372036854775807</td> 
+   </tr> 
+   <tr> 
+    <td>BigIntegerField</td> 
+    <td>64位整数字段（看清楚，非自增），类似IntegerField ，-9223372036854775808 到9223372036854775807。在Django的模板表单里体现为一个textinput标签。</td> 
+   </tr> 
+   <tr> 
+    <td>BinaryField</td> 
+    <td>二进制数据类型。使用受限，少用。</td> 
+   </tr> 
+   <tr> 
+    <td><strong>BooleanField</strong></td> 
+    <td>布尔值类型。默认值是None。在HTML表单中体现为CheckboxInput标签。如果要接收null值，请使用NullBooleanField。</td> 
+   </tr> 
+   <tr> 
+    <td><strong>CharField</strong></td> 
+    <td>字符串类型。必须接收一个max_length参数，表示字符串长度不能超过该值。默认的表单标签是input text。最常用的filed，没有之一！</td> 
+   </tr> 
+   <tr> 
+    <td>CommaSeparatedIntegerField</td> 
+    <td>逗号分隔的整数类型。必须接收一个max_length参数。常用于表示较大的金额数目，例如1,000,000元。</td> 
+   </tr> 
+   <tr> 
+    <td><strong>DateField</strong></td> 
+    <td><code>class DateField(auto_now=False, auto_now_add=False, **options)</code>日期类型。一个Python中的datetime.date的实例。在HTML中表现为TextInput标签。在admin后台中，Django会帮你自动添加一个JS的日历表和一个“Today”快捷方式，以及附加的日期合法性验证。两个重要参数：（参数互斥，不能共存） <code>auto_now</code>:每当对象被保存时将字段设为当前日期，常用于保存最后修改时间。<code>auto_now_add</code>：每当对象被创建时，设为当前日期，常用于保存创建日期(注意，它是不可修改的)。设置上面两个参数就相当于给field添加了<code>editable=False</code>和<code>blank=True</code>属性。如果想具有修改属性，请用default参数。例子：<code>pub_time = models.DateField(auto_now_add=True)</code>，自动添加发布时间。</td> 
+   </tr> 
+   <tr> 
+    <td>DateTimeField</td> 
+    <td>日期时间类型。Python的datetime.datetime的实例。与DateField相比就是多了小时、分和秒的显示，其它功能、参数、用法、默认值等等都一样。</td> 
+   </tr> 
+   <tr> 
+    <td>DecimalField</td> 
+    <td>固定精度的十进制小数。相当于Python的Decimal实例，必须提供两个指定的参数！参数<code>max_digits</code>：最大的位数，必须大于或等于小数点位数 。<code>decimal_places</code>：小数点位数，精度。 当<code>localize=False</code>时，它在HTML表现为NumberInput标签，否则是text类型。例子：储存最大不超过999，带有2位小数位精度的数，定义如下：<code>models.DecimalField(..., max_digits=5, decimal_places=2)</code>。</td> 
+   </tr> 
+   <tr> 
+    <td>DurationField</td> 
+    <td>持续时间类型。存储一定期间的时间长度。类似Python中的timedelta。在不同的数据库实现中有不同的表示方法。常用于进行时间之间的加减运算。但是小心了，这里有坑，PostgreSQL等数据库之间有兼容性问题！</td> 
+   </tr> 
+   <tr> 
+    <td><strong>EmailField</strong></td> 
+    <td>邮箱类型，默认max_length最大长度254位。使用这个字段的好处是，可以使用DJango内置的EmailValidator进行邮箱地址合法性验证。</td> 
+   </tr> 
+   <tr> 
+    <td><strong>FileField</strong></td> 
+    <td><code>class FileField(upload_to=None, max_length=100, **options)</code>上传文件类型，后面单独介绍。</td> 
+   </tr> 
+   <tr> 
+    <td>FilePathField</td> 
+    <td>文件路径类型，后面单独介绍</td> 
+   </tr> 
+   <tr> 
+    <td>FloatField</td> 
+    <td>浮点数类型，参考整数类型</td> 
+   </tr> 
+   <tr> 
+    <td><strong>ImageField</strong></td> 
+    <td>图像类型，后面单独介绍。</td> 
+   </tr> 
+   <tr> 
+    <td><strong>IntegerField</strong></td> 
+    <td>整数类型，最常用的字段之一。取值范围-2147483648到2147483647。在HTML中表现为NumberInput标签。</td> 
+   </tr> 
+   <tr> 
+    <td><strong>GenericIPAddressField</strong></td> 
+    <td><code>class GenericIPAddressField(protocol='both', unpack_ipv4=False, **options)[source]</code>,IPV4或者IPV6地址，字符串形式，例如<code>192.0.2.30</code>或者<code>2a02:42fe::4</code>在HTML中表现为TextInput标签。参数<code>protocol</code>默认值为‘both’，可选‘IPv4’或者‘IPv6’，表示你的IP地址类型。</td> 
+   </tr> 
+   <tr> 
+    <td>NullBooleanField</td> 
+    <td>类似布尔字段，只不过额外允许<code>NULL</code>作为选项之一。</td> 
+   </tr> 
+   <tr> 
+    <td>PositiveIntegerField</td> 
+    <td>正整数字段，包含0,最大2147483647。</td> 
+   </tr> 
+   <tr> 
+    <td>PositiveSmallIntegerField</td> 
+    <td>较小的正整数字段，从0到32767。</td> 
+   </tr> 
+   <tr> 
+    <td>SlugField</td> 
+    <td>slug是一个新闻行业的术语。一个slug就是一个某种东西的简短标签，包含字母、数字、下划线或者连接线，通常用于URLs中。可以设置max_length参数，默认为50。</td> 
+   </tr> 
+   <tr> 
+    <td>SmallIntegerField</td> 
+    <td>小整数，包含-32768到32767。</td> 
+   </tr> 
+   <tr> 
+    <td><strong>TextField</strong></td> 
+    <td>大量文本内容，在HTML中表现为Textarea标签，最常用的字段类型之一！如果你为它设置一个max_length参数，那么在前端页面中会受到输入字符数量限制，然而在模型和数据库层面却不受影响。只有CharField才能同时作用于两者。</td> 
+   </tr> 
+   <tr> 
+    <td>TimeField</td> 
+    <td>时间字段，Python中datetime.time的实例。接收同DateField一样的参数，只作用于小时、分和秒。</td> 
+   </tr> 
+   <tr> 
+    <td><strong>URLField</strong></td> 
+    <td>一个用于保存URL地址的字符串类型，默认最大长度200。</td> 
+   </tr> 
+   <tr> 
+    <td><strong>UUIDField</strong></td> 
+    <td>用于保存通用唯一识别码（Universally Unique Identifier）的字段。使用Python的UUID类。在PostgreSQL数据库中保存为uuid类型，其它数据库中为char(32)。这个字段是自增主键的最佳替代品，后面有例子展示。</td> 
+   </tr> 
+  </tbody> 
+ </table> 
+ <h3>这里有如何上传文件和图片的方法：</h3> 
+ <h3>1.<strong>FileField：</strong></h3> 
+ <div class="codehilite">
+  <pre><span></span><span class="kr">class</span> <span class="nx">FileField</span><span class="p">(</span><span class="nx">upload_to</span><span class="o">=</span><span class="nx">None</span><span class="p">,</span> <span class="nx">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="o">**</span><span class="nx">options</span><span class="p">)[</span><span class="nx">source</span><span class="p">]</span>
+</pre>
+ </div> 
+ <p>上传文件字段（不能设置为主键）。默认情况下，该字段在HTML中表现为一个ClearableFileInput标签。在数据库内，我们实际保存的是一个字符串类型，默认最大长度100，可以通过max_length参数自定义。真实的文件是保存在服务器的文件系统内的。</p> 
+ <p>重要参数<code>upload_to</code>用于设置上传地址的目录和文件名。如下例所示：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="k">class</span> <span class="nc">MyModel</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="c1"># 文件被传至`MEDIA_ROOT/uploads`目录，MEDIA_ROOT由你在settings文件中设置</span>
+    <span class="n">upload</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">FileField</span><span class="p">(</span><span class="n">upload_to</span><span class="o">=</span><span class="s1">'uploads/'</span><span class="p">)</span>
+    <span class="c1"># 或者</span>
+    <span class="c1"># 被传到`MEDIA_ROOT/uploads/2015/01/30`目录，增加了一个时间划分</span>
+    <span class="n">upload</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">FileField</span><span class="p">(</span><span class="n">upload_to</span><span class="o">=</span><span class="s1">'uploads/%Y/%m/</span><span class="si">%d</span><span class="s1">/'</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p><strong>Django很人性化地帮我们实现了根据日期生成目录的方式！</strong></p> 
+ <p><strong><code>upload_to</code>参数也可以接收一个回调函数，该函数返回具体的路径字符串</strong>，如下例：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="k">def</span> <span class="nf">user_directory_path</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+    <span class="c1">#文件上传到MEDIA_ROOT/user_&lt;id&gt;/&lt;filename&gt;目录中</span>
+    <span class="k">return</span> <span class="s1">'user_{0}/{1}'</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">instance</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">MyModel</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">upload</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">FileField</span><span class="p">(</span><span class="n">upload_to</span><span class="o">=</span><span class="n">user_directory_path</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>例子中，<code>user_directory_path</code>这种回调函数，必须接收两个参数，然后返回一个Unix风格的路径字符串。参数<code>instace</code>代表一个定义了<code>FileField</code>的模型的实例，说白了就是当前数据记录。<code>filename</code>是原本的文件名。</p> 
+ <hr> 
+ <h3>2. <strong>ImageField</strong></h3> 
+ <div class="codehilite">
+  <pre><span></span><span class="kr">class</span> <span class="nx">ImageField</span><span class="p">(</span><span class="nx">upload_to</span><span class="o">=</span><span class="nx">None</span><span class="p">,</span> <span class="nx">height_field</span><span class="o">=</span><span class="nx">None</span><span class="p">,</span> <span class="nx">width_field</span><span class="o">=</span><span class="nx">None</span><span class="p">,</span> <span class="nx">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="o">**</span><span class="nx">options</span><span class="p">)[</span><span class="nx">source</span><span class="p">]</span>
+</pre>
+ </div> 
+ <p>用于保存图像文件的字段。其基本用法和特性与FileField一样，只不过多了两个属性height和width。默认情况下，该字段在HTML中表现为一个ClearableFileInput标签。在数据库内，我们实际保存的是一个字符串类型，默认最大长度100，可以通过max_length参数自定义。真实的图片是保存在服务器的文件系统内的。</p> 
+ <p><code>height_field</code>参数：保存有图片高度信息的模型字段名。 <code>width_field</code>参数：保存有图片宽度信息的模型字段名。</p> 
+ <p><strong>使用Django的ImageField需要提前安装pillow模块，pip install pillow即可。</strong></p> 
+ <p>使用FileField或者ImageField字段的步骤：</p> 
+ <ol> 
+  <li>在settings文件中，配置<code>MEDIA_ROOT</code>，作为你上传文件在服务器中的基本路径（为了性能考虑，这些文件不会被储存在数据库中）。再配置个<code>MEDIA_URL</code>，作为公用URL，指向上传文件的基本路径。请确保Web服务器的用户账号对该目录具有写的权限。</li> 
+  <li>添加FileField或者ImageField字段到你的模型中，定义好<code>upload_to</code>参数，文件最终会放在<code>MEDIA_ROOT</code>目录的“upload_to”子目录中。</li> 
+  <li>所有真正被保存在数据库中的，只是指向你上传文件路径的字符串而已。可以通过url属性，在Django的模板中方便的访问这些文件。例如，假设你有一个ImageField字段，名叫<code>mug_shot</code>，那么在Django模板的HTML文件中，可以使用<code>{{ object.mug_shot.url }}</code>来获取该文件。其中的object用你具体的对象名称代替。</li> 
+  <li>可以通过<code>name</code>和<code>size</code>属性，获取文件的名称和大小信息。</li> 
+ </ol> 
+ <h3>安全建议</h3> 
+ <p>无论你如何保存上传的文件，一定要注意他们的内容和格式，避免安全漏洞！务必对所有的上传文件进行安全检查，确保它们不出问题！如果你不加任何检查就盲目的让任何人上传文件到你的服务器文档根目录内，比如上传了一个CGI或者PHP脚本，很可能就会被访问的用户执行，这具有致命的危害。</p> 
+ <hr> 
+ <h3>3. <strong>FilePathField</strong></h3> 
+ <div class="codehilite">
+  <pre><span></span><span class="kr">class</span> <span class="nx">FilePathField</span><span class="p">(</span><span class="nx">path</span><span class="o">=</span><span class="nx">None</span><span class="p">,</span> <span class="nx">match</span><span class="o">=</span><span class="nx">None</span><span class="p">,</span> <span class="nx">recursive</span><span class="o">=</span><span class="nx">False</span><span class="p">,</span> <span class="nx">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="o">**</span><span class="nx">options</span><span class="p">)[</span><span class="nx">source</span><span class="p">]</span>
+</pre>
+ </div> 
+ <p>一种用来保存文件路径信息的字段。在数据表内以字符串的形式存在，默认最大长度100，可以通过max_length参数设置。</p> 
+ <p>它包含有下面的一些参数：</p> 
+ <p><code>path</code>：必须指定的参数。表示一个系统绝对路径。</p> 
+ <p><code>match</code>:可选参数，一个正则表达式，用于过滤文件名。只匹配基本文件名，不匹配路径。例如<code>foo.*\.txt$</code>，只匹配文件名<code>foo23.txt</code>，不匹配<code>bar.txt</code>与<code>foo23.png</code>。</p> 
+ <p><code>recursive</code>:可选参数，只能是True或者False。默认为False。决定是否包含子目录，也就是是否递归的意思。</p> 
+ <p><code>allow_files</code>:可选参数，只能是True或者False。默认为True。决定是否应该将文件名包括在内。它和<code>allow_folders</code>其中，必须有一个为True。</p> 
+ <p><code>allow_folders</code>： 可选参数，只能是True或者False。默认为False。决定是否应该将目录名包括在内。</p> 
+ <p>比如：</p> 
+ <div class="codehilite">
+  <pre><span></span>FilePathField(path="/home/images", match="foo.*", recursive=True)
+</pre>
+ </div> 
+ <p>它只匹配<code>/home/images/foo.png</code>，但不匹配<code>/home/images/foo/bar.png</code>，因为默认情况，只匹配文件名，而不管路径是怎么样的。</p> 
+ <hr> 
+ <h3>4. <strong>UUIDField：</strong></h3> 
+ <p>数据库无法自己生成uuid，因此需要如下使用default参数：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">import</span> <span class="nn">uuid</span>     <span class="c1"># Python的内置模块</span>
+<span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
+
+<span class="k">class</span> <span class="nc">MyUUIDModel</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="nb">id</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">UUIDField</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">,</span> <span class="n">editable</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+    <span class="c1"># 其它字段</span>
+</pre>
+ </div> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/94"> <i class="fa fa-arrow-left"></i>&nbsp;第一章：模型层</a> 
+  <a class="float-right" href="/course/django/96"> 关系类型字段&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 17</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/95">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.667.667.50/005LQChzly8ftiffa4ixvj30ij0ijgmo.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>您好，看完您的文章，对FilePathField 和 FileField 两个之间的区别存在疑问，网上百度了一下http://landcareweb.com/questions/36545/yao-shi-yong-django-filefieldhuan-shi-filepathfield，我觉得 这个讲解的挺清楚的。 同时建议您可以增加一些关于这两个的讲解，谢谢</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 还不错的Tarzan </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年6月5日 22:40</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1386">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>感谢您的宝贵建议。其实我在视频教程里有详细讲解，只是没想到文字教程也要写得更细一点。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 还不错的Tarzan </span> 
+      <em>2019年6月6日 10:18</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1389">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.512.512.50/005xq9n6ly8fvpagmfqtzj30e80e8gmx.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>老师您好， 文中：表名myapp_person由Django自动生成，默认格式为“项目名称+下划线+小写类名”，你可以重写这个规则。 这里应该是 应用名称+ 下划线 + 小写类名吧</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 阿冉要好好学英语 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年5月21日 15:07</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1341">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.0.0.996.996.50/006xIWURly8gehjmghiqfj30ro0roq53.jpg?KID=imgbed,tva&amp;Expires=1591289035&amp;ssig=NX%2BU5OBrH%2F" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>对。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 蔷薇-Nina &nbsp;&nbsp;回复&nbsp;&nbsp; 阿冉要好好学英语 </span> 
+      <em>2020年6月6日 14:56</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2100">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/default/images/default_avatar_female_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>老师您好，有个字段定义问题想问您， 平常定义字段是这么定义的：first_name = models.CharField(max_length=50) 我从网上看了其他的一个例子，例子的链接是https://stackoverflow.com/questions/24569687/searching-by-related-fields-in-django-admin/55740168#55740168，里面有个Result model，这个model定义的字段是 year = models.IntegerField(_("Year")) time = models.CharField(_("Time"), max_length=8) 但是在我的环境这种写法报错，我想问下，这种方法是为了什么才这么定义那？还是这个例子给的不全本身有误呢？谢谢您</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 米_粒10 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年4月19日 10:37</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1269">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>一、将字符串作为第一个参数提供给Field，表示这是它的verbose_name 二、类似_('string')的写法是国际化和本地化的操作，外国人经常需要这么做 三、你报错是因为你没有导入：‘from django.utils.translation import ugettext as _’ 四、参考http://www.liujiangblog.com/course/django/180</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 米_粒10 </span> 
+      <em>2019年4月19日 14:30</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1270">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/default/images/default_avatar_female_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>原来这样，学习了；导入后没错了，感谢老师指导。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 米_粒10 &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2019年4月22日 10:11</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1273">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.10.0.492.492.50/006fn4Wyly8fjtpx1a3q2j30e80dogm2.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>可以将在settings文件中，配置MEDIA_ROOT的详细过程写一下吗</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 我真的是唐铭泽 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年4月3日 21:54</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1217">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.996.996.50/006SrEWNly8fzbt02svrsj30ro0ro0zu.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>刚百度了一下，参考一下这个，http://www.zhimengzhe.com/bianchengjiaocheng/qitabiancheng/338810.html。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 学到老单到老 &nbsp;&nbsp;回复&nbsp;&nbsp; 我真的是唐铭泽 </span> 
+      <em>2019年4月8日 17:34</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1230">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.180.180.50/66a6981fjw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>刚开始学习，这篇实例偏少，枯燥了些</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 月光篱落 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年3月16日 11:58</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1159">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva4.sinaimg.cn/crop.0.0.180.180.50/9d1a9027jw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>auto id字段在form中看不到这个，所以更新数据时候都是新增了，其实我想要的时候update。这是为什么？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; Delex-Xie </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年11月22日 21:53</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/887">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva2.sinaimg.cn/crop.0.0.664.664.50/8ea3178bjw8f0qgc5x05qj20ig0iggmf.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>DateField 在后台有时间选择器， 在前台却没有选择器， 怎么让前台也显示时间选择器；</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; jekoie </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年7月9日 13:48</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/559">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.511.511.50/89190bedly8fdhjfub6lsj20e70e80t8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我在一个model里面定义了一个字段对应的外键 在另一个model里面，如何引用进来，直接引用会报错</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 巴黎城门口的小木匠v </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年3月31日 22:36</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/358">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva4.sinaimg.cn/crop.0.0.512.512.50/bad991c2jw8evnuv6t9inj20e80e8q3d.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>makemigrations会生成一个.py文件，那么它对于多人开发使用git进行版本控制有什么作用吗？能不能稍微详细地讲解 一下，谢谢谢谢！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; bbbbbbbbbbbbang </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年3月19日 14:58</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/312">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.0.180.180.50/871fe6a5jw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>假如一个学生的年龄，限制在15-40岁之间</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; hello_南极 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年1月20日 19:50</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/146">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva4.sinaimg.cn/crop.0.0.1242.1242.50/89efe543jw8fbqc8wlun9j20yi0yi0tj.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>就是生成表的时候 给字段添加上备注</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 榆木头头 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2017年12月26日 20:09</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/101">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>没有</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 榆木头头 </span> 
+      <em>2017年12月26日 22:11</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/102">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]

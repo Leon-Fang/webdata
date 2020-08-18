@@ -1,0 +1,816 @@
+[<div class="col-md-9"> 
+ <!-- 教程正文主体部分 --> 
+ <h1>6. 登录视图</h1> 
+ <small>阅读:&nbsp;59346&nbsp;&nbsp;&nbsp;&nbsp; <a href="#comments">评论</a>：35 </small> 
+ <hr> 
+ <p>数据模型和前端页面我们都已经设计好了，是时候开始完善我们的登录视图具体内容了。</p> 
+ <h2>一、登录视图</h2> 
+ <p>根据我们在路由中的设计，用户通过<code>login.html</code>中的表单填写用户名和密码，并以POST的方式发送到服务器的<code>/login/</code>地址。服务器通过<code>login/views.py</code>中的<code>login()</code>视图函数，接收并处理这一请求。</p> 
+ <p>我们可以通过下面的方法接收和处理请求：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="k">def</span> <span class="nf">login</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s2">"POST"</span><span class="p">:</span>
+        <span class="n">username</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'username'</span><span class="p">)</span>
+        <span class="n">password</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'password'</span><span class="p">)</span>
+        <span class="k">print</span><span class="p">(</span><span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'/index/'</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/login.html'</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>说明：</p> 
+ <ul> 
+  <li>每个视图函数都至少接收一个参数，并且是第一位置参数，该参数封装了当前请求的所有数据；</li> 
+  <li>通常将第一参数命名为request，当然也可以是别的；</li> 
+  <li><code>request.method</code>中封装了数据请求的方法，如果是“POST”（全大写），将执行if语句的内容，如果不是，直接返回最后的render()结果，也就是正常的登录页面；</li> 
+  <li><code>request.POST</code>封装了所有POST请求中的数据，这是一个字典类型，可以通过get方法获取具体的值。</li> 
+  <li>类似<code>get('username')</code>中的键‘username’是HTML模板中表单的input元素里‘name’属性定义的值。所以在编写form表单的时候一定不能忘记添加name属性。</li> 
+  <li>利用print函数在开发环境中验证数据；</li> 
+  <li>利用redirect方法，将页面重定向到index页。</li> 
+ </ul> 
+ <p>启动服务器，然后在<code>http://127.0.0.1:8000/login/</code>的表单中随便填入用户名和密码，然后点击提交。然而，页面却出现了错误提示，如下图所示：</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/108-1.png"></p> 
+ <p>错误原因是CSRF验证失败，请求被中断。CSRF（Cross-site request forgery）跨站请求伪造，是一种常见的网络攻击手段，具体原理和技术内容请自行百科。Django自带对许多常见攻击手段的防御机制，CSRF就是其中一种，还有XSS、SQL注入等。</p> 
+ <p>解决这个问题的办法其实在Django的Debug错误页面已经给出了，我们需要在前端页面的form表单内添加一个<code>{% csrf_token %}</code>标签：</p> 
+ <div class="codehilite">
+  <pre><span></span>                <span class="nt">&lt;form</span> <span class="na">class=</span><span class="s">"form-login"</span> <span class="na">action=</span><span class="s">"/login/"</span> <span class="na">method=</span><span class="s">"post"</span><span class="nt">&gt;</span>
+                  {% csrf_token %}
+                  <span class="nt">&lt;h3</span> <span class="na">class=</span><span class="s">"text-center"</span><span class="nt">&gt;</span>欢迎登录<span class="nt">&lt;/h3&gt;</span>
+                  <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">"form-group"</span><span class="nt">&gt;</span>
+                    <span class="nt">&lt;label</span> <span class="na">for=</span><span class="s">"id_username"</span><span class="nt">&gt;</span>用户名：<span class="nt">&lt;/label&gt;</span>
+                    <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">"text"</span> <span class="na">name=</span><span class="s">'username'</span> <span class="na">class=</span><span class="s">"form-control"</span> <span class="na">id=</span><span class="s">"id_username"</span> <span class="na">placeholder=</span><span class="s">"Username"</span> <span class="err">autofocus</span> <span class="err">required</span><span class="nt">&gt;</span>
+                  <span class="nt">&lt;/div&gt;</span>
+                  <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">"form-group"</span><span class="nt">&gt;</span>
+                    <span class="nt">&lt;label</span> <span class="na">for=</span><span class="s">"id_password"</span><span class="nt">&gt;</span>密码：<span class="nt">&lt;/label&gt;</span>
+                    <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">"password"</span> <span class="na">name=</span><span class="s">'password'</span> <span class="na">class=</span><span class="s">"form-control"</span> <span class="na">id=</span><span class="s">"id_password"</span> <span class="na">placeholder=</span><span class="s">"Password"</span> <span class="err">required</span><span class="nt">&gt;</span>
+                  <span class="nt">&lt;/div&gt;</span>
+                  <span class="nt">&lt;div&gt;</span>
+                  <span class="nt">&lt;a</span> <span class="na">href=</span><span class="s">"/register/"</span> <span class="na">class=</span><span class="s">"text-success "</span> <span class="nt">&gt;&lt;ins&gt;</span>新用户注册<span class="nt">&lt;/ins&gt;&lt;/a&gt;</span>
+                  <span class="nt">&lt;button</span> <span class="na">type=</span><span class="s">"submit"</span> <span class="na">class=</span><span class="s">"btn btn-primary float-right"</span><span class="nt">&gt;</span>登录<span class="nt">&lt;/button&gt;</span>
+                  <span class="nt">&lt;/div&gt;</span>
+                <span class="nt">&lt;/form&gt;</span>
+</pre>
+ </div> 
+ <p>这个标签必须放在form表单内部，但是内部的位置可以随意。</p> 
+ <p>重新刷新login页面，确保csrf的标签生效，然后再次输入内容并提交。这次就可以成功地在Pycharm开发环境中看到接收的用户名和密码，同时浏览器页面也跳转到了首页。</p> 
+ <h2>二、数据验证</h2> 
+ <p>前面我们提到过，要对用户发送的数据进行验证。数据验证分前端页面验证和后台服务器验证。前端验证可以通过专门的插件或者自己写JS代码实现，也可以简单地使用HTML5的新特性。这里，我们使用的是HTML5的内置验证功能，如下图所示：</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/108-2.png"></p> 
+ <p>它帮我们实现了下面的功能：</p> 
+ <ul> 
+  <li>用户名和密码这类必填字段不能为空</li> 
+  <li>密码部分用圆点替代</li> 
+ </ul> 
+ <p>如果你还想要更强大和丰富的验证功能，比如限定密码长度不低于8位，用户名不能包含特殊字符等等，可以搜索并使用一些插件。</p> 
+ <p>前端页面的验证都是用来给守法用户做提示和限制的，并不能保证绝对的安全，后端服务器依然要重新对数据进行验证。我们现在的视图函数，没有对数据进行任何的验证，如果你在用户名处输入个空格，是可以正常提交的，但这显然是不允许的。甚至，如果跳过浏览器伪造请求，那么用户名是None也可以发送过来。通常，除了数据内容本身，我们至少需要保证各项内容都提供了且不为空，对于用户名、邮箱、地址等内容往往还需要剪去前后的空白，防止用户未注意到的空格。</p> 
+ <p>现在，让我们修改一下前面的代码：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="k">def</span> <span class="nf">login</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s2">"POST"</span><span class="p">:</span>
+        <span class="n">username</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'username'</span><span class="p">)</span>
+        <span class="n">password</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'password'</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">username</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">and</span> <span class="n">password</span><span class="p">:</span>  <span class="c1"># 确保用户名和密码都不为空      </span>
+            <span class="c1"># 用户名字符合法性验证</span>
+            <span class="c1"># 密码长度验证</span>
+            <span class="c1"># 更多的其它验证.....</span>
+            <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'/index/'</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/login.html'</span><span class="p">)</span>
+</pre>
+ </div> 
+ <ul> 
+  <li>get方法是Python字典类型的内置方法，它能够保证在没有指定键的情况下，返回一个None，从而确保当数据请求中没有username或password键时不会抛出异常；</li> 
+  <li>通过<code>if username and password:</code>确保用户名和密码都不为空；</li> 
+  <li>通过strip方法，将用户名前后无效的空格剪除；</li> 
+  <li>更多的数据验证需要根据实际情况增加，原则是以最低的信任度对待发送过来的数据。</li> 
+ </ul> 
+ <h2>三、验证用户名和密码</h2> 
+ <p>数据形式合法性验证通过了，不代表用户就可以登录了，因为最基本的密码对比还未进行。</p> 
+ <p>通过唯一的用户名，使用Django的ORM去数据库中查询用户数据，如果有匹配项，则进行密码对比，如果没有匹配项，说明用户名不存在。如果密码对比错误，说明密码不正确。</p> 
+ <p>下面贴出当前状态下，/login/views.py中的全部代码，注意其中添加了一句<code>from . import models</code>，导入我们先前编写好的model模型。</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="kn">from</span> <span class="nn">django.shortcuts</span> <span class="kn">import</span> <span class="n">render</span>
+<span class="kn">from</span> <span class="nn">django.shortcuts</span> <span class="kn">import</span> <span class="n">redirect</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">models</span>
+<span class="c1"># Create your views here.</span>
+
+
+<span class="k">def</span> <span class="nf">index</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">pass</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/index.html'</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">login</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s2">"POST"</span><span class="p">:</span>
+        <span class="n">username</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'username'</span><span class="p">)</span>
+        <span class="n">password</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'password'</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">username</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">and</span> <span class="n">password</span><span class="p">:</span>  <span class="c1"># 确保用户名和密码都不为空</span>
+            <span class="c1"># 用户名字符合法性验证</span>
+            <span class="c1"># 密码长度验证</span>
+            <span class="c1"># 更多的其它验证.....</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">user</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">username</span><span class="p">)</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/login.html'</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">user</span><span class="o">.</span><span class="n">password</span> <span class="o">==</span> <span class="n">password</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'/index/'</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/login.html'</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">register</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">pass</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/register.html'</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">logout</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">pass</span>
+    <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s2">"/login/"</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>说明：</p> 
+ <ul> 
+  <li>首先要在顶部导入models模块；</li> 
+  <li>使用try异常机制，防止数据库查询失败的异常；</li> 
+  <li>如果未匹配到用户，则执行except中的语句；注意这里没有区分异常的类型，因为在数据库访问过程中，可能发生很多种类型的异常，我们要对用户屏蔽这些信息，不可以暴露给用户，而是统一返回一个错误提示，比如用户名不存在。这是大多数情况下的通用做法。当然，如果你非要细分，也不是不行。</li> 
+  <li><code>models.User.objects.get(name=username)</code>是Django提供的最常用的数据查询API，具体含义和用法可以阅读前面的章节，不再赘述；</li> 
+  <li>通过<code>user.password == password</code>进行密码比对，成功则跳转到index页面，失败则返回登录页面。</li> 
+ </ul> 
+ <p>重启服务器，然后在登录表单内，使用错误的用户名和密码，以及我们先前在admin中创建的合法的测试用户，分别登录，看看效果。</p> 
+ <h2>四、 添加提示信息</h2> 
+ <p>上面的代码还缺少很重要的一部分内容，也就是错误提示信息！无论是登录成功还是失败，用户都没有得到任何提示信息，这显然是不行的。</p> 
+ <p>修改一下login视图：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="k">def</span> <span class="nf">login</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s1">'POST'</span><span class="p">:</span>
+        <span class="n">username</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'username'</span><span class="p">)</span>
+        <span class="n">password</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'password'</span><span class="p">)</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="s1">'请检查填写的内容！'</span>
+        <span class="k">if</span> <span class="n">username</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">and</span> <span class="n">password</span><span class="p">:</span>
+            <span class="c1"># 用户名字符合法性验证</span>
+            <span class="c1"># 密码长度验证</span>
+            <span class="c1"># 更多的其它验证.....</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">user</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">username</span><span class="p">)</span>
+            <span class="k">except</span> <span class="p">:</span>
+                <span class="n">message</span> <span class="o">=</span> <span class="s1">'用户不存在！'</span>
+                <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/login.html'</span><span class="p">,</span> <span class="p">{</span><span class="s1">'message'</span><span class="p">:</span> <span class="n">message</span><span class="p">})</span>
+
+            <span class="k">if</span> <span class="n">user</span><span class="o">.</span><span class="n">password</span> <span class="o">==</span> <span class="n">password</span><span class="p">:</span>
+                <span class="k">print</span><span class="p">(</span><span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'/index/'</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">message</span> <span class="o">=</span> <span class="s1">'密码不正确！'</span>
+                <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/login.html'</span><span class="p">,</span> <span class="p">{</span><span class="s1">'message'</span><span class="p">:</span> <span class="n">message</span><span class="p">})</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/login.html'</span><span class="p">,</span> <span class="p">{</span><span class="s1">'message'</span><span class="p">:</span> <span class="n">message</span><span class="p">})</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'login/login.html'</span><span class="p">)</span>
+</pre>
+ </div> 
+ <p>请仔细分析一下上面的登录和密码验证逻辑，以及错误提示的安排。</p> 
+ <p>这里增加了message变量，用于保存提示信息。当有错误信息的时候，将错误信息打包成一个字典，然后作为第三个参数提供给render方法。这个数据字典在渲染模板的时候会传递到模板里供你调用。</p> 
+ <p>为了在前端页面显示信息，还需要对<code>login.html</code>进行修改：</p> 
+ <div class="codehilite">
+  <pre><span></span><span class="p">&lt;</span><span class="nt">form</span> <span class="na">class</span><span class="o">=</span><span class="s">"form-login"</span> <span class="na">action</span><span class="o">=</span><span class="s">"/login/"</span> <span class="na">method</span><span class="o">=</span><span class="s">"post"</span><span class="p">&gt;</span>
+                  {% if message %}
+                    <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"alert alert-warning"</span><span class="p">&gt;</span>{{ message }}<span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+                  {% endif %}
+                  {% csrf_token %}
+                  <span class="p">&lt;</span><span class="nt">h3</span> <span class="na">class</span><span class="o">=</span><span class="s">"text-center"</span><span class="p">&gt;</span>欢迎登录<span class="p">&lt;/</span><span class="nt">h3</span><span class="p">&gt;</span>
+                  <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"form-group"</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="nt">label</span> <span class="na">for</span><span class="o">=</span><span class="s">"id_username"</span><span class="p">&gt;</span>用户名：<span class="p">&lt;/</span><span class="nt">label</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="nt">input</span> <span class="na">type</span><span class="o">=</span><span class="s">"text"</span> <span class="na">name</span><span class="o">=</span><span class="s">'username'</span> <span class="na">class</span><span class="o">=</span><span class="s">"form-control"</span> <span class="na">id</span><span class="o">=</span><span class="s">"id_username"</span> <span class="na">placeholder</span><span class="o">=</span><span class="s">"Username"</span> <span class="na">autofocus</span> <span class="na">required</span><span class="p">&gt;</span>
+                  <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+                  <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"form-group"</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="nt">label</span> <span class="na">for</span><span class="o">=</span><span class="s">"id_password"</span><span class="p">&gt;</span>密码：<span class="p">&lt;/</span><span class="nt">label</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="nt">input</span> <span class="na">type</span><span class="o">=</span><span class="s">"password"</span> <span class="na">name</span><span class="o">=</span><span class="s">'password'</span> <span class="na">class</span><span class="o">=</span><span class="s">"form-control"</span> <span class="na">id</span><span class="o">=</span><span class="s">"id_password"</span> <span class="na">placeholder</span><span class="o">=</span><span class="s">"Password"</span> <span class="na">required</span><span class="p">&gt;</span>
+                  <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+                  <span class="p">&lt;</span><span class="nt">div</span><span class="p">&gt;</span>
+                  <span class="p">&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">"/register/"</span> <span class="na">class</span><span class="o">=</span><span class="s">"text-success "</span> <span class="p">&gt;&lt;</span><span class="nt">ins</span><span class="p">&gt;</span>新用户注册<span class="p">&lt;/</span><span class="nt">ins</span><span class="p">&gt;&lt;/</span><span class="nt">a</span><span class="p">&gt;</span>
+                  <span class="p">&lt;</span><span class="nt">button</span> <span class="na">type</span><span class="o">=</span><span class="s">"submit"</span> <span class="na">class</span><span class="o">=</span><span class="s">"btn btn-primary float-right"</span><span class="p">&gt;</span>登录<span class="p">&lt;/</span><span class="nt">button</span><span class="p">&gt;</span>
+                  <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="nt">form</span><span class="p">&gt;</span>
+</pre>
+ </div> 
+ <p>Django的模板语言<code>{% if xxx %}{% endif %}</code>非常类似Python的if语句，也可以添加<code>{% else %}</code>分句。例子中，通过判断message变量是否为空，也就是是否有错误提示信息，如果有，就显示出来！这里使用了Bootstrap的警示信息类alert，你也可以自定义CSS或者JS。</p> 
+ <p>好了，重启服务器，尝试用错误的和正确的用户名及密码登录，看看页面效果吧！下面是错误信息的展示：</p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/108-3.png"></p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/108-4.png"></p> 
+ <p><img alt="image" src="http://liujiangblog.com/static/images/course/108-5.png"></p> 
+ <hr> 
+ <!-- 教程导航条 --> 
+ <div> 
+  <a href="/course/django/107"> <i class="fa fa-arrow-left"></i>&nbsp;5. 前端页面设计</a> 
+  <a class="float-right" href="/course/django/109"> 7. Django表单&nbsp;<i class="fa fa-arrow-right"></i></a> 
+ </div> 
+ <!-- 教程导航条结束 --> 
+ <hr> 
+ <!-- 评论区--> 
+ <!-- 显示评论条数--> 
+ <h4>评论总数： 35</h4> 
+ <hr> 
+ <!-- 评论表单区--> 
+ <div> 
+  <a class="text-danger" href="https://api.weibo.com/oauth2/authorize?client_id=3191049160&amp;response_type=code&amp;redirect_uri=http://www.liujiangblog.com/login?next=/course/django/108">点击登录后方可评论</a> 
+ </div> 
+ <!-- 评论表单区结束--> 
+ <hr> 
+ <!-- 评论显示区--> 
+ <div id="comments"> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax2.sinaimg.cn/crop.0.0.700.700.50/006nKydlly8g46a005cwrj30jg0jgdo4.jpg?KID=imgbed,tva&amp;Expires=1585807871&amp;ssig=x2BK2nHGoi" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>老师，刷新表单后之前的提示信息还在页面上，怎么解决？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 一口一个糯米滋 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年4月2日 16:31</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1997">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva3.sinaimg.cn/crop.0.0.480.480.50/0065hN1Wjw8es4u8zj3nzj30dc0dc74k.jpg?KID=imgbed,tva&amp;Expires=1580284062&amp;ssig=shybCSpUZr" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>你好，我按照你的教程做完以后看不到登录页面的警示信息 请问这是怎么了？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 挖洞的猿 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2020年1月29日 12:53</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1854">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva1.sinaimg.cn/crop.0.0.180.180.50/59bd64d7jw1e8qgp5bmzyj2050050aa8.jpg?KID=imgbed,tva&amp;Expires=1585481095&amp;ssig=Bc3M6W%2BwBF" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我也是，只有用户名不存在和密码不正确</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 定期换名字啦啦 &nbsp;&nbsp;回复&nbsp;&nbsp; 挖洞的猿 </span> 
+      <em>2020年3月29日 17:01</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1987">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva4.sinaimg.cn/crop.69.0.676.676.50/005Fnn4ajw1ehsg8eidt2j30m80iu41j.jpg?KID=imgbed,tva&amp;Expires=1569400397&amp;ssig=AYi4rbi1f0" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>if username.strip( ) and password: #确保用户名和密码不能为空 AttributeError: 'NoneType' object has no attribute 'strip' 出现了问题，大神们怎么解决啊？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 富硒大米及农产品 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年9月25日 13:47</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1636">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva4.sinaimg.cn/crop.69.0.676.676.50/005Fnn4ajw1ehsg8eidt2j30m80iu41j.jpg?KID=imgbed,tva&amp;Expires=1569400397&amp;ssig=AYi4rbi1f0" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>找到问题了。在login.html中的用户名表单中的错误：name=' username'。正确的是：name='username' 在执行views.py中username = request.POST.get('username')中，因为端的name=' username'与‘username’不一样，发生了异常，get方法返回一个NoneType对象，没有strip属性。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 富硒大米及农产品 &nbsp;&nbsp;回复&nbsp;&nbsp; 富硒大米及农产品 </span> 
+      <em>2019年9月25日 14:04</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1637">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva4.sinaimg.cn/crop.69.0.676.676.50/005Fnn4ajw1ehsg8eidt2j30m80iu41j.jpg?KID=imgbed,tva&amp;Expires=1569400397&amp;ssig=AYi4rbi1f0" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>name=' username' name='username' 上面比下面的多了一个空格。空格引发的灾难！</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 富硒大米及农产品 &nbsp;&nbsp;回复&nbsp;&nbsp; 富硒大米及农产品 </span> 
+      <em>2019年9月25日 14:06</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1638">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 12em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg?KID=imgbed,tva&amp;Expires=1569430444&amp;ssig=vl6QIV2PbU" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>这事其实还得赖我，合法性判定上，检测得少了点。 不过，这是一个学习教程，如果把代码搞得像生成环境那么健壮可靠，估计很多初学者就看不下去，抓不住重点了....</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 富硒大米及农产品 </span> 
+      <em>2019年9月25日 22:08</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1642">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 12em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tva1.sinaimg.cn/crop.0.0.180.180.50/59bd64d7jw1e8qgp5bmzyj2050050aa8.jpg?KID=imgbed,tva&amp;Expires=1585481095&amp;ssig=Bc3M6W%2BwBF" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我也遇到了这个问题，不过我的是没有写name属性，还是要多看评论</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 定期换名字啦啦 &nbsp;&nbsp;回复&nbsp;&nbsp; 富硒大米及农产品 </span> 
+      <em>2020年3月29日 16:52</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1986">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.1002.1002.50/006FDZo0ly8g3s7ch72j7j30ru0rujub.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我在第一步随便填了一个账号密码，带你及登录，显示404 没找到</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 上帝咬过的李哥 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年7月1日 10:46</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1417">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>404说明你访问的url不存在</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 上帝咬过的李哥 </span> 
+      <em>2019年7月1日 15:08</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1423">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax3.sinaimg.cn/crop.0.0.664.664.50/8767e316ly8gdnxsr9cidj20ig0ig75d.jpg?KID=imgbed,tva&amp;Expires=1589295158&amp;ssig=C43iKRIpBN" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我按照之前的教程一步做下来，路由也是按照之前配置的，也是出现了页面不存在的问题。。。。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> elivlialin &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2020年5月12日 19:55</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/2061">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva4.sinaimg.cn/crop.0.0.180.180.50/ab5134c1jw1ez8wucrlpoj2050050mx1.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>老师们好， message = '请检查填写的内容！' 这一句是那种情况下才显示呢，我的前端只显示'用户名不存在'和‘密码不正确’？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 烟囱1234_655 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年6月1日 11:29</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1378">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>比如当你没输入用户名或密码的情况下。 因为你使用的是浏览器的表单，如果你不填，提交不了，所以演示不了这种情况。 而如果你使用类似postman的工具，或者自己伪造一个没有内容的空请求，那么就可以看到了。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 烟囱1234_655 </span> 
+      <em>2019年6月6日 10:28</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1392">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax3.sinaimg.cn/crop.155.0.311.311.50/0072KVQIly8g0iv12e9p9j30dw08omxq.jpg?KID=imgbed,tva&amp;Expires=1576990048&amp;ssig=uMzNTFozgH" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>刘老师，我查了一下，给form表单设置novalidate属性，是可以演示 “请检查填写的内容！”的</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 用户6289766272 &nbsp;&nbsp;回复&nbsp;&nbsp; <span class="badge badge-info">&nbsp;博主</span> </span> 
+      <em>2019年12月22日 09:49</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1776">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="https://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif?KID=imgbed,tva&amp;Expires=1577262138&amp;ssig=89RvBHjmOT" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>F12打开浏览器调试，修改页面代码div属性，删除required，然后可以什么都不填直接点提交，就会提示请填写用户密码了，，哈哈</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 用户5617139709 &nbsp;&nbsp;回复&nbsp;&nbsp; 烟囱1234_655 </span> 
+      <em>2019年12月26日 16:47</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1803">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.996.996.50/006oyCm1ly8flya8lvvqbj30ro0roaat.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>标记无效：'endif'。您是否忘记注册或加载此标记？ 出现这个问题是为什么呢</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 吃麦子的猫 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年5月18日 15:54</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1337">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva4.sinaimg.cn/crop.0.0.180.180.50/a147e4a3jw1e8qgp5bmzyj2050050aa8.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>有些地方写错了，要自己琢磨，比如 message="密码不正确" return render(request, 'login/login.html',{"message": message}) 要自己加上才上渲染传递message到前端，引用起来</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 正面小青年 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年1月22日 19:33</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1025">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.568.568.50/87af5c2aly8feir9ghge4j20fs0fsmx6.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>感谢大佬</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 咸蛋erizo &nbsp;&nbsp;回复&nbsp;&nbsp; 正面小青年 </span> 
+      <em>2019年4月15日 17:26</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1257">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva3.sinaimg.cn/crop.0.58.440.440.50/b8253f15jw8eayptqq27uj20c80fh755.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>你好</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 衰老的粽子 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2019年1月21日 10:31</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1024">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/default/images/default_avatar_male_50.gif" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>在views.py中增加下面语句： from login import models</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; Barry1970_87683 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年12月8日 07:47</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/923">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.178.0.293.293.50/006AaVVsly8fw7tz0rufaj30ho085qbx.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>except User.DoesNotExist: message = "用户名不存在！" 改成这样比较好</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 为了给笛子点赞才找回密码 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年11月12日 17:16</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/848">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.79.178.566.566.50/005PMdg8ly8fjzip8l3ibj30k00scgr3.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>比如访问数据库失败，那么你的except就抓取不到了</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> <span class="badge badge-info">&nbsp;博主</span> &nbsp;&nbsp;回复&nbsp;&nbsp; 为了给笛子点赞才找回密码 </span> 
+      <em>2018年11月13日 10:44</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/852">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.996.996.50/007aMVsFly8fwc6filxhgj30ro0rota5.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>Django1.11.6版本,使用from . import models,报错,无法获取数据库的数据,然后改成from django.contrib.auth import models,依旧同样错误.最后使用StackOverflow上一个方法即可,安装pylint-Django,然后在setting中配置...原文链接:https://stackoverflow.com/questions/45135263/class-has-no-objects-member/</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 些时光儿 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年10月28日 22:17</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/807">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.0.996.996.50/684b4357jw8f6i1rp6013j20ro0romyl.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>from . import models</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 带着寂寞闯天涯 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年7月20日 18:06</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/627">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.1328.1328.50/006KZ60ily8fe8dud0coyj310w10wgrc.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>后面if 里调用user，出现了UnboundLocalError</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; UpheRainown </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年7月15日 12:34</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/583">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.1328.1328.50/006KZ60ily8fe8dud0coyj310w10wgrc.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>顶顶顶</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> UpheRainown &nbsp;&nbsp;回复&nbsp;&nbsp; UpheRainown </span> 
+      <em>2018年7月15日 12:36</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/584">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.0.540.540.50/005T37vtjw8emva01pgtrj30f00f0aaw.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>Django2.0用 from . import models 在views中导入models，否则无法无数据库中的数据匹配，后面的导入form表单同上</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; MwwwwwwwT_狂奔橘子 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年4月18日 15:28</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/394">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.512.512.50/8f2f3be6ly8fplhhqw1yej20e80e8mxp.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>但是导入models后还是无法与数据库中的数据匹配。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> Donestre_悲叹狮 &nbsp;&nbsp;回复&nbsp;&nbsp; MwwwwwwwT_狂奔橘子 </span> 
+      <em>2018年4月19日 23:29</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/397">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax1.sinaimg.cn/crop.0.0.400.400.50/006LLiYdly8fpkmpxy0f3j30b40b4jtb.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>如果没传递参数的话，试着把html中的method="post"改成method="POST"看下</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 浅川春雪 &nbsp;&nbsp;回复&nbsp;&nbsp; Donestre_悲叹狮 </span> 
+      <em>2018年4月22日 15:30</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/404">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.512.512.50/8f2f3be6ly8fplhhqw1yej20e80e8mxp.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>而且在登录界面输入错误的用户名和密码后依然跳转到了主页。请问是什么问题？我的django是2.0版本的。</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; Donestre_悲叹狮 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年4月18日 10:43</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/391">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.0.540.540.50/005T37vtjw8emva01pgtrj30f00f0aaw.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我也是 我调试了很久都是这样</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> MwwwwwwwT_狂奔橘子 &nbsp;&nbsp;回复&nbsp;&nbsp; Donestre_悲叹狮 </span> 
+      <em>2018年4月18日 14:24</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/393">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.0.852.852.50/7017044cjw8enigq4fmnqj20no0npmz5.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>下载源码对照修改也不能解决这个问题。是否跟django的版本有关？</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 蚁行生 &nbsp;&nbsp;回复&nbsp;&nbsp; Donestre_悲叹狮 </span> 
+      <em>2018年7月21日 10:52</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/632">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 4em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tva1.sinaimg.cn/crop.0.0.664.664.50/9af3491fjw8fai3eg8otfj20ig0ig74w.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我在admin中 login 注册的用户登录 还是提示密码错误</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 西双版纳的风情 &nbsp;&nbsp;回复&nbsp;&nbsp; Donestre_悲叹狮 </span> 
+      <em>2019年2月28日 20:32</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1092">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 8em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax4.sinaimg.cn/crop.0.0.996.996.50/006EfgFDly8fs5c4esjmsj30ro0rodh0.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>我也是这样，请问你解决了没有</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span> 陌上千流 &nbsp;&nbsp;回复&nbsp;&nbsp; 西双版纳的风情 </span> 
+      <em>2019年6月2日 20:48</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/1381">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="comment " style="margin-left: 0em"> 
+   <div class="row"> 
+    <div> 
+     <img src="http://tvax2.sinaimg.cn/crop.0.0.512.512.50/006IVkARly8fmubygmm3aj30e80e8q3i.jpg" alt="user_image"> 
+    </div> 
+    <div class="comment-content  col-md-10"> 
+     <p>之前学的实在from django.db import models 这个需要的是from django.contrib.auth import models</p> 
+     <br> 
+     <div class="comment_footer small mute"> 
+      <span>By&nbsp;&nbsp; 音脆斯挺 </span>&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp; 
+      <em>2018年2月27日 18:21</em>&nbsp;&nbsp; 
+      <a class="text-info" href="/reply/222">回复</a> 
+     </div> 
+     <br> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- 评论显示区结束--> 
+  <!-- 评论区结束--> 
+ </div> 
+ <!-- 右侧正文栏结束 --> 
+</div>]
