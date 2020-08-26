@@ -99,8 +99,8 @@ public class MyPipeline implements Pipeline{
 	private boolean AlreadyInDb(List<String> dataList2, List<String> dataFromDB) {
 		boolean result = false;
 		for (String s :dataList2 ) {
-			if(dataFromDB.contains(s) & dataFromDB.contains(s) & dataFromDB.contains(s)) {
-				result = true;
+			if(!dataFromDB.contains(s)) {
+				result = false;
 				break;
 			}
 		}
@@ -200,7 +200,7 @@ public class MyPipeline implements Pipeline{
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}
-			System.out.println("sql end!");
+			System.out.println("sql end and result count is: " + resultList.size());
 			stmt.close();
 			connection.close();
 		} catch (Exception e) {

@@ -38,7 +38,7 @@ public class MyPageProcessor implements PageProcessor{
 			System.out.println("start to get news~!!!");
 			PasrseNewsPage(page);			
 		}else if(page.getUrl().toString().contains("/FC.html")) {
-			logger.info("start to get important data canlendar");
+			System.out.println("start to get important data canlendar");
 			parseEcoCalendar(page);   
 		}
 	}
